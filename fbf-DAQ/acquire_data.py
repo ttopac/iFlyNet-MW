@@ -7,7 +7,8 @@ import numpy as np
 
 def calibrate_SGs(params):
   with nidaqmx.Task() as task:
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=350.0) #Commercial_SG_onWing
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #Lift
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai1", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #Drag
     task.timing.cfg_samp_clk_timing(rate=params["sample_rate"], sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=params["sample_rate"])
     sgsamples = np.asarray(task.read(number_of_samples_per_channel=params["samples_read"]))
     sgmean = np.mean(sgsamples)
@@ -24,10 +25,10 @@ def get_data(aoa, vel, sgmean, params):
 
   t0 = time.time()
   with nidaqmx.Task() as task:
-    task.ai_channels.add_ai_voltage_chan("cDAQ1Mod6/ai2") #PZT_LB
-    task.ai_channels.add_ai_voltage_chan("cDAQ1Mod6/ai3") #PZT_LT
-    task.ai_channels.add_ai_voltage_chan("cDAQ1Mod6/ai1") #PZT_RB
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=350.0) #Commercial_SG_onWing
+    task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #PZT_1
+    task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #PZT_2
+    task.ai_channels.add_ai_voltage_chan("cDAQ1Mod6/ai2") #PZT_3
+    
     task.timing.cfg_samp_clk_timing(rate=params["sample_rate"], sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=params["sample_rate"])
     testdata = np.zeros((4,1))
     
