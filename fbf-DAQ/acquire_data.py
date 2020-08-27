@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 
-def calibrate_SG(params):
+def calibrate_SGs(params):
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=350.0) #Commercial_SG_onWing
     task.timing.cfg_samp_clk_timing(rate=params["sample_rate"], sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=params["sample_rate"])
@@ -50,6 +50,6 @@ if __name__ == "__main__":
   aoa, vel = 99, 99
   counter = 0
 
-  sgmean = calibrate_SG(params)
+  sgmean = calibrate_SGs(params)
   while True:
     aoa, vel = get_data(aoa, vel, sgmean, params)
