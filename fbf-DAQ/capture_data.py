@@ -9,14 +9,13 @@ from multiprocessing import Process, Pipe
 
 params = dict()
 params["sample_rate"] = 7000
-params["samples_read_train"] = 420000 #420000 corresponds to 60 secs of data.
 
 SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
 
-def capture_data_fixedlen(SGoffsets):
+def capture_data_fixedlen(SGoffsets, samples_to_read):
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #PZT_2
@@ -34,9 +33,9 @@ def capture_data_fixedlen(SGoffsets):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #SG_9
     task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #Lift
     task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai1", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #Drag
-    task.timing.cfg_samp_clk_timing(rate=params["sample_rate"], sample_mode=AcquisitionType.FINITE, samps_per_chan=params["samples_read_train"])
+    task.timing.cfg_samp_clk_timing(rate=params["sample_rate"], sample_mode=AcquisitionType.FINITE, samps_per_chan=samples_to_read)
     
-    read_data = np.zeros((16, params["samples_read_train"]))
+    read_data = np.zeros((16, samples_to_read))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
 
@@ -46,8 +45,8 @@ def capture_data_fixedlen(SGoffsets):
     read_data[6:,:] *= 1000000 #Convert to microstrains
     return read_data
 
-def send_data(child_conn, SGoffsets, captype = "fixedlen"):
+def send_data(child_conn, SGoffsets, samples_to_read, captype = "fixedlen"):
   if captype == "fixedlen":
-    read_data = capture_data_fixedlen(SGoffsets)
+    read_data = capture_data_fixedlen(SGoffsets, samples_to_read)
     child_conn.send(read_data)
     child_conn.close()

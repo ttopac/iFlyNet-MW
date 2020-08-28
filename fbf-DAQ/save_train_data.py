@@ -19,7 +19,7 @@ if __name__ == "__main__":
     if vel_in != "":
       vel = vel_in
 
-    p = Process(target = send_data, args=(child_conn, SGoffsets, "fixedlen"))
+    p = Process(target = send_data, args=(child_conn, SGoffsets, 420000, "fixedlen"))
     p.start()
     read_data = parent_conn.recv()
     p.join()
