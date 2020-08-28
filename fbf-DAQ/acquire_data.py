@@ -1,6 +1,8 @@
 import nidaqmx
 from nidaqmx.constants import AcquisitionType
 from nidaqmx.constants import StrainGageBridgeType
+from nidaqmx import stream_readers
+from nidaqmx import Task
 import matplotlib.pyplot as plt
 import time
 import numpy as np
@@ -20,7 +22,10 @@ def calibrate_SGs(params):
     task.timing.cfg_samp_clk_timing(rate=params["sample_rate"], sample_mode=AcquisitionType.FINITE, samps_per_chan=params["sample_rate"])
 
     calib_samples = np.zeros((10, params["sample_rate"]))
-    num_samples = task.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE)
+    in_stream = nidaqmx._task_modules.in_stream.InStream(task)
+    reader = stream_readers.AnalogMultiChannelReader(in_stream)
+    
+    reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE)
     sgmean = np.mean(calib_samples, axis=1)
     print(sgmean)
     return sgmean
@@ -54,7 +59,10 @@ def get_data(aoa, vel, sgmean, params):
     task.timing.cfg_samp_clk_timing(rate=params["sample_rate"], sample_mode=AcquisitionType.FINITE, samps_per_chan=params["samples_read_train"])
     
     train_samples = np.zeros((16, params["samples_read_train"]))
-    num_samples = task.read_many_sample(train_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE)
+    in_stream = nidaqmx._task_modules.in_stream.InStream(task)
+    reader = stream_readers.AnalogMultiChannelReader(in_stream)
+
+    reader.read_many_sample(train_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=70)
     np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train_{}ms_{}deg.npy'.format(vel,aoa),train_samples)
     return aoa, vel
 
@@ -62,7 +70,7 @@ def get_data(aoa, vel, sgmean, params):
 if __name__ == "__main__":
   params = dict()
   params["sample_rate"] = 7000
-  params["samples_read_train"] = 100000
+  params["samples_read_train"] = 420000 #Corresponds to 60 secs of data.
   aoa, vel = 99, 99
 
   sgmean = calibrate_SGs(params)
