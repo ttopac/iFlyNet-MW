@@ -13,10 +13,10 @@ import threading
 params = dict()
 params["sample_rate"] = 7000
 
-SGcoeffs = dict()
-SGcoeffs["amplifier_coeff"] = 100
-SGcoeffs["GF"] = 2.11
-SGcoeffs["Vex"] = 12
+# SGcoeffs = dict()
+# SGcoeffs["amplifier_coeff"] = 100
+# SGcoeffs["GF"] = 2.11
+# SGcoeffs["Vex"] = 12
 
 def capture_data_fixedlen(SGoffsets, samples_to_read):
   with nidaqmx.Task() as task:
@@ -43,9 +43,9 @@ def capture_data_fixedlen(SGoffsets, samples_to_read):
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
 
     reader.read_many_sample(read_data, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=70)
-    read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
+    # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
     read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
-    read_data[6:,:] *= 1000000 #Convert to microstrains
+    read_data[14:,:] *= 1000000 #Convert to only commercial SGs to microstrains
     return read_data
 
 def capture_data_continuous(SGoffsets, samples_to_read):
@@ -75,9 +75,9 @@ def capture_data_continuous(SGoffsets, samples_to_read):
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     while True:
       reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=1000)
-      read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
+      # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
       read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
-      read_data[6:,:] *= 1000000 #Convert to microstrains
+      read_data[14:,:] *= 1000000 #Convert to only commercial SGs to microstrains, leave our SGs in volts.
 
 def send_data(SGoffsets, samples_to_read, captype, child_conn=None):
   if captype == "fixedlen":
