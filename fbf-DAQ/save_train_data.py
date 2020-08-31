@@ -3,10 +3,14 @@ from capture_SG_offsets import send_SG_offsets
 from capture_data import send_data
 import numpy as np
 
+params = dict()
+params["sample_rate"] = 7000
+params["samples_read_train"] = 420000 #Corresponds to 60 secs of data.
+
 
 if __name__ == "__main__":
   parent_conn,child_conn = Pipe()
-  p = Process(target = send_SG_offsets, args=(child_conn,))
+  p = Process(target = send_SG_offsets, args=(params["sample_rate"], params["sample_rate"], child_conn,))
   p.start()
   SGoffsets = parent_conn.recv()
   p.join()
@@ -19,7 +23,7 @@ if __name__ == "__main__":
     if vel_in != "":
       vel = vel_in
 
-    p = Process(target = send_data, args=(SGoffsets, 420000, "fixedlen", child_conn)) #420000 for 60 seconds of data
+    p = Process(target = send_data, args=(SGoffsets, params["sample_rate"], params["samples_read_train"], "fixedlen", child_conn)) #420000 for 60 seconds of data
     p.start()
     read_data = parent_conn.recv()
     p.join()
