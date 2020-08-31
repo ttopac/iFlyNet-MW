@@ -33,8 +33,8 @@ def calibrate_SGs():
     calib_samples = np.zeros((10, params["sample_rate"]))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
-    
     reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE)
+    
     calib_samples[0:8] = -(4*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]) / (2*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
     sgmean = np.mean(calib_samples, axis=1)
     return sgmean
