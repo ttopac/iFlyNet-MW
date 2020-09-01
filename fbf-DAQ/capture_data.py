@@ -45,7 +45,7 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     read_data[14:,:] *= 1000000 #Convert to only commercial SGs to microstrains
     return read_data
 
-def capture_data_continuous(SGoffsets, samples_to_read):
+def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
   global read_data
 
   with nidaqmx.Task() as task:
