@@ -6,7 +6,7 @@ from nidaqmx import stream_readers
 from nidaqmx import Task
 
 import numpy as np
-from scipy.signal import resample
+from scipy import signal
 import time
 import math
 
@@ -24,15 +24,15 @@ from concurrent.futures import ThreadPoolExecutor
 
 #Initialize the DAQ and SG parameters
 params = dict()
-params["sample_rate"] = 7000
 SGcoeffs = dict()
+params["sample_rate"] = 7000
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
 downsample_mult = 100
 
 #Plotting coefficients
-plot_refresh_rate = 0.1 #seconds
+plot_refresh_rate = 1 #seconds
 visible_duration = 30 #seconds
 num_samples = int(params["sample_rate"]*plot_refresh_rate/downsample_mult)
 
@@ -57,8 +57,8 @@ PZTlines = list()
 for i in range(6):
   PZTlines.append(ax1.plot(xs, ys[i], linewidth=0.3, label="PZT {}".format(i+1))[0])
 ax1.set_xlim(0, visible_duration)
-ax1.set_ylim(-0.003, 0.003)
-# ax1.set_ylim(-0.1, 0.1)
+# ax1.set_ylim(-0.003, 0.003) #Limits for unconnected testing
+ax1.set_ylim(-0.1, 0.1)
 leg1 = ax1.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
 for line in leg1.get_lines():
   line.set_linewidth(1.5)
@@ -70,12 +70,15 @@ ax1.tick_params(labelsize="small")
 
 SGlines = list()
 for i in range(8):
-  SGlines.append(ax2.plot(xs, ys[6+i], linewidth=0.3, label="SG {}".format(i+1))[0])
+  if i == 7:
+    SGlines.append(ax2.plot(xs, ys[6+i], linewidth=0.3, label="SG {}".format(i+2))[0])
+  else: 
+    SGlines.append(ax2.plot(xs, ys[6+i], linewidth=0.3, label="SG {}".format(i+1))[0])
 liftline, = ax2.plot(xs, ys[14], linewidth=0.5, label="Lift")
 dragline, = ax2.plot(xs, ys[15], linewidth=0.5, label="Drag")
 ax2.set_xlim(0, visible_duration)
-ax2.set_ylim(-0.02, 0.02)
-# ax2.set_ylim(-100, 100)
+# ax2.set_ylim(-0.02, 0.02) #Limits for unconnected testing
+ax2.set_ylim(-100, 100)
 leg2 = ax2.legend(fontsize=7, loc="upper right", ncol=4, columnspacing=1)
 for line in leg2.get_lines():
   line.set_linewidth(1.5)
@@ -89,14 +92,15 @@ ax2.tick_params(labelsize="small")
 #Function to generate real-time plots.
 def plot_live(i, ys):
   global read_data
-  global start
   if (i%int(visible_duration/plot_refresh_rate) == 0):
     ys [:,:] = 0
   
-  fewerdata = resample(read_data, num_samples, axis=1) #Downsample the data
+  fewerPZTdata = signal.resample(read_data[0:6,:], num_samples, axis=1) #Downsample the PZT data
+  fewerSGdata = np.mean (read_data[6:,:].reshape(10,downsample_mult,-1), axis=1) #Downsample the SG data
   slice_start = i%(int(visible_duration/plot_refresh_rate))*num_samples
   slice_end = i%(int(visible_duration/plot_refresh_rate))*num_samples + num_samples
-  ys[:,slice_start:slice_end] = fewerdata 
+  ys[0:6,slice_start:slice_end] = fewerPZTdata 
+  ys[6:,slice_start:slice_end] = fewerSGdata
   
   for count,line in enumerate(PZTlines):
     line.set_ydata(ys[count])
@@ -104,13 +108,11 @@ def plot_live(i, ys):
     line.set_ydata(ys[count+6])
   liftline.set_ydata(ys[14])
   dragline.set_ydata(ys[15])
-  # return list((liftline,dragline))+PZTlines+SGlines
-  return list((liftline,dragline))+PZTlines+SGlines
+  return PZTlines+SGlines+list((liftline,dragline))
 
 if __name__ == "__main__":
   global read_data
-  global start
-
+  
   # Get strain gauge offsets for calibration
   parent_conn, child_conn = Pipe()
   p = Process(target = send_SG_offsets, args=(params["sample_rate"], params["sample_rate"], child_conn))
@@ -120,15 +122,12 @@ if __name__ == "__main__":
 
   # Run capture data in background
   executor = ThreadPoolExecutor(max_workers=2)
-  executor.submit(send_data, SGoffsets, params["sample_rate"], 700, "continuous")
+  executor.submit(send_data, SGoffsets, params["sample_rate"], params["sample_rate"]*plot_refresh_rate, "continuous")
   time.sleep(0.5)
   from capture_data import read_data
 
   # Plot the data
   canvas = FigureCanvasTkAgg(fig, master=root)
   canvas.get_tk_widget().grid(column=0, row=1)
-  start = time.time()
   ani = FuncAnimation(fig, plot_live, fargs=(ys,), interval=plot_refresh_rate*1000, blit=True)
   root.mainloop()
-
-
