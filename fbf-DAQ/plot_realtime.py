@@ -29,11 +29,11 @@ SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
-downsample_mult = 1
+downsample_mult = 100
 
 #Plotting coefficients
 plot_refresh_rate = 0.1 #seconds
-visible_duration = 8 #seconds
+visible_duration = 30 #seconds
 num_samples = int(params["sample_rate"]*plot_refresh_rate/downsample_mult)
 
 #Initialize the GUI
@@ -105,7 +105,7 @@ def plot_live(i, ys):
   liftline.set_ydata(ys[14])
   dragline.set_ydata(ys[15])
   # return list((liftline,dragline))+PZTlines+SGlines
-  return list((liftline,))+PZTlines+SGlines
+  return list((liftline,dragline))+PZTlines+SGlines
 
 if __name__ == "__main__":
   global read_data
@@ -119,7 +119,7 @@ if __name__ == "__main__":
   p.join()
 
   # Run capture data in background
-  executor = ThreadPoolExecutor(max_workers=4)
+  executor = ThreadPoolExecutor(max_workers=2)
   executor.submit(send_data, SGoffsets, params["sample_rate"], 700, "continuous")
   time.sleep(0.5)
   from capture_data import read_data
