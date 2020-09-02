@@ -112,7 +112,7 @@ def plot_live(i, ys):
 
 if __name__ == "__main__":
   global read_data
-  
+
   # Get strain gauge offsets for calibration
   parent_conn, child_conn = Pipe()
   p = Process(target = send_SG_offsets, args=(params["sample_rate"], params["sample_rate"], child_conn))
@@ -129,5 +129,5 @@ if __name__ == "__main__":
   # Plot the data
   canvas = FigureCanvasTkAgg(fig, master=root)
   canvas.get_tk_widget().grid(column=0, row=1)
-  ani = FuncAnimation(fig, plot_live, fargs=(ys,), interval=plot_refresh_rate*1000, blit=True)
+  ani = FuncAnimation(fig, plot_live, fargs=(ys,), interval=plot_refresh_rate*1000, blit=True, cache_frame_data=False)
   root.mainloop()
