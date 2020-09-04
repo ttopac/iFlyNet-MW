@@ -32,7 +32,7 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai0") #12: SG_7
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #13: SG_9
     task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #14: Lift
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai1", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #15: Drag
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #15: Drag
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.FINITE, samps_per_chan=samples_to_read)
     
     read_data = np.zeros((16, samples_to_read))
@@ -42,7 +42,7 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     reader.read_many_sample(read_data, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=70)
     # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
     read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
-    read_data[14:,:] *= 1000000 #Convert to only commercial SGs to microstrains
+    read_data[14:,:] *= -1000000 #Convert to only commercial SGs to microstrains with correct sign, leave our SGs in volts.
     return read_data
 
 def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
@@ -64,17 +64,19 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai0") #12: SG_7
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #13: SG_9
     task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #14: Lift
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai1", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #15: Drag
-    task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=sample_rate*30)
-    
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #15: Drag
+    task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=samples_to_read*5)
+
     read_data = np.zeros((16, samples_to_read))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
+    
     while True:
       reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=1000)
       # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
       read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
-      read_data[14:,:] *= 1000000 #Convert to only commercial SGs to microstrains, leave our SGs in volts.
+      read_data[14:,:] *= -1000000 #Convert to only commercial SGs to microstrains with correct sign, leave our SGs in volts.
+
 
 def send_data(SGoffsets, sample_rate, samples_to_read, captype, child_conn=None):
   if captype == "fixedlen":

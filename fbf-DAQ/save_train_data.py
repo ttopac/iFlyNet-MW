@@ -5,7 +5,7 @@ import numpy as np
 
 params = dict()
 params["sample_rate"] = 7000
-params["samples_read_train"] = 420000 #Corresponds to 60 secs of data.
+params["samples_read_train"] = 210000 #Corresponds to 60 secs of data.
 
 
 if __name__ == "__main__":
