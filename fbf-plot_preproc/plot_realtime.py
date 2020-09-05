@@ -17,10 +17,13 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.collections import LineCollection
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from capture_SG_offsets import send_SG_offsets
-from capture_data import send_data
 from multiprocessing import Process, Queue, Pipe
 from concurrent.futures import ThreadPoolExecutor
+import sys
+import os
+sys.path.append(os.path.abspath('./fbf-DAQ'))
+from capture_SG_offsets import send_SG_offsets
+from capture_data import send_data
 
 #Initialize the DAQ and SG parameters
 params = dict()

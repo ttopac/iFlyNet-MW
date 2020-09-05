@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# aveStrain = list()
-
 # vel = input ("Enter the vel to plot: ")
 # aoa = input ("Enter the aoa to plot: ")
 vel = [16]
@@ -10,9 +8,8 @@ aoa = [0,4,8,12,14,16,17,18,19,20,21]
 
 for v in vel:
   for a in aoa:
+    # trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/')
     trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train_{}ms_{}deg.npy'.format(v,a))
-    # trainData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/pre3/train_{}ms_{}deg.npy'.format(v,a))
-    # aveStrain.append(-1*np.mean(trainData[6]))
     
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
@@ -57,13 +54,3 @@ for v in vel:
 
     plt.show()
     # fig.savefig('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/plots/train_{}ms_{}deg.png'.format(v,a))
-
-
-#Code for plotting average strain
-# fig = plt.figure()
-# ax1 = fig.add_subplot(1,1,1)
-# ax1.set_title("Commercial SG Lift", fontsize=12)
-# ax1.set_xlabel("Angle (deg)", fontsize=11)
-# ax1.set_ylabel("Strain (%)", fontsize=11)
-# ax1.plot(aoa, aveStrain, marker='o')
-# plt.show()
