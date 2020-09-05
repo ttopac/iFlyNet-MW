@@ -6,6 +6,7 @@ from nidaqmx import stream_readers
 from nidaqmx import Task
 import numpy as np
 from multiprocessing import Process, Pipe
+import time
 
 # SGcoeffs = dict()
 # SGcoeffs["amplifier_coeff"] = 100
@@ -14,6 +15,7 @@ from multiprocessing import Process, Pipe
 
 def calibrate_SGs(sample_rate, samples_to_read):
   with nidaqmx.Task() as task:
+    start = time.time()
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod2/ai2") #SG_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod2/ai3") #SG_2
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod3/ai0") #SG_3
@@ -29,11 +31,13 @@ def calibrate_SGs(sample_rate, samples_to_read):
     calib_samples = np.zeros((10, samples_to_read))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
-    reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE)
-    
+    reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
+    print (time.time() - start)
+
     # calib_samples[0:8] = -(4*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]) / (2*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
     sgmean = np.mean(calib_samples, axis=1)
     print (sgmean)
+    print ("SG calibration sampling rate was: {}".format(task.timing.samp_clk_rate))
     return sgmean
 
 def send_SG_offsets(sample_rate, samples_to_read, child_conn):

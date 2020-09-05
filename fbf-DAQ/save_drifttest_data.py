@@ -2,12 +2,12 @@ from multiprocessing import Process, Queue, Pipe
 from capture_SG_offsets import send_SG_offsets
 from capture_data import send_data
 import numpy as np
+import time
 
 params = dict()
-params["sample_rate"] = 70
-params["samples_read_offset"] = 70 #Corresponds to 1 sec of data.
-params["samples_read_drift"] = 252000 #Corresponds to 60 MINUTES of data.
-
+params["sample_rate"] = 1700 #Lowest sample rate possible is 1613 for our NI device. 1700 actually becomes 1724.1379310344828
+params["samples_read_offset"] = 1700 #Corresponds to ~1 sec of data.
+params["samples_read_drift"] = 6120000 #6120000 corresponds to 60 MINUTES of data.
 
 
 if __name__ == "__main__":
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     if vel_in != "":
       vel = vel_in
 
-    p = Process(target = send_data, args=(SGoffsets, params["sample_rate"], params["samples_read_train"], "fixedlen", child_conn))
+    p = Process(target = send_data, args=(SGoffsets, params["sample_rate"], params["samples_read_drift"], "fixedlen", child_conn))
     p.start()
     read_data = parent_conn.recv()
     p.join()

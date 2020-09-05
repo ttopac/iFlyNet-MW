@@ -39,10 +39,11 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
 
-    reader.read_many_sample(read_data, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=70)
+    reader.read_many_sample(read_data, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
     # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
     read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
     read_data[14:,:] *= -1000000 #Convert to only commercial SGs to microstrains with correct sign, leave our SGs in volts.
+    print ("DAQ sampling rate was: {}".format(task.timing.samp_clk_rate))
     return read_data
 
 def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
@@ -70,9 +71,10 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
     read_data = np.zeros((16, samples_to_read))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
-    
+    print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
+
     while True:
-      reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=1000)
+      reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
       # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
       read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
       read_data[14:,:] *= -1000000 #Convert to only commercial SGs to microstrains with correct sign, leave our SGs in volts.
