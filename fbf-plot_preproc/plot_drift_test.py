@@ -4,22 +4,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 #Plotting stuff. Ignore.
-def make_patch_spines_invisible(ax):
-  ax.set_frame_on(True)
-  ax.patch.set_visible(False)
-  for sp in ax.spines.values():
-    sp.set_visible(False)
+# def make_patch_spines_invisible(ax):
+#   ax.set_frame_on(True)
+#   ax.patch.set_visible(False)
+#   for sp in ax.spines.values():
+#     sp.set_visible(False)
 # make_patch_spines_invisible(ax1_temptwin)
 # ax1_temptwin.spines["right"].set_visible(True)
 
-vel = 12
-aoa = 10
+vel = 0
+aoa = 0
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
 # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift1_Sept5/drifttest_{}ms_{}deg.npy'.format(vel,aoa))
 driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift1_Sept5/drifttest_{}ms_{}deg.npy'.format(vel,aoa))
 tempdata = tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift1_Sept5/drifttesttemp_{}ms_{}deg.txt'.format(vel,aoa)
-downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
+downsampled_SSNSGs = np.mean (-driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
 downsampled_commSG = np.mean (driftData[14:,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
 xs = np.linspace(0,downsampled_commSG.shape[1]/60,downsampled_commSG.shape[1])
 df = pd.read_csv(tempdata, header=0, delim_whitespace=True)
@@ -53,7 +53,7 @@ ax2_temptwin.spines["right"].set_position(("axes", 1.08))
 ax2_veltwin.plot (xs, vel_np[0:3600], "b-", linewidth=0.8,  label="WT Speed")
 ax2_temptwin.plot (xs, temp_np[0:3600], "r-", linewidth=0.8,  label="WT Temp")
 
-ax1.set_title("Commercial SG readings for V = {}m/s, AoA = {}deg".format(vel,aoa), fontsize=12)
+ax1.set_title("-SSN SG readings for V = {}m/s, AoA = {}deg".format(vel,aoa), fontsize=12)
 ax1.set_xlabel("Time (min)", fontsize=11)
 ax1.set_ylabel("Voltage (V)", fontsize=11)
 ax1_veltwin.set_ylabel("Airspeed (m/s)", fontsize=11)
@@ -69,7 +69,7 @@ ax1.grid(False)
 ax1_temptwin.grid(False)
 ax1_veltwin.grid(False)
 
-ax2.set_title("SSN SG readings for V = {}m/s, AoA = {}deg".format(vel,aoa), fontsize=12)
+ax2.set_title("Commercial SG readings for V = {}m/s, AoA = {}deg".format(vel,aoa), fontsize=12)
 ax2.set_xlabel("Time (min)", fontsize=11)
 ax2.set_ylabel("Microstrain (us)", fontsize=11)
 ax2_veltwin.set_ylabel("Airspeed (m/s)", fontsize=11)
