@@ -7,7 +7,7 @@ ave_root_SG = list()
 # vel = input ("Enter the vel to plot: ")
 # aoa = input ("Enter the aoa to plot: ")
 vel = [2,4,6,8,10,12,14,16,18,20]
-aoa = 6
+aoa = 14
 
 for v in vel:
   # trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/')
