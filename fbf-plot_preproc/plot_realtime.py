@@ -35,8 +35,8 @@ SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
 
 #Plotting coefficients
-plot_refresh_rate = 0.1 #seconds
-visible_duration = 60 #seconds
+plot_refresh_rate = 1 #seconds
+visible_duration = 30 #seconds
 num_samples = int(params["sample_rate"]*plot_refresh_rate/downsample_mult)
 
 #Initialize the GUI
@@ -73,13 +73,13 @@ ax1.set_xticklabels([])
 ax1.tick_params(labelsize="small")
 
 SGlines = list()
-for i in range(8):
+for i in range(2,6):
   if i == 7:
     SGlines.append(ax2.plot(xs, ys[6+i], linewidth=0.5, label="SG {}".format(i+2))[0])
-  else: 
+  else:
     SGlines.append(ax2.plot(xs, ys[6+i], linewidth=0.5, label="SG {}".format(i+1))[0])
 ax2.set_xlim(0, visible_duration)
-ax2.set_ylim(-0.2, 0.2)
+ax2.set_ylim(-0.005, 0.005)
 leg2 = ax2.legend(fontsize=7, loc="upper right", ncol=3, columnspacing=1)
 for line in leg2.get_lines():
   line.set_linewidth(1.5)
@@ -108,22 +108,22 @@ def plot_live(i, ys, yinterp):
   global read_data
   if (i%int(visible_duration/plot_refresh_rate) == 0):
     ys [:,:] = 0
+    yinterp [:,:] = 0
   
   fewerPZTdata = signal.resample(read_data[0:6,:], num_samples, axis=1) #Downsample the PZT data
-  fewerSGdata = np.mean (read_data[6:,:].reshape(10,downsample_mult,-1), axis=1) #Downsample the SG data
+  fewerSGdata = np.mean (read_data[6:,:].reshape(10,-1,downsample_mult), axis=2) #Downsample the SG data
   prev_slice_start = i%(int(visible_duration/plot_refresh_rate))*num_samples - num_samples
   prev_slice_end = i%(int(visible_duration/plot_refresh_rate))*num_samples
   slice_start = i%(int(visible_duration/plot_refresh_rate))*num_samples
   slice_end = i%(int(visible_duration/plot_refresh_rate))*num_samples + num_samples
   ys[0:6,slice_start:slice_end] = fewerPZTdata
+  ys[6:,slice_start:slice_end] = fewerSGdata
   yinterp [6:,slice_start:slice_end] = fewerSGdata
 
-  if (i>1) and np.any(np.abs(fewerSGdata[:-2,0:]) > 5000*np.abs(yinterp[6:-2,prev_slice_start:prev_slice_end])): #Reject drastic jumps.
-    ys[6:,slice_start:slice_end] = ys[6:,prev_slice_start:prev_slice_end]
-    print ("rejected")
-  else:
-    ys[6:,slice_start:slice_end] = fewerSGdata
-  
+  # if (i>1) and np.any(np.abs(fewerSGdata[:-2,0:]) > 5000*np.abs(yinterp[6:-2,prev_slice_start:prev_slice_end])): #Reject drastic jumps.
+  #   ys[6:,slice_start:slice_end] = ys[6:,prev_slice_start:prev_slice_end]
+  #   print (fewerSGdata[0,50])
+    
   for count,line in enumerate(PZTlines):
     line.set_ydata(ys[count])
   for count,line in enumerate(SGlines):
