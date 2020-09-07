@@ -46,9 +46,7 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     print ("DAQ sampling rate was: {}".format(task.timing.samp_clk_rate))
     return read_data
 
-def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
-  global read_data
-
+def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #0: PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #1: PZT_2
@@ -66,7 +64,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #13: SG_9
     task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #14: Lift
     task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #15: Drag
-    task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=samples_to_read*5)
+    task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=samples_to_read*100)
 
     read_data = np.zeros((16, samples_to_read))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
@@ -74,11 +72,13 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
 
     while True:
-      reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
-      # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
-      read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
-      read_data[14:,:] *= -1000000 #Convert to only commercial SGs to microstrains with correct sign, leave our SGs in volts.
-      print (np.mean(read_data[10,:]))
+      while queue.empty():
+        reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
+        # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
+        read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
+        read_data[14:,:] *= -1000000 #Convert only commercial SGs to microstrains with correct sign, leave our SGs in volts.
+        queue.put(read_data)
+
 
 
 def send_data(SGoffsets, sample_rate, samples_to_read, captype, child_conn=None):
@@ -87,4 +87,4 @@ def send_data(SGoffsets, sample_rate, samples_to_read, captype, child_conn=None)
     child_conn.send(read_data)
     child_conn.close()
   if captype == "continuous":
-    capture_data_continuous(SGoffsets, sample_rate, samples_to_read)
+    capture_data_continuous(SGoffsets, sample_rate, samples_to_read, child_conn)

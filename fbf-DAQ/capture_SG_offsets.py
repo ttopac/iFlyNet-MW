@@ -40,7 +40,6 @@ def calibrate_SGs(sample_rate, samples_to_read):
     print ("SG calibration sampling rate was: {}".format(task.timing.samp_clk_rate))
     return sgmean
 
-def send_SG_offsets(sample_rate, samples_to_read, child_conn):
+def send_SG_offsets(sample_rate, samples_to_read, queue):
   sgmean = calibrate_SGs(sample_rate, samples_to_read)
-  child_conn.send(sgmean)
-  child_conn.close()
+  queue.put(sgmean)

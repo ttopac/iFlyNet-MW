@@ -18,6 +18,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from multiprocessing import Process, Queue, Pipe
+from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import os
@@ -28,8 +29,8 @@ from capture_data import send_data
 #Initialize the DAQ and SG parameters
 params = dict()
 SGcoeffs = dict()
-params["sample_rate"] = 1724.1379310344828
-downsample_mult = 1
+params["sample_rate"] = 1700
+downsample_mult = 10
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
@@ -103,16 +104,13 @@ ax3.tick_params(labelsize="small")
 
 
 #Function to generate real-time plots.
-def plot_live(i, ys):
-  global read_data
+def plot_live(i, ys, q):
+  read_data = q.get()
   if (i%int(visible_duration/plot_refresh_rate) == 0):
     ys [:,:] = 0
   
-  print (np.mean(read_data[10,:]))
   fewerPZTdata = signal.resample(read_data[0:6,:], num_samples, axis=1) #Downsample the PZT data
   fewerSGdata = np.mean (read_data[6:,:].reshape(10,-1,downsample_mult), axis=2) #Downsample the SG data
-  prev_slice_start = i%(int(visible_duration/plot_refresh_rate))*num_samples - num_samples
-  prev_slice_end = i%(int(visible_duration/plot_refresh_rate))*num_samples
   slice_start = i%(int(visible_duration/plot_refresh_rate))*num_samples
   slice_end = i%(int(visible_duration/plot_refresh_rate))*num_samples + num_samples
   ys[0:6,slice_start:slice_end] = fewerPZTdata
@@ -127,23 +125,21 @@ def plot_live(i, ys):
   return PZTlines+SGlines+list((liftline,dragline))
 
 if __name__ == "__main__":
-  global read_data
 
   # Get strain gauge offsets for calibration
-  parent_conn, child_conn = Pipe()
-  p = Process(target = send_SG_offsets, args=(params["sample_rate"], int(params["sample_rate"]), child_conn))
-  p.start()
-  SGoffsets = parent_conn.recv()
-  p.join()
+  q1 = Queue()
+  p1 = Process(target = send_SG_offsets, args=(params["sample_rate"], int(params["sample_rate"]), q1))
+  p1.start()
+  SGoffsets = q1.get()
+  p1.join()
 
   # Run capture data in background
-  executor = ThreadPoolExecutor(max_workers=2)
-  executor.submit(send_data, SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous")
-  time.sleep(0.5)
-  from capture_data import read_data
+  q2 = Queue()
+  p2 = Process(target = send_data, args=(SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", q2))
+  p2.start()
 
   # Plot the data
   canvas = FigureCanvasTkAgg(fig, master=root)
   canvas.get_tk_widget().grid(column=0, row=1)
-  ani = FuncAnimation(fig, plot_live, fargs=(ys,), interval=plot_refresh_rate*1000, blit=True, cache_frame_data=True)
+  ani = FuncAnimation(fig, plot_live, fargs=(ys,q2), interval=plot_refresh_rate*1000, blit=True)
   root.mainloop()
