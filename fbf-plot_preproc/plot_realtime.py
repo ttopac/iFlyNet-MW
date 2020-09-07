@@ -29,14 +29,14 @@ from capture_data import send_data
 #Initialize the DAQ and SG parameters
 params = dict()
 SGcoeffs = dict()
-params["sample_rate"] = 1700
+params["sample_rate"] = 1700 #This will not be the actual sampling rate. NI uses sampling rate of something around for this input 1724.
 downsample_mult = 10
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
 
 #Plotting coefficients
-plot_refresh_rate = 1 #seconds
+plot_refresh_rate = 0.1 #seconds
 visible_duration = 30 #seconds
 num_samples = int(params["sample_rate"]*plot_refresh_rate/downsample_mult)
 
