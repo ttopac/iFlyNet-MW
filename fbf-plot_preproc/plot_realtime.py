@@ -28,7 +28,7 @@ from capture_data import send_data
 #Initialize the DAQ and SG parameters
 params = dict()
 SGcoeffs = dict()
-params["sample_rate"] = 1000
+params["sample_rate"] = 1724.1379310344828
 downsample_mult = 1
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
@@ -56,7 +56,6 @@ ax3 = fig.add_subplot(3,1,3)
 fig.tight_layout(pad=2.0)
 xs = np.linspace (0, visible_duration, int(visible_duration*params["sample_rate"]/downsample_mult))
 ys = np.zeros((16,int(visible_duration*params["sample_rate"]/downsample_mult)))
-yinterp = np.zeros((16,int(visible_duration*params["sample_rate"]/downsample_mult)))
 
 PZTlines = list()
 for i in range(6):
@@ -73,13 +72,13 @@ ax1.set_xticklabels([])
 ax1.tick_params(labelsize="small")
 
 SGlines = list()
-for i in range(2,6):
+for i in range(4,5):
   if i == 7:
     SGlines.append(ax2.plot(xs, ys[6+i], linewidth=0.5, label="SG {}".format(i+2))[0])
   else:
     SGlines.append(ax2.plot(xs, ys[6+i], linewidth=0.5, label="SG {}".format(i+1))[0])
 ax2.set_xlim(0, visible_duration)
-ax2.set_ylim(-0.005, 0.005)
+ax2.set_ylim(-0.002, 0.002)
 leg2 = ax2.legend(fontsize=7, loc="upper right", ncol=3, columnspacing=1)
 for line in leg2.get_lines():
   line.set_linewidth(1.5)
@@ -104,12 +103,12 @@ ax3.tick_params(labelsize="small")
 
 
 #Function to generate real-time plots.
-def plot_live(i, ys, yinterp):
+def plot_live(i, ys):
   global read_data
   if (i%int(visible_duration/plot_refresh_rate) == 0):
     ys [:,:] = 0
-    yinterp [:,:] = 0
   
+  print (np.mean(read_data[10,:]))
   fewerPZTdata = signal.resample(read_data[0:6,:], num_samples, axis=1) #Downsample the PZT data
   fewerSGdata = np.mean (read_data[6:,:].reshape(10,-1,downsample_mult), axis=2) #Downsample the SG data
   prev_slice_start = i%(int(visible_duration/plot_refresh_rate))*num_samples - num_samples
@@ -118,11 +117,6 @@ def plot_live(i, ys, yinterp):
   slice_end = i%(int(visible_duration/plot_refresh_rate))*num_samples + num_samples
   ys[0:6,slice_start:slice_end] = fewerPZTdata
   ys[6:,slice_start:slice_end] = fewerSGdata
-  yinterp [6:,slice_start:slice_end] = fewerSGdata
-
-  # if (i>1) and np.any(np.abs(fewerSGdata[:-2,0:]) > 5000*np.abs(yinterp[6:-2,prev_slice_start:prev_slice_end])): #Reject drastic jumps.
-  #   ys[6:,slice_start:slice_end] = ys[6:,prev_slice_start:prev_slice_end]
-  #   print (fewerSGdata[0,50])
     
   for count,line in enumerate(PZTlines):
     line.set_ydata(ys[count])
@@ -137,7 +131,7 @@ if __name__ == "__main__":
 
   # Get strain gauge offsets for calibration
   parent_conn, child_conn = Pipe()
-  p = Process(target = send_SG_offsets, args=(params["sample_rate"], params["sample_rate"], child_conn))
+  p = Process(target = send_SG_offsets, args=(params["sample_rate"], int(params["sample_rate"]), child_conn))
   p.start()
   SGoffsets = parent_conn.recv()
   p.join()
@@ -151,5 +145,5 @@ if __name__ == "__main__":
   # Plot the data
   canvas = FigureCanvasTkAgg(fig, master=root)
   canvas.get_tk_widget().grid(column=0, row=1)
-  ani = FuncAnimation(fig, plot_live, fargs=(ys,yinterp), interval=plot_refresh_rate*1000, blit=True, cache_frame_data=True)
+  ani = FuncAnimation(fig, plot_live, fargs=(ys,), interval=plot_refresh_rate*1000, blit=True, cache_frame_data=True)
   root.mainloop()

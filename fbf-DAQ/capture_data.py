@@ -78,6 +78,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read):
       # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
       read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
       read_data[14:,:] *= -1000000 #Convert to only commercial SGs to microstrains with correct sign, leave our SGs in volts.
+      print (np.mean(read_data[10,:]))
 
 
 def send_data(SGoffsets, sample_rate, samples_to_read, captype, child_conn=None):
