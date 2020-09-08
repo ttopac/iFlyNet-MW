@@ -12,13 +12,14 @@ import pandas as pd
 # make_patch_spines_invisible(ax1_temptwin)
 # ax1_temptwin.spines["right"].set_visible(True)
 
-vel = 0
-aoa = 0
+vel = '0'
+aoa = '0'
+test_folder = 'drift2_Sept6'
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
-# driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift1_Sept5/drifttest_{}ms_{}deg.npy'.format(vel,aoa))
-driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift1_Sept5/drifttest_{}ms_{}deg.npy'.format(vel,aoa))
-tempdata = tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift1_Sept5/drifttesttemp_{}ms_{}deg.txt'.format(vel,aoa)
+# driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+tempdata = tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
 downsampled_SSNSGs = np.mean (-driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
 downsampled_commSG = np.mean (driftData[14:,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
 xs = np.linspace(0,downsampled_commSG.shape[1]/60,downsampled_commSG.shape[1])
