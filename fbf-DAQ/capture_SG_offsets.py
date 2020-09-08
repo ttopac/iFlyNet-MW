@@ -24,8 +24,8 @@ def calibrate_SGs(sample_rate, samples_to_read):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod3/ai3") #SG_6
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai0") #SG_7 (note SG_8 is missing)
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #SG_9
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #Lift
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #Drag
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.2) #Lift
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.2) #Drag
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.FINITE, samps_per_chan=samples_to_read)
 
     calib_samples = np.zeros((10, samples_to_read))

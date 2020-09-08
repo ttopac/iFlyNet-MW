@@ -27,8 +27,8 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod3/ai3") #11: SG_6
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai0") #12: SG_7
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #13: SG_9
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #14: Lift
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #15: Drag
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.2) #14: Lift
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.2) #15: Drag
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.FINITE, samps_per_chan=samples_to_read)
     
     read_data = np.zeros((16, samples_to_read))
@@ -58,8 +58,8 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod3/ai3") #11: SG_6
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai0") #12: SG_7
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #13: SG_9
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #14: Lift
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.4) #15: Drag
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.2) #14: Lift
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, nominal_gage_resistance=351.2) #15: Drag
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=samples_to_read*100)
 
     read_data = np.zeros((16, samples_to_read))
