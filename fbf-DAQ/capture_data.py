@@ -69,14 +69,13 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
 
     while True:
-      while queue.empty():
-        reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
-        # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
-        read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
-        read_data[14:,:] *= -1000000 #Convert only commercial SGs to microstrains with correct sign, leave our SGs in volts.
-        # print ("Data read by capture function: ", end="")
-        # print (np.mean(read_data[13]))
-        queue.put(read_data)
+      while queue.qsize() > 1: #This is here to keep up with delay in DAQ.
+        a = queue.get_nowait()
+      reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
+      # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
+      read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
+      read_data[14:,:] *= -1000000 #Convert only commercial SGs to microstrains with correct sign, leave our SGs in volts.
+      queue.put_nowait(read_data)
 
 
 
