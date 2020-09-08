@@ -32,15 +32,14 @@ def calibrate_SGs(sample_rate, samples_to_read):
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
-    print (time.time() - start)
 
     # calib_samples[0:8] = -(4*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]) / (2*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
     sgmean = np.mean(calib_samples, axis=1)
+    print ("SG means are: ", end="")
     print (sgmean)
     print ("SG calibration sampling rate was: {}".format(task.timing.samp_clk_rate))
     return sgmean
 
-def send_SG_offsets(sample_rate, samples_to_read, child_conn):
+def send_SG_offsets(sample_rate, samples_to_read, queue):
   sgmean = calibrate_SGs(sample_rate, samples_to_read)
-  child_conn.send(sgmean)
-  child_conn.close()
+  queue.put(sgmean)
