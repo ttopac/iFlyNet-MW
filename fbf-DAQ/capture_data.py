@@ -4,11 +4,7 @@ import nidaqmx
 from nidaqmx.constants import AcquisitionType
 from nidaqmx.constants import StrainGageBridgeType
 from nidaqmx import stream_readers
-from nidaqmx import Task
 import numpy as np
-from multiprocessing import Process, Queue, Pipe
-import time
-import threading
 
 # SGcoeffs = dict()
 # SGcoeffs["amplifier_coeff"] = 100
@@ -67,6 +63,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=samples_to_read*100)
 
     read_data = np.zeros((16, samples_to_read))
+
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
@@ -77,6 +74,8 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
         # read_data[6:14] = -(4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
         read_data[6:,:] -= SGoffsets.reshape(SGoffsets.shape[0],-1) #Subtract the offset to obtain calibrated data
         read_data[14:,:] *= -1000000 #Convert only commercial SGs to microstrains with correct sign, leave our SGs in volts.
+        # print ("Data read by capture function: ", end="")
+        # print (np.mean(read_data[13]))
         queue.put(read_data)
 
 
