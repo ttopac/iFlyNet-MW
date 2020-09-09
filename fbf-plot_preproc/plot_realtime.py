@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath('./fbf-DAQ'))
 sys.path.append(os.path.abspath('./helpers'))
 from capture_SG_offsets import send_SG_offsets
 from capture_data import send_data
-from plot_realtime_helper import PlotRealtime
+from plot_sensordata_helper import PlotSensorData
 
 
 #Initialize the DAQ and SG parameters
@@ -28,7 +28,6 @@ visible_duration = 30 #seconds
 plot_refresh_rate = 1 #seconds
 downsample_mult = 1
 ys = np.zeros((16,int(visible_duration*params["sample_rate"]/downsample_mult)))
-
 
 #Initialize the GUI
 root = tk.Tk()
@@ -48,9 +47,12 @@ if __name__ == "__main__":
   p2.start()
 
   # Plot the data
-  realtime_plot = PlotRealtime(params, visible_duration, plot_refresh_rate, downsample_mult)
-  canvas = FigureCanvasTkAgg(realtime_plot.fig, master=root)
+  # realtime_plot = PlotRealtime(params, visible_duration, plot_refresh_rate, downsample_mult)
+  plot = PlotSensorData(visible_duration, downsample_mult, params)
+  plot.plot_raw_lines(realtime=True, plot_refresh_rate=plot_refresh_rate)
+
+  canvas = FigureCanvasTkAgg(plot.fig, master=root)
   canvas.get_tk_widget().grid(column=0, row=1)
-  ani = FuncAnimation(realtime_plot.fig, realtime_plot.plot_live, fargs=(ys,q2), interval=plot_refresh_rate*1000, blit=True)
+  ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys,q2), interval=plot_refresh_rate*1000, blit=True)
   root.mainloop()
   
