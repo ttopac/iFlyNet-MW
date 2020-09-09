@@ -18,13 +18,15 @@ test_folder = 'drift4_Sept8'
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 plot_anemo_temp = True
 
-driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
-# driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+# driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
 downsampled_SSNSGs = np.mean (-driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
 downsampled_commSG = np.mean (driftData[14:,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
-xs = np.linspace(0,downsampled_commSG.shape[1]/60,downsampled_commSG.shape[1])
+xs = np.linspace(0,downsampled_commSG.shape[1]/60,downsampled_commSG.shape[1]) #Here /60 converts everything to minutes
 if plot_anemo_temp:
+  # tempdata = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.npy'.format(test_folder,vel,aoa)
   tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
+
   df = pd.read_csv(tempdata, header=0, delim_whitespace=True)
   temp_np = df['Temp.'].to_numpy()
   vel_np = df['Speed'].to_numpy()
@@ -63,8 +65,8 @@ if plot_anemo_temp:
   ax1_veltwin = ax1.twinx()
   ax1_temptwin = ax1.twinx()
   ax1_temptwin.spines["right"].set_position(("axes", 1.08))
-  ax1_veltwin.plot (xs, vel_np[0:3600], "b-", linewidth=0.8,  label="WT Speed")
-  ax1_temptwin.plot (xs, temp_np[0:3600], "r-", linewidth=0.8,  label="WT Temp")
+  ax1_veltwin.plot (xs, vel_np[0:downsampled_commSG.shape[1]], "b-", linewidth=0.8,  label="WT Speed")
+  ax1_temptwin.plot (xs, temp_np[0:downsampled_commSG.shape[1]], "r-", linewidth=0.8,  label="WT Temp")
   ax1_veltwin.set_ylabel("Airspeed (m/s)", fontsize=11)
   ax1_temptwin.set_ylabel("Temperature (F)", fontsize=11)
   ax1_veltwin.yaxis.label.set_color('b')
@@ -78,8 +80,8 @@ if plot_anemo_temp:
   ax2_veltwin = ax2.twinx()
   ax2_temptwin = ax2.twinx()
   ax2_temptwin.spines["right"].set_position(("axes", 1.08))
-  ax2_veltwin.plot (xs, vel_np[0:3600], "b-", linewidth=0.8,  label="WT Speed")
-  ax2_temptwin.plot (xs, temp_np[0:3600], "r-", linewidth=0.8,  label="WT Temp")
+  ax2_veltwin.plot (xs, vel_np[0:downsampled_commSG.shape[1]], "b-", linewidth=0.8,  label="WT Speed")
+  ax2_temptwin.plot (xs, temp_np[0:downsampled_commSG.shape[1]], "r-", linewidth=0.8,  label="WT Temp")
   ax2_veltwin.set_ylabel("Airspeed (m/s)", fontsize=11)
   ax2_temptwin.set_ylabel("Temperature (F)", fontsize=11)
   ax2_veltwin.yaxis.label.set_color('b')
