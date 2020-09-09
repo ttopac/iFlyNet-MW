@@ -8,7 +8,7 @@ import time
 params = dict()
 params["sample_rate"] = 1724.1379310344828 #Lowest sample rate possible is 1613 for our NI device. 1700 actually becomes 1724.1379310344828
 params["samples_read_offset"] = int(1724.1379310344828) #Corresponds to ~1 sec of data.
-params["samples_read_drift"] = int (6120000/60) #6120000 corresponds to 60 MINUTES of data.
+params["samples_read_drift"] = int (5*6120000) #6120000 corresponds to 60 MINUTES of data.
 
 
 if __name__ == "__main__":
