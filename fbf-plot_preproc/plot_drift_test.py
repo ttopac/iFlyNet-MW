@@ -26,10 +26,10 @@ xs = np.linspace(0,downsampled_commSG.shape[1]/60,downsampled_commSG.shape[1]) #
 if plot_anemo_temp:
   # tempdata = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.npy'.format(test_folder,vel,aoa)
   tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
-
   df = pd.read_csv(tempdata, header=0, delim_whitespace=True)
-  temp_np = df['Temp.'].to_numpy()
   vel_np = df['Speed'].to_numpy()
+  temp_np_F = df['Temp.'].to_numpy()
+  temp_np_C = (temp_np_F-32) * 5 / 9
 
 fig = plt.figure(figsize=(12.0, 6.0))
 plt.style.use ('fivethirtyeight')
@@ -66,14 +66,14 @@ if plot_anemo_temp:
   ax1_temptwin = ax1.twinx()
   ax1_temptwin.spines["right"].set_position(("axes", 1.08))
   ax1_veltwin.plot (xs, vel_np[0:downsampled_commSG.shape[1]], "b-", linewidth=0.8,  label="WT Speed")
-  ax1_temptwin.plot (xs, temp_np[0:downsampled_commSG.shape[1]], "r-", linewidth=0.8,  label="WT Temp")
+  ax1_temptwin.plot (xs, temp_np_C[0:downsampled_commSG.shape[1]], "r-", linewidth=0.8,  label="WT Temp")
   ax1_veltwin.set_ylabel("Airspeed (m/s)", fontsize=11)
-  ax1_temptwin.set_ylabel("Temperature (F)", fontsize=11)
+  ax1_temptwin.set_ylabel("Temperature (C)", fontsize=11)
   ax1_veltwin.yaxis.label.set_color('b')
   ax1_temptwin.yaxis.label.set_color('r')
   ax1_veltwin.tick_params(colors = 'b', labelsize="x-small")
   ax1_temptwin.tick_params(colors = 'r', labelsize="x-small")
-  ax1_temptwin.set_ylim((72,78))
+  ax1_temptwin.set_ylim((22,26))
   ax1_temptwin.grid(False)
   ax1_veltwin.grid(False)
 
@@ -81,14 +81,14 @@ if plot_anemo_temp:
   ax2_temptwin = ax2.twinx()
   ax2_temptwin.spines["right"].set_position(("axes", 1.08))
   ax2_veltwin.plot (xs, vel_np[0:downsampled_commSG.shape[1]], "b-", linewidth=0.8,  label="WT Speed")
-  ax2_temptwin.plot (xs, temp_np[0:downsampled_commSG.shape[1]], "r-", linewidth=0.8,  label="WT Temp")
+  ax2_temptwin.plot (xs, temp_np_C[0:downsampled_commSG.shape[1]], "r-", linewidth=0.8,  label="WT Temp")
   ax2_veltwin.set_ylabel("Airspeed (m/s)", fontsize=11)
-  ax2_temptwin.set_ylabel("Temperature (F)", fontsize=11)
+  ax2_temptwin.set_ylabel("Temperature (C)", fontsize=11)
   ax2_veltwin.yaxis.label.set_color('b')
   ax2_temptwin.yaxis.label.set_color('r')
   ax2_veltwin.tick_params(colors = 'b', labelsize="x-small")
   ax2_temptwin.tick_params(colors = 'r', labelsize="x-small")
-  ax2_temptwin.set_ylim((72,78))
+  ax2_temptwin.set_ylim((22,26))
   ax2_temptwin.grid(False)
   ax2_veltwin.grid(False)
 
