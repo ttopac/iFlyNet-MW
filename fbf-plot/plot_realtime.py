@@ -10,8 +10,8 @@ import sys
 import os
 sys.path.append(os.path.abspath('./fbf-DAQ'))
 sys.path.append(os.path.abspath('./helpers'))
-from capture_SG_offsets import send_SG_offsets
-from capture_data import send_data
+from daq_captureSGoffsets_helper import send_SG_offsets
+from daq_capturedata_helper import send_data
 from plot_sensordata_helper import PlotSensorData
 
 
@@ -50,9 +50,10 @@ if __name__ == "__main__":
   # realtime_plot = PlotRealtime(params, visible_duration, plot_refresh_rate, downsample_mult)
   plot = PlotSensorData(visible_duration, downsample_mult, params)
   plot.plot_raw_lines(realtime=True, plot_refresh_rate=plot_refresh_rate)
+  plot.term_common_params()
 
   canvas = FigureCanvasTkAgg(plot.fig, master=root)
   canvas.get_tk_widget().grid(column=0, row=1)
-  ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys,q2), interval=plot_refresh_rate*1000, blit=True)
+  ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys,q2,plot_refresh_rate), interval=plot_refresh_rate*1000, blit=True)
   root.mainloop()
   

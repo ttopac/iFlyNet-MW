@@ -24,7 +24,6 @@ class PlotSensorData:
     mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=['#1f77b4', '#ff7f0e', '#2ca02c', '#bcbd22', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#17becf', '#d62728']) 
     mpl.rcParams['axes.edgecolor'] = 'black'
     mpl.rcParams['axes.linewidth'] = 1
-    self.fig.tight_layout(pad=2.0)
 
     self.PZTlines = list()
     self.ax1.set_xlim(0, self.visible_duration)
@@ -60,22 +59,19 @@ class PlotSensorData:
     for line in self.leg3.get_lines():
       line.set_linewidth(1.5)
 
-    plt.tight_layout(pad=1.2)
-    plt.show()
-
 
   def plot_raw_lines (self, realtime, vel=None, aoa=None, ys=None, plot_refresh_rate=None):
     if realtime:
       self.xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
       self.ys = np.zeros((16,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult)))
       self.num_samples = int(self.params["sample_rate"]*plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
-      self.fig.suptitle('Real-time sensor readings', fontsize=12)
       self.ax1.set_ylim(-0.05, 0.05)
       self.ax2.set_ylim(-0.2, 0.2)
       self.ax3.set_ylim(-200, 200)
       self.ax1.set_xticklabels([])
       self.ax2.set_xticklabels([])
       self.ax3.set_xticklabels([])
+      plt.tight_layout(pad=1.5)
     else:
       self.xs = np.linspace(0,self.visible_duration,ys.shape[1]) 
       self.ys = ys
@@ -83,17 +79,17 @@ class PlotSensorData:
       self.ax1.set_ylim(-0.05, 0.05)
       self.fig.set_size_inches(12.0, 6.0)
       self.ax3.set_xlabel("Time (min)", fontsize=11)
-
+      plt.tight_layout(pad=1.2)
 
     for i in range(6):
-      self.PZTlines.append(self.ax1.plot(self.xs, ys[i], linewidth=0.3, label="PZT {}".format(i+1))[0])
+      self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1))[0])
     for i in range(8):
       if i == 7:
-        self.SGlines.append(self.ax2.plot(self.xs, ys[6+i], linewidth=0.5, label="SG {}".format(i+2))[0])
+        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2))[0])
       else:
-        self.SGlines.append(self.ax2.plot(self.xs, ys[6+i], linewidth=0.5, label="SG {}".format(i+1))[0])
-    self.liftline, = self.ax3.plot(self.xs, ys[14], linewidth=0.5, label="Lift")
-    self.dragline, = self.ax3.plot(self.xs, ys[15], linewidth=0.5, label="Drag")
+        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1))[0])
+    self.liftline, = self.ax3.plot(self.xs, self.ys[14], linewidth=0.5, label="Lift")
+    self.dragline, = self.ax3.plot(self.xs, self.ys[15], linewidth=0.5, label="Drag")
 
 
   def plot_commSG_tempcomp_lines (self, temp_np_F, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly): #NOT IMPLEMENTED FOR REAL-TIME YET.
@@ -106,17 +102,19 @@ class PlotSensorData:
 
 
   #Function to generate real-time plots.
-  def plot_live(self, i, ys, queue):
+  def plot_live(self, i, ys, queue, plot_refresh_rate):
     read_data = queue.get()
-    if (i%int(self.visible_duration/self.plot_refresh_rate) == 0): #Refresh data after its filled.
+    if (i%int(self.visible_duration/plot_refresh_rate) == 0): #Reset data once its filled.
       ys [:,:] = 0
     
     fewerPZTdata = signal.resample(read_data[0:6,:], self.num_samples, axis=1) #Downsample the PZT data
-    fewerSGdata = np.mean (read_data[6:,:].reshape(10,-1,self.downsample_mult), axis=2) #Downsample the SG data
-    slice_start = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples
-    slice_end = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples + self.num_samples
+    fewerSSNSGdata = np.mean (read_data[6:14,:].reshape(8,-1,self.downsample_mult), axis=2) #Downsample the SSNSG data
+    fewerCommSGdata = np.mean (read_data[14:,:].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
+    slice_start = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples
+    slice_end = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples + self.num_samples
     ys[0:6,slice_start:slice_end] = fewerPZTdata
-    ys[6:,slice_start:slice_end] = fewerSGdata
+    ys[6:14,slice_start:slice_end] = -fewerSSNSGdata
+    ys[14:,slice_start:slice_end] = fewerCommSGdata
       
     for count,line in enumerate(self.PZTlines):
       line.set_ydata(ys[count])
