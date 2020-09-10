@@ -47,7 +47,7 @@ class PlotSensorData:
     self.ax3.grid(False)
 
 
-  def term_common_params(self):
+  def term_common_params(self, realtime):
     self.leg1 = self.ax1.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
     self.leg2 = self.ax2.legend(fontsize=7, loc="upper right", ncol=3, columnspacing=1)
     self.leg3 = self.ax3.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
@@ -58,6 +58,13 @@ class PlotSensorData:
       line.set_linewidth(1.5)
     for line in self.leg3.get_lines():
       line.set_linewidth(1.5)
+    
+    if realtime:
+      plt.tight_layout(pad=1.5)
+    else:
+      self.fig.set_size_inches(12.0, 6.0)
+      plt.tight_layout(pad=1.3)
+
 
 
   def plot_raw_lines (self, realtime, vel=None, aoa=None, ys=None, plot_refresh_rate=None):
@@ -71,15 +78,12 @@ class PlotSensorData:
       self.ax1.set_xticklabels([])
       self.ax2.set_xticklabels([])
       self.ax3.set_xticklabels([])
-      plt.tight_layout(pad=1.5)
     else:
       self.xs = np.linspace(0,self.visible_duration,ys.shape[1]) 
       self.ys = ys
       self.fig.suptitle("Readings for V = {}m/s, AoA = {}deg".format(vel,aoa), fontsize=12)
       self.ax1.set_ylim(-0.05, 0.05)
-      self.fig.set_size_inches(12.0, 6.0)
       self.ax3.set_xlabel("Time (min)", fontsize=11)
-      plt.tight_layout(pad=1.2)
 
     for i in range(6):
       self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1))[0])
