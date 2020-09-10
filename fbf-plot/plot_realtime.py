@@ -47,7 +47,6 @@ if __name__ == "__main__":
   p2.start()
 
   # Plot the data
-  # realtime_plot = PlotRealtime(params, visible_duration, plot_refresh_rate, downsample_mult)
   plot = PlotSensorData(visible_duration, downsample_mult, params)
   plot.plot_raw_lines(realtime=True, plot_refresh_rate=plot_refresh_rate)
   plot.term_common_params(realtime=True)

@@ -78,7 +78,6 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
       queue.put_nowait(read_data)
 
 
-
 def send_data(SGoffsets, sample_rate, samples_to_read, captype, child_conn=None):
   if captype == "fixedlen":
     read_data = capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read)
