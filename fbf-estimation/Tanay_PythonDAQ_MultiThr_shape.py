@@ -1,5 +1,5 @@
 # Written in MATLAB by Sara Ha. Adapted to Python by Tanay Topac.
-# Only for shape estimation. Do not use for control (yet)!
+# Only for shape estimation.
 import os
 import time
 import nidaqmx
@@ -9,7 +9,6 @@ import sympy as sym
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from drawnow import drawnow
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as anim
 
@@ -125,16 +124,15 @@ def plot_shape(ax, x, y, last_strain):
 	Xb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (x.max() + x.min())
 	Yb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (y.max() + y.min())
 	Zb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (last_strain.T.max() + last_strain.T.min())
-	# Comment or uncomment following both lines to test the fake bounding box:
-	for xb, yb, zb in zip(Xb, Yb, Zb):
-		ax.plot([xb], [yb], [zb], 'w')
+	# Uncomment following both lines to test the fake bounding box:
+	# for xb, yb, zb in zip(Xb, Yb, Zb):
+	# 	ax.plot([xb], [yb], [zb], 'w')
 
 	plt.show()
 
 def update_plot(frame_number, shape_hist, plot):
 	plot[0].remove()
 	plot[0] = ax.plot_surface(x, y, shape_hist[frame_number].T, cmap=cm.coolwarm, linewidth=0, antialiased=True)
-
 if __name__ == '__main__':
 	
 	shape_hist = list()

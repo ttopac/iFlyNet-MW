@@ -2,7 +2,7 @@ from collections import deque
 import cv2
 
 import tkinter as tk
-from tkinter import Tk, Frame, Canvas, Button
+from tkinter import Tk, Frame, Canvas, Label
 import PIL.Image, PIL.ImageTk
 from threading import Thread
 import time
@@ -60,17 +60,19 @@ class DrawTKVideoCapture(Frame):
     self.parent = parent
     self.endo_video = CaptureVideoWEndoscope(self.camnum)
     # Create a canvas that can fit the above video source size
-    self.canvas = Canvas(self.parent, width=self.endo_video.new_w, height=self.endo_video.new_h)
-  
+    self.videocan = Canvas(self.parent, width=self.endo_video.new_w, height=self.endo_video.new_h)
+    self.videolbl = Label(self.parent, text=window_title)
+
   def update(self, delay=15):    
       ret, frame = self.endo_video.get_frame_for_TK()
       if ret:
         self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
-        self.canvas.create_image(0, 0, image = self.photo, anchor = tk.NW)
+        self.videocan.create_image(0, 0, image = self.photo, anchor = tk.NW)
       self.parent.after(delay, self.update, delay)
 
   def place_on_grid (self, row, column, rowspan, columnspan):
-    self.canvas.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
+    self.videocan.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
+    self.videolbl.grid(row=row-1, column=column, rowspan=1, columnspan=1)
 
   def multithreaded_capture(self, delay=15, init_call=False):
     if init_call:
@@ -80,7 +82,7 @@ class DrawTKVideoCapture(Frame):
       time.sleep(0.1)
 
     self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.endo_video.viddeque[-1]))
-    self.canvas.create_image(0, 0, image = self.photo, anchor = tk.NW)
+    self.videocan.create_image(0, 0, image = self.photo, anchor = tk.NW)
     self.parent.after (delay, self.multithreaded_capture, delay)
 
 if __name__ == "__main__":
