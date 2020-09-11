@@ -62,7 +62,7 @@ class CalcMFCShape():
     strains_np = strains_df.to_numpy()
     return strains_np
 
-  def supply_data (self, shape_queue, data_queue=None fakedata=False):
+  def supply_data (self, shape_queue, data_queue=None, fakedata=False):
     if fakedata:
       # data = read_from_xls('g:/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx')
       data = self.read_from_xls('/Volumes/GoogleDrive/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx') #Shape is (49,6)
