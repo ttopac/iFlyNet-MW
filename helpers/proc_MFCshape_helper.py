@@ -27,7 +27,8 @@ class CalcMFCShape():
   
   def estimate_shape_analytic(self, sensordata, queue):  # data.shape(6, num_datapoints), sgmean.shape(num_sensors), shape_hist=list
     # SGdata = sensordata #FOR FAKEDATA
-    SGdata = np.mean(sensordata[9:14], axis=1) 
+    SGdata = np.mean(sensordata[9:14], axis=1)
+    print (SGdata[1]) 
     
     # 1. Using polynomial fit, obtain strain distribution for each chord along strain1_fit=y=126.6 and strain2_fit=y=278.6 (x-axis)
     strain1_fit = np.polyfit(self.X1LOC, SGdata[0:3], 2)  # polynomial fit of order 2
@@ -53,25 +54,31 @@ class CalcMFCShape():
     for i in range(self.XVAL.shape[0]):
       y_d_fit = np.polyfit(self.YLOC, np.asarray([0, d1_val[i], d2_val[i]]), 2)  # polynomial fit of order 2
       y_d_i = np.polyval(y_d_fit, self.YVAL)
-      y_d[i, :] = y_d_i
+      y_d[i, :] = y_d_i / 1000
+    print ("Estimated shape")
     queue.put_nowait(y_d)
 
   def read_from_xls(self,strains_file):
-    strains_df = pd.read_excel("/"+strains_file, sheet_name="cyclic_tanay", dtype=np.float32)
+    strains_df = pd.read_excel(strains_file, sheet_name="cyclic_tanay", dtype=np.float32)
     strains_df = strains_df.loc[:, "ch1":]
     strains_np = strains_df.to_numpy()
     return strains_np
 
   def supply_data (self, shape_queue, data_queue=None, fakedata=False):
     if fakedata:
-      # data = read_from_xls('g:/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx')
-      data = self.read_from_xls('/Volumes/GoogleDrive/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx') #Shape is (49,6)
+      excel_file_path = 'g:/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx'
+      # excel_file_path = '//Volumes/GoogleDrive/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx'
+      data = self.read_from_xls(excel_file_path)
       i = 0
       while i < data.shape[0]:
         self.estimate_shape_analytic(data[i,0:5], shape_queue)
         i += 1
         time.sleep(1)
     else:
-      sensordata = data_queue.get()
-      self.estimate_shape_analytic(sensordata, shape_queue)
+      while True:
+        while data_queue.qsize() > 1:
+          print ("Sensor data got")
+          sensordata = data_queue.get()
+          self.estimate_shape_analytic(sensordata, shape_queue)
+          time.sleep(1)
 	

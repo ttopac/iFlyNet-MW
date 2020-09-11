@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import Tk, Frame, Canvas, Label
 import PIL.Image, PIL.ImageTk
 from threading import Thread
+from multiprocessing import Process, Queue
 import time
 
 
@@ -15,7 +16,7 @@ class CaptureVideoWEndoscope:
       raise ValueError("Unable to open video source", camnum)
     self.cap.set(3,1280)
     self.cap.set(4,720)
-    self.viddeque = deque(maxlen=1)  # Initialize deque used to store frames read from the stream
+    self.viddeque = deque(maxlen=5)  # Initialize deque used to store frames read from the stream
     w = self.cap.get(3)
     h = self.cap.get(4)
     self.new_w = int(w/2)
@@ -37,10 +38,11 @@ class CaptureVideoWEndoscope:
     if multithreaded:
       while True:
         if self.cap.isOpened():
-          ret, frame = self.cap.read()
-          resized = cv2.resize(frame, (self.new_w, self.new_h)) 
-          if ret:
-            self.viddeque.append(cv2.cvtColor(resized, cv2.COLOR_BGR2RGB))
+            ret, frame = self.cap.read()
+            if ret:
+              resized = cv2.resize(frame, (self.new_w, self.new_h)) 
+              self.viddeque.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
     else:
       if self.cap.isOpened():
         ret, frame = self.cap.read()
@@ -79,12 +81,15 @@ class DrawTKVideoCapture(Frame):
       thr = Thread(target=self.endo_video.get_frame_for_TK, args=(True,))
       thr.daemon = True
       thr.start()
-      time.sleep(0.1)
+      time.sleep(0.5)
 
-    self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.endo_video.viddeque[-1]))
-    self.videocan.create_image(0, 0, image = self.photo, anchor = tk.NW)
-    self.parent.after (delay, self.multithreaded_capture, delay)
+    try:
+      self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.endo_video.viddeque[-1]))
+      self.videocan.create_image(0, 0, image = self.photo, anchor = tk.NW)
+      self.parent.after (delay, self.multithreaded_capture, delay)
+    except:
+      self.parent.after (delay, self.multithreaded_capture, delay)
 
 if __name__ == "__main__":
-  aoavideo = CaptureVideoWEndoscope(1)
+  aoavideo = CaptureVideoWEndoscope(0)
   aoavideo.show_video_standalone()

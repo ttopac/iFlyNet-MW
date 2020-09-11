@@ -15,7 +15,7 @@ from multiprocessing import Process, Queue
 class PlotMFCShape:
   def __init__(self, plot_refresh_rate, XVAL, YVAL):
     self.plot_refresh_rate = plot_refresh_rate
-    self.fig = plt.figure(figsize=(6.0, 6.0))
+    self.fig = plt.figure(figsize=(3.0, 3.0))
 
     self.ax = self.fig.gca(projection='3d')
     self.xgrid, self.ygrid = np.meshgrid(XVAL, YVAL)
@@ -41,23 +41,25 @@ class PlotMFCShape:
       self.ax.plot([xb], [yb], [zb], 'w')
 
   def plot_live(self, i, queue):
-    read_shape = queue.get()
-    # three_d_vertices = [list(zip(self.xgrid.reshape(-1), self.ygrid.reshape(-1), read_shape.reshape(-1)))]
-    # self.mysurf.set_verts(three_d_vertices, closed=False)
-    self.mysurf.remove()
-    self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, linewidth=0)
-    return (self.mysurf,)
+    print ("Plotting live")
+    while queue.qsize() > 1:
+      read_shape = queue.get()
+      # three_d_vertices = [list(zip(self.xgrid.reshape(-1), self.ygrid.reshape(-1), read_shape.reshape(-1)))]
+      # self.mysurf.set_verts(three_d_vertices, closed=False)
+      self.mysurf.remove()
+      self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, linewidth=0)
+      return (self.mysurf,)
 
 
 if __name__ == "__main__":
   #Test plotting in TK with fake data streaming in real-time.
   root = tk.Tk()
   root.title ("Real-time MFC Plotting")
-  plot_refresh_rate = 0.25 #seconds
+  plot_refresh_rate = 1 #seconds
 
   mfc_shape = CalcMFCShape()
   q1 = Queue()
-  p1 = Process(target = mfc_shape.supply_data, args=(q1, True))
+  p1 = Process(target = mfc_shape.supply_data, args=(q1, False, True))
   p1.start()
 
   plot = PlotMFCShape(plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL)

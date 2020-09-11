@@ -12,7 +12,7 @@ class PlotSensorData:
     self.params = params
     self.visible_duration = visible_duration
     self.downsample_mult = downsample_mult
-    self.fig = plt.figure(figsize=(6.0, 6.0))
+    self.fig = plt.figure(figsize=(6.0, 3.0))
     self.ax1 = self.fig.add_subplot(3,1,1)
     self.ax2 = self.fig.add_subplot(3,1,2)
     self.ax3 = self.fig.add_subplot(3,1,3)
@@ -106,8 +106,13 @@ class PlotSensorData:
 
 
   #Function to generate real-time plots.
-  def plot_live(self, i, ys, queue, plot_refresh_rate):
-    read_data = queue.get()
+  def plot_live(self, i, ys, queue, plot_refresh_rate, only_plot=True):
+    if only_plot:
+      read_data = queue.get()
+    else:
+      read_data = queue.get()
+      queue.put_nowait(read_data)
+    
     if (i%int(self.visible_duration/plot_refresh_rate) == 0): #Reset data once its filled.
       ys [:,:] = 0
     
