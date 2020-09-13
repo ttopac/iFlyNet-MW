@@ -9,11 +9,6 @@ import numpy as np
 from multiprocessing import Process, Pipe
 import time
 
-# SGcoeffs = dict()
-# SGcoeffs["amplifier_coeff"] = 100
-# SGcoeffs["GF"] = 2.11
-# SGcoeffs["Vex"] = 12
-
 def calibrate_SGs(sample_rate, samples_to_read):
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod2/ai2") #SG_1
@@ -33,7 +28,6 @@ def calibrate_SGs(sample_rate, samples_to_read):
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
 
-    # calib_samples[0:8] = -(4*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]) / (2*calib_samples[0:8]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
     sgmean = np.mean(calib_samples, axis=1)
     sgmean[8:] *= 3.3 #Multiply the ai values with excitation voltage to obtain initial voltage values.
     print ("SG initial voltages are (V): ", end="")

@@ -4,8 +4,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import sys, os
 sys.path.append(os.path.abspath('./helpers'))
-from proc_tempcomp_helper import CommSG_Temp_Comp
-
+import proc_tempcomp_helper
+import proc_tempcomp_helper
 
 class PlotSensorData:
   def __init__(self, visible_duration, downsample_mult, params=None):
@@ -35,17 +35,16 @@ class PlotSensorData:
     self.SGlines = list()
     self.ax2.set_xlim(0, self.visible_duration)
     self.ax2.set_title("-SSN SGs", fontsize=11)
-    self.ax2.set_ylabel("Voltage (V)", labelpad=2, fontsize=11)
+    self.ax2.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
     self.ax2.tick_params(labelsize="small")
     self.ax2.grid(False)
 
     self.ax3.set_xlim(0, self.visible_duration)
     self.ax3.set_title("Commercial SGs", fontsize=11)
     self.ax3.set_xlabel("Time", fontsize=11)
-    self.ax3.set_ylabel("Microstrain (us)", labelpad=2, fontsize=11)
+    self.ax3.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
     self.ax3.tick_params(labelsize="small")
     self.ax3.grid(False)
-
 
   def term_common_params(self, realtime):
     self.leg1 = self.ax1.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
@@ -65,15 +64,13 @@ class PlotSensorData:
       self.fig.set_size_inches(12.0, 6.0)
       plt.tight_layout(pad=1.3)
 
-
-
   def plot_raw_lines (self, realtime, vel=None, aoa=None, ys=None, plot_refresh_rate=None):
     if realtime:
       self.xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
       self.ys = np.zeros((16,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult)))
       self.num_samples = int(self.params["sample_rate"]*plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
       self.ax1.set_ylim(-0.05, 0.05)
-      self.ax2.set_ylim(-0.2, 0.2)
+      self.ax2.set_ylim(50, 50)
       self.ax3.set_ylim(-200, 200)
       self.ax1.set_xticklabels([])
       self.ax2.set_xticklabels([])
@@ -85,24 +82,15 @@ class PlotSensorData:
       self.ax1.set_ylim(-0.05, 0.05)
       self.ax3.set_xlabel("Time (min)", fontsize=11)
 
-    for i in range(6):
+    for i in range(6): #PZTs
       self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1))[0])
-    for i in range(8):
+    for i in range(8): #SSNSGs
       if i == 7:
-        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2))[0])
+        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2))[0])
       else:
-        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1))[0])
-    self.liftline, = self.ax3.plot(self.xs, self.ys[14], linewidth=0.5, label="Lift")
-    self.dragline, = self.ax3.plot(self.xs, self.ys[15], linewidth=0.5, label="Drag")
-
-
-  def plot_commSG_tempcomp_lines (self, temp_np_F, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly): #NOT IMPLEMENTED FOR REAL-TIME YET.
-    temp_np_C = (temp_np_F-32) * 5 / 9
-    ref_temp = temp_np_C[0]
-    commSG_temp_comp = CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
-    comp_downsampled_commSG, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:], temp_np_C)
-    self.ax3.plot(self.xs, -comp_downsampled_commSG[0], ':', color=self.ax2.lines[0].get_color(), linewidth=0.5, label="SG Lift (compensated)")
-    self.ax3.plot(self.xs, -comp_downsampled_commSG[1], ':', color=self.ax2.lines[1].get_color(), linewidth=0.5, label="SG Drag (compensated)")
+        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1))[0])
+    self.liftline, = self.ax3.plot(self.xs, -self.ys[14], linewidth=0.5, label="Lift") #Comm. LiftSG
+    self.dragline, = self.ax3.plot(self.xs, -self.ys[15], linewidth=0.5, label="Drag") #Comm. DragSG
 
 
   #Function to generate real-time plots.
@@ -113,30 +101,46 @@ class PlotSensorData:
       read_data = queue.get()
       queue.put_nowait(read_data)
     
-    if (i%int(self.visible_duration/plot_refresh_rate) == 0): #Reset data once its filled.
+    if (i%int(self.visible_duration/plot_refresh_rate) == 0): #Reset data once the period is filled.
       ys [:,:] = 0
     
     fewerPZTdata = signal.resample(read_data[0:6,:], self.num_samples, axis=1) #Downsample the PZT data
     fewerSSNSGdata = np.mean (read_data[6:14,:].reshape(8,-1,self.downsample_mult), axis=2) #Downsample the SSNSG data
-    fewerCommSGdata = np.mean (read_data[14:,:].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
+    fewerCommSGdata = np.mean (read_data[14:16,:].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
     slice_start = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples
     slice_end = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples + self.num_samples
     ys[0:6,slice_start:slice_end] = fewerPZTdata
-    ys[6:14,slice_start:slice_end] = -fewerSSNSGdata
-    ys[14:,slice_start:slice_end] = fewerCommSGdata
+    ys[6:14,slice_start:slice_end] = fewerSSNSGdata
+    ys[14:16,slice_start:slice_end] = fewerCommSGdata
       
     for count,line in enumerate(self.PZTlines):
       line.set_ydata(ys[count])
     for count,line in enumerate(self.SGlines):
-      line.set_ydata(ys[count+6])
-    self.liftline.set_ydata(ys[14])
-    self.dragline.set_ydata(ys[15])
+      line.set_ydata(-ys[count+6])
+    self.liftline.set_ydata(-ys[14])
+    self.dragline.set_ydata(-ys[15])
     return self.PZTlines+self.SGlines+list((self.liftline,self.dragline))
 
+  #Temperature-related functions
+  def plot_commSG_tempcomp_lines (self, temp_np_C, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly): #NOT IMPLEMENTED FOR REAL-TIME YET.
+    ref_temp = temp_np_C[0]
+    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
+    comp_downsampled_commSG, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C)
+    self.ax3.plot(self.xs, -comp_downsampled_commSG[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="SG Lift (compensated)")
+    self.ax3.plot(self.xs, -comp_downsampled_commSG[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="SG Drag (compensated)")
 
-  def plot_anemometer_data (self, vel_np, temp_np_F):
-    temp_np_C = (temp_np_F-32) * 5 / 9
-  
+  def plot_SSNSG_tempcomp_lines (self, temp_np_C, r_total, r_wire, alpha_gold, alpha_constantan):
+    ref_temp = temp_np_C[0]
+    SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp, r_total, r_wire, alpha_gold, alpha_constantan)
+    comp_downsampled_SSNSG = SSNSG_temp_comp.compensate(self.ys[6:14], temp_np_C)
+    self.compSGlines = list()
+    for i in range(8):
+      if i == 7:
+        self.compSGlines.append(self.ax2.plot(self.xs, -comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+2))[0])
+      else:
+        self.compSGlines.append(self.ax2.plot(self.xs, -comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+1))[0])
+
+  def plot_anemometer_data (self, vel_np, temp_np_C):  
     ax2_veltwin = self.ax2.twinx()
     ax2_temptwin = self.ax2.twinx()
     ax2_temptwin.spines["right"].set_position(("axes", 1.08))
@@ -166,3 +170,22 @@ class PlotSensorData:
     ax3_temptwin.set_ylim((22,26))
     ax3_temptwin.grid(False)
     ax3_veltwin.grid(False)
+
+  def plot_RTD_data (self, temp_np_C):  
+    ax2_temptwin = self.ax2.twinx()
+    ax2_temptwin.spines["right"].set_position(("axes", 1.08))
+    ax2_temptwin.plot (self.xs, temp_np_C, "r-", linewidth=0.8,  label="WT Temp")
+    ax2_temptwin.set_ylabel("Temperature (C)", fontsize=11)
+    ax2_temptwin.yaxis.label.set_color('r')
+    ax2_temptwin.tick_params(colors = 'r', labelsize="x-small")
+    ax2_temptwin.set_ylim((22,26))
+    ax2_temptwin.grid(False)
+
+    ax3_temptwin = self.ax3.twinx()
+    ax3_temptwin.spines["right"].set_position(("axes", 1.08))
+    ax3_temptwin.plot (self.xs, temp_np_C, "r-", linewidth=0.8,  label="WT Temp")
+    ax3_temptwin.set_ylabel("Temperature (C)", fontsize=11)
+    ax3_temptwin.yaxis.label.set_color('r')
+    ax3_temptwin.tick_params(colors = 'r', labelsize="x-small")
+    ax3_temptwin.set_ylim((22,26))
+    ax3_temptwin.grid(False)

@@ -24,8 +24,21 @@ class CommSG_Temp_Comp():
     e_therm, uncert, lead_influence = self.comp_steel(temp)
     corr_gage_fact = self.correct_gage_fact(temp)
     corr_matl_dev = self.comp_matl_dev(temp)
-    e_steel = -1*readings*self.gage_fact/corr_gage_fact - (e_therm*self.k_poly/self.gage_fact) - lead_influence
+    e_steel = readings*self.gage_fact/corr_gage_fact - (e_therm*self.k_poly/self.gage_fact) - lead_influence
     e_substrate = e_steel - corr_matl_dev
     return (e_substrate, uncert)
 
   
+class SSNSG_Temp_Comp():
+  def __init__ (self, ref_temp, r_total, r_wire, alpha_gold, alpha_constantan):
+    self.ref_temp = ref_temp
+    self.r_total = r_total
+    self.r_wire = r_wire
+    self.alpha_gold = alpha_gold
+    self.alpha_constantan = alpha_constantan
+
+  def compensate (self, readings, temp):
+    r_ratio = self.r_wire / self.r_total
+    e_therm = r_ratio*self.alpha_gold + (1-r_ratio)*self.alpha_constantan
+    e_substrate = readings - e_therm.reshape(-1,1)*(temp-self.ref_temp)
+    return e_substrate
