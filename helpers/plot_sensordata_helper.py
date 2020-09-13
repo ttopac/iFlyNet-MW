@@ -5,7 +5,18 @@ import matplotlib.pyplot as plt
 import sys, os
 sys.path.append(os.path.abspath('./helpers'))
 import proc_tempcomp_helper
-import proc_tempcomp_helper
+
+#Comm. SG compensation parameters
+poly_coeffs = (-23.65, 2.06, -5.02E-2, 2.26E-4, 0.3, 0.219)
+gage_fact, k_poly = 2, 2
+gage_fact_CTE, SG_matl_CTE = 93E-6, 10.8E-6
+al6061_CTE = 23.6E-6
+
+#SSN SG compensation parameters (skipping SG8)
+r_total = np.asarray ([14, 14.4, 14.1, 15.3, 14.7, 14, 14.3, 13.9])
+r_wire = np.asarray ([0.2, 0.6, 0.3, 1.5, 0.9, 0.2, 0.5, 0.1])
+alpha_gold = 1857.5
+alpha_constantan = 21.758
 
 class PlotSensorData:
   def __init__(self, visible_duration, downsample_mult, params=None):
@@ -94,24 +105,35 @@ class PlotSensorData:
 
 
   #Function to generate real-time plots.
-  def plot_live(self, i, ys, queue, plot_refresh_rate, only_plot=True):
+  def plot_live(self, i, ys, queue, plot_refresh_rate, plot_compensated_strains=True, only_plot=True):
     if only_plot:
       read_data = queue.get()
     else:
       read_data = queue.get()
       queue.put_nowait(read_data)
-    
+    if i == 0: #Set initial temperature at the beginning
+      ref_temp = np.mean(read_data[16])
     if (i%int(self.visible_duration/plot_refresh_rate) == 0): #Reset data once the period is filled.
       ys [:,:] = 0
     
     fewerPZTdata = signal.resample(read_data[0:6,:], self.num_samples, axis=1) #Downsample the PZT data
     fewerSSNSGdata = np.mean (read_data[6:14,:].reshape(8,-1,self.downsample_mult), axis=2) #Downsample the SSNSG data
     fewerCommSGdata = np.mean (read_data[14:16,:].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
+    temp_np_C = np.mean(read_data[16])
+    SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp, r_total, r_wire, alpha_gold, alpha_constantan)
+    compSSNSGdata = SSNSG_temp_comp.compensate(self.ys[6:14], temp_np_C)
+    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
+    compCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C)
+
     slice_start = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples
     slice_end = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples + self.num_samples
     ys[0:6,slice_start:slice_end] = fewerPZTdata
-    ys[6:14,slice_start:slice_end] = fewerSSNSGdata
-    ys[14:16,slice_start:slice_end] = fewerCommSGdata
+    if plot_compensated_strains:
+      ys[6:14,slice_start:slice_end] = compSSNSGdata
+      ys[14:16,slice_start:slice_end] = compCommSGdata
+    else:  
+      ys[6:14,slice_start:slice_end] = fewerSSNSGdata
+      ys[14:16,slice_start:slice_end] = fewerCommSGdata
       
     for count,line in enumerate(self.PZTlines):
       line.set_ydata(ys[count])
