@@ -40,7 +40,7 @@ class CaptureVideoWEndoscope:
         if self.cap.isOpened():
           ret, frame = self.cap.read()
           if ret:
-            resized = cv2.resize(frame, (self.new_w, self.new_h)) 
+            resized = cv2.resize(frame, (self.new_w, self.new_h))
             self.viddeque.append(cv2.cvtColor(resized, cv2.COLOR_BGR2RGB))
 
     else:
@@ -62,34 +62,32 @@ class DrawTKVideoCapture(Frame):
     self.parent = parent
     self.endo_video = CaptureVideoWEndoscope(self.camnum)
     # Create a canvas that can fit the above video source size
-    self.videocan = Canvas(self.parent, width=self.endo_video.new_w, height=self.endo_video.new_h)
+    self.videocvs = Canvas(self.parent, width=self.endo_video.new_w, height=self.endo_video.new_h)
     self.videolbl = Label(self.parent, text=window_title)
 
   def update(self, delay=15):    
       ret, frame = self.endo_video.get_frame_for_TK()
       if ret:
         self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
-        self.videocan.create_image(0, 0, image = self.photo, anchor = tk.NW)
+        self.videocvs.create_image(0, 0, image = self.photo, anchor = tk.NW)
       self.parent.after(delay, self.update, delay)
 
   def place_on_grid (self, row, column, rowspan, columnspan):
-    self.videocan.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
+    self.videocvs.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
     self.videolbl.grid(row=row-1, column=column, rowspan=1, columnspan=1)
 
   def multithreaded_capture(self, delay=15, init_call=False):
     if init_call:
       thr = Thread(target=self.endo_video.get_frame_for_TK, args=(True,))
-      thr.daemon = True
       thr.start()
-      time.sleep(0.5)
-
+    delay = 15
     try:
       self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.endo_video.viddeque[-1]))
-      self.videocan.create_image(0, 0, image = self.photo, anchor = tk.NW)
+      self.videocvs.create_image(0, 0, image = self.photo, anchor = tk.NW)
       self.parent.after (delay, self.multithreaded_capture, delay)
     except:
       self.parent.after (delay, self.multithreaded_capture, delay)
 
 if __name__ == "__main__":
-  aoavideo = CaptureVideoWEndoscope(1)
+  aoavideo = CaptureVideoWEndoscope(0)
   aoavideo.show_video_standalone()
