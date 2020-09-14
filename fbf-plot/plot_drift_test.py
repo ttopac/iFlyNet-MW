@@ -12,14 +12,14 @@ SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
 
-SSNSG_voltage = True #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
-commSGdata_reverted = True #(True if data is before Sept. 13) We multiplied CommSG data with -1 in all experiments before Sept. 13.
-vel = '0_2'
-aoa = '0_2'
-test_folder = 'drift5_Sept9'
+SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
+commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data with -1 in all experiments before Sept. 13.
+vel = '0'
+aoa = '0'
+test_folder = 'drift6_Sept13'
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
-temp_source = 'anemometer' #Options are None, 'anemometer', or 'RTD'
+temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
 plot_temp_line = True
 plot_commSG_comp = True
 plot_SSNSG_comp = True

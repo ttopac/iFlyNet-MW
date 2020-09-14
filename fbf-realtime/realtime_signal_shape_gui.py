@@ -30,12 +30,12 @@ class RawSignalAndShapeWindow(Frame):
       self.parent.columnconfigure(c, weight=1)
 
   def draw_videos(self, video_names, camnums):
-    video1 = DrawTKVideoCapture(self.parent, video_names[0], camnums[0])
-    video1.place_on_grid(1, 0, 1, 1)
-    # video2 = DrawTKVideoCapture(self.parent, video_names[1], camnums[1])
-    # video2.place_on_grid(3, 0, 1, 1)
-    video1.multithreaded_capture(init_call=True) #Use for multi-threaded executions
-    # video2.multithreaded_capture(init_call=True) #Use for multi-threaded executions
+    # video1 = DrawTKVideoCapture(self.parent, video_names[0], camnums[0])
+    # video1.place_on_grid(1, 0, 1, 1)
+    video2 = DrawTKVideoCapture(self.parent, video_names[1], camnums[1])
+    video2.place_on_grid(3, 0, 1, 1)
+    # video1.multithreaded_capture(init_call=True) #Use for multi-threaded executions
+    video2.multithreaded_capture(init_call=True) #Use for multi-threaded executions
     # video1.update() #Use for single threaded executions
     # video2.update() #Use for single threaded executions
 
@@ -98,9 +98,8 @@ if __name__ == "__main__":
   # root.geometry("1000x1200")
 
   app = RawSignalAndShapeWindow(parent=root)
-  app.getSGoffsets(params)
+  # app.getSGoffsets(params)
   app.draw_videos(video_names, camnums)
-  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False)
-  print ("Drawing MFCs")
-  app.draw_MFCshapes(params, plot_refresh_rate)
+  # app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False)
+  # app.draw_MFCshapes(params, plot_refresh_rate)
   root.mainloop()
