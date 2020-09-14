@@ -38,10 +38,10 @@ class CaptureVideoWEndoscope:
     if multithreaded:
       while True:
         if self.cap.isOpened():
-            ret, frame = self.cap.read()
-            if ret:
-              resized = cv2.resize(frame, (self.new_w, self.new_h)) 
-              self.viddeque.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+          ret, frame = self.cap.read()
+          if ret:
+            resized = cv2.resize(frame, (self.new_w, self.new_h)) 
+            self.viddeque.append(cv2.cvtColor(resized, cv2.COLOR_BGR2RGB))
 
     else:
       if self.cap.isOpened():
@@ -91,5 +91,5 @@ class DrawTKVideoCapture(Frame):
       self.parent.after (delay, self.multithreaded_capture, delay)
 
 if __name__ == "__main__":
-  aoavideo = CaptureVideoWEndoscope(0)
+  aoavideo = CaptureVideoWEndoscope(1)
   aoavideo.show_video_standalone()
