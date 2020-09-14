@@ -51,7 +51,7 @@ class PlotSensorData:
     self.ax2.grid(False)
 
     self.ax3.set_xlim(0, self.visible_duration)
-    self.ax3.set_title("Commercial SGs", fontsize=11)
+    self.ax3.set_title("-Commercial SGs", fontsize=11)
     self.ax3.set_xlabel("Time", fontsize=11)
     self.ax3.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
     self.ax3.tick_params(labelsize="small")
