@@ -174,7 +174,7 @@ class PlotSensorData:
     ax2_temptwin.yaxis.label.set_color('r')
     ax2_veltwin.tick_params(colors = 'b', labelsize="x-small")
     ax2_temptwin.tick_params(colors = 'r', labelsize="x-small")
-    ax2_temptwin.set_ylim((22,26))
+    ax2_temptwin.set_ylim((18,26))
     ax2_temptwin.grid(False)
     ax2_veltwin.grid(False)
 
@@ -189,7 +189,7 @@ class PlotSensorData:
     ax3_temptwin.yaxis.label.set_color('r')
     ax3_veltwin.tick_params(colors = 'b', labelsize="x-small")
     ax3_temptwin.tick_params(colors = 'r', labelsize="x-small")
-    ax3_temptwin.set_ylim((22,26))
+    ax3_temptwin.set_ylim((18,26))
     ax3_temptwin.grid(False)
     ax3_veltwin.grid(False)
 
@@ -200,7 +200,6 @@ class PlotSensorData:
     ax2_temptwin.set_ylabel("Temperature (C)", fontsize=11)
     ax2_temptwin.yaxis.label.set_color('r')
     ax2_temptwin.tick_params(colors = 'r', labelsize="x-small")
-    ax2_temptwin.set_ylim((20,26))
     ax2_temptwin.grid(False)
 
     ax3_temptwin = self.ax3.twinx()
@@ -209,5 +208,4 @@ class PlotSensorData:
     ax3_temptwin.set_ylabel("Temperature (C)", fontsize=11)
     ax3_temptwin.yaxis.label.set_color('r')
     ax3_temptwin.tick_params(colors = 'r', labelsize="x-small")
-    ax3_temptwin.set_ylim((20,26))
     ax3_temptwin.grid(False)
