@@ -30,7 +30,7 @@ def calibrate_SGs(sample_rate, samples_to_read):
     reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
 
     sgmean = np.mean(calib_samples, axis=1)
-    sgmean[8:] *= 3.3 #Multiply the ai values with excitation voltage to obtain initial voltage values.
+    sgmean[8:10] *= 3.3 #Multiply the ai values with excitation voltage to obtain initial voltage values.
     print ("SG initial voltages are (V): ", end="")
     print (sgmean)
     print ("Initial temperature is: {}".format(sgmean[10]))
