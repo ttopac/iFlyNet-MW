@@ -54,8 +54,6 @@ class CalcMFCShape():
     for i in range(self.XVAL.shape[0]):
       y_d_fit = np.polyfit(self.YLOC, np.asarray([0, d1_val[i], d2_val[i]]), 2)  # polynomial fit of order 2
       y_d_i = np.polyval(y_d_fit, self.YVAL)
-      y_d[i, :] = y_d_i / 1000
-    print ("Estimated shape")
     queue.put_nowait(y_d)
 
   def read_from_xls(self,strains_file):
