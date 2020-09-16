@@ -7,7 +7,7 @@ from daq_captureSGoffsets_helper import send_SG_offsets
 from daq_capturedata_helper import send_data
 
 params = dict()
-params["sample_rate"] = 1724.1379310344828 #Use 7000 for training, 1700 for drift. 1700 actually becomes 1724.1379310344828. Lowest sample rate possible is 1613 for our NI device. 
+params["sample_rate"] = 7000 #Use 7000 for training, 1700 for drift. 1700 actually becomes 1724.1379310344828. Lowest sample rate possible is 1613 for our NI device. 
 params["samples_read_offset"] = int(params["sample_rate"]) #Corresponds to ~1 sec of data.
 params["samples_read_main"] = int (420000) #Use 420000 for training (1 min), 6120000 for drift (60 mins).
 
@@ -31,4 +31,4 @@ if __name__ == "__main__":
     p.start()
     read_data = parent_conn.recv()
     p.join()
-    np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train_{}ms_{}deg.npy'.format(vel,aoa),read_data)
+    np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train2_Sept16/train_{}ms_{}deg.npy'.format(vel,aoa),read_data)
