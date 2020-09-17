@@ -22,11 +22,9 @@ class CommSG_Temp_Comp():
 
   def compensate (self, readings, temp):
     e_therm, e_therm_ref, uncert = self.comp_steel(temp)
-    corr_gage_fact = self.correct_gage_fact(temp)
     corr_matl_dev = self.comp_matl_dev(temp)
-    e_steel_ref = readings[:,0]*self.gage_fact/corr_gage_fact[0] - (e_therm_ref*self.k_poly/self.gage_fact)
-    e_steel = readings*self.gage_fact/corr_gage_fact - (e_therm*self.k_poly/self.gage_fact)
-    e_substrate = e_steel - e_steel_ref.reshape(-1,1) - corr_matl_dev #Make sure of the sign before corr_matl_dev
+    e_steel = readings - ((e_therm - e_therm_ref)*self.k_poly/self.gage_fact)
+    e_substrate = e_steel - corr_matl_dev #Make sure of the sign before corr_matl_dev
     return (e_substrate, uncert)
 
   

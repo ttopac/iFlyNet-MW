@@ -14,7 +14,7 @@ al6061_CTE = 23.6E-6
 
 #SSN SG compensation parameters (skipping SG8)
 r_total = np.asarray ([14, 14.4, 14.1, 15.3, 14.7, 14, 14.3, 13.9])
-r_wire = np.asarray ([0.2, 0.6, 0.3, 1.5, 0.9, 0.2, 0.5, 0.1])
+r_wire = np.asarray ([0.65, 0.6, 0.65, 1.3, 0, 0.2, 0.5, 0.2]) #Values from Sept16. From Xiyuan: [0.4, 0.6, 0.3, 1.5, 0.9, 0.2, 0.5, 0.1]
 alpha_gold = 1857.5
 alpha_constantan = 21.758
 
@@ -144,14 +144,14 @@ class PlotSensorData:
     return self.PZTlines+self.SGlines+list((self.liftline,self.dragline))
 
   #Temperature-related functions
-  def plot_commSG_tempcomp_lines (self, temp_np_C, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly): #NOT IMPLEMENTED FOR REAL-TIME YET.
+  def plot_commSG_tempcomp_lines (self, temp_np_C, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly, ref_temp=None): #NOT IMPLEMENTED FOR REAL-TIME YET.
     ref_temp = temp_np_C[0]
     commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
     comp_downsampled_commSG, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C)
     self.ax3.plot(self.xs, -comp_downsampled_commSG[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="SG Lift (compensated)")
     self.ax3.plot(self.xs, -comp_downsampled_commSG[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="SG Drag (compensated)")
 
-  def plot_SSNSG_tempcomp_lines (self, temp_np_C, r_total, r_wire, alpha_gold, alpha_constantan):
+  def plot_SSNSG_tempcomp_lines (self, temp_np_C, r_total, r_wire, alpha_gold, alpha_constantan, ref_temp=None):
     ref_temp = temp_np_C[0]
     SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp, r_total, r_wire, alpha_gold, alpha_constantan)
     comp_downsampled_SSNSG = SSNSG_temp_comp.compensate(self.ys[6:14], temp_np_C)

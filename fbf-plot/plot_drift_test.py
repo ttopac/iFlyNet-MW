@@ -34,8 +34,8 @@ al6061_CTE = 23.6E-6
 
 #SSN SG compensation parameters (skipping SG8)
 r_total = np.asarray ([14, 14.4, 14.1, 15.3, 14.7, 14, 14.3, 13.9])
-r_wire = np.asarray ([0.2, 0.2, 0.3, 1.1, 0.2, 0.2, 0.5, 0.1]) #Approx from drift8_Sept15_0_3 test.
-# r_wire = np.asarray ([0.2, 0.6, 0.3, 1.5, 0.9, 0.2, 0.5, 0.1]) #From Xiyuan
+r_wire = np.asarray ([0.65, 0.6, 0.65, 1.3, 0, 0.2, 0.5, 0.2]) #Values from Sept16. From Xiyuan: [0.4, 0.6, 0.3, 1.5, 0.9, 0.2, 0.5, 0.1]
+# r_wire = np.asarray ([0.2, 0.2, 0.3, 1.1, 0.2, 0.2, 0.5, 0.1]) #Approx from drift8_Sept15_0_3 test.
 alpha_gold = 1857.5
 alpha_constantan = 21.758
 
