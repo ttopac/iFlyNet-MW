@@ -144,9 +144,9 @@ class PlotSensorData:
     return self.PZTlines+self.SGlines+list((self.liftline,self.dragline))
 
   #Temperature-related functions
-  def plot_commSG_tempcomp_lines (self, temp_np_C, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly, ref_temp=None): #NOT IMPLEMENTED FOR REAL-TIME YET.
+  def plot_commSG_tempcomp_lines (self, temp_np_C, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly, ref_temp=None, ownchar=False): #NOT IMPLEMENTED FOR REAL-TIME YET.
     ref_temp = temp_np_C[0]
-    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
+    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, ownchar, gage_fact, k_poly)
     comp_downsampled_commSG, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C)
     self.ax3.plot(self.xs, -comp_downsampled_commSG[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="SG Lift (compensated)")
     self.ax3.plot(self.xs, -comp_downsampled_commSG[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="SG Drag (compensated)")
