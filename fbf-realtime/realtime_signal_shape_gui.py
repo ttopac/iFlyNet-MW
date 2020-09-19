@@ -95,7 +95,7 @@ if __name__ == "__main__":
   plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1
   ys = np.zeros((16,int(visible_duration*params["sample_rate"]/downsample_mult)))
-  video_names = ("Side-view of wing fixture", "Side view of the outer MFC")
+  video_names = ("Side view of the outer MFC", "Side-view of wing fixture")
   camnums = (1,2)
   
   root = Tk()
