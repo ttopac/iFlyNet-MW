@@ -14,9 +14,9 @@ SGcoeffs["Vex"] = 12
 
 SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
 commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data with -1 in all experiments before Sept. 13.
-vel = '0_3'
-aoa = '0_3'
-test_folder = 'drift8_Sept15'
+vel = '0'
+aoa = '0'
+test_folder = 'tempcal1_Sept18'
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
 temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
@@ -27,7 +27,9 @@ if temp_source == None:
   plot_temp_line, plot_commSG_comp, plot_SSNSG_comp = False, False, False
 
 #Comm. SG compensation parameters
-poly_coeffs = (-23.65, 2.06, -5.02E-2, 2.26E-4, 0.3, 0.219)
+# poly_coeffs = (-23.65, 2.06, -5.02E-2, 2.26E-4, 0.3, 0.219)
+# poly_coeffs_newchar = [-1441, 162, -6.006, 0.07589, 0, 0] #Full data
+poly_coeffs_newchar = [17.14, -8.573, 0.4876, -0.004384, 0, 0] #Only tempup part
 gage_fact, k_poly = 2, 2
 gage_fact_CTE, SG_matl_CTE = 93E-6, 10.8E-6
 al6061_CTE = 23.6E-6
@@ -41,7 +43,7 @@ alpha_constantan = 21.758
 
 if __name__ == "__main__":
   # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
-  driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+  driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/tempcal_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
   downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
   if SSNSG_voltage: downsampled_SSNSGs = 1e6*(4*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]) / (2*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
   downsampled_commSGs = np.mean (driftData[14:16,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
@@ -71,7 +73,7 @@ if __name__ == "__main__":
       plot.plot_RTD_data (temp_np_C)
 
   if plot_commSG_comp:
-    plot.plot_commSG_tempcomp_lines(temp_np_C, poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly)
+    plot.plot_commSG_tempcomp_lines(temp_np_C, poly_coeffs_newchar, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly, ownchar=True)
 
   if plot_SSNSG_comp:
     plot.plot_SSNSG_tempcomp_lines(temp_np_C, r_total, r_wire, alpha_gold, alpha_constantan)

@@ -3,16 +3,16 @@ import matplotlib.pyplot as plt
 
 # vel = input ("Enter the vel to plot: ")
 # aoa = input ("Enter the aoa to plot: ")
-vel = [16]
-aoa = [0,4,8,12,14,16,17,18,19,20,21]
+vel = [10]
+aoa = [19]
 
 for v in vel:
   for a in aoa:
     # trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/')
-    trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train_{}ms_{}deg.npy'.format(v,a))
+    trainData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,a))
     
     fig = plt.figure()
-    ax1 = fig.add_subplot(1,1,1)
+    ax1 = fig.add_subplot(3,1,1)
     ax2 = fig.add_subplot(3,1,2)
     ax3 = fig.add_subplot(3,1,3)
     fig.tight_layout(pad=2.0)
