@@ -71,11 +71,11 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
 
     while True:
-      # while queue.qsize() > 1: #This is here to keep up with delay in DAQ.
-      try:  
-        a = queue.get_nowait()
-      except:
-        pass
+      while queue.qsize() > 1: #This is here to keep up with delay in DAQ.
+        try:  
+          a = queue.get_nowait()
+        except:
+          pass
       reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
       read_data[6:14,:] -= SGoffsets[0:8].reshape(8,-1) #Subtract the offset from SSN SGs to obtain zeros. CommSGs are already zeroed above with initial voltage.
       read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])

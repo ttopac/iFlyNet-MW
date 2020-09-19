@@ -23,7 +23,7 @@ class PlotSensorData:
     self.params = params
     self.visible_duration = visible_duration
     self.downsample_mult = downsample_mult
-    self.fig = plt.figure(figsize=(6.0, 3.0))
+    self.fig = plt.figure()
     self.ax1 = self.fig.add_subplot(3,1,1)
     self.ax2 = self.fig.add_subplot(3,1,2)
     self.ax3 = self.fig.add_subplot(3,1,3)
@@ -70,6 +70,7 @@ class PlotSensorData:
       line.set_linewidth(1.5)
     
     if realtime:
+      self.fig.set_size_inches(6.0, 5.5) #Width, height
       plt.tight_layout(pad=1.5)
     else:
       self.fig.set_size_inches(12.0, 6.0)
@@ -81,8 +82,8 @@ class PlotSensorData:
       self.ys = np.zeros((16,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult)))
       self.num_samples = int(self.params["sample_rate"]*plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
       self.ax1.set_ylim(-0.05, 0.05)
-      self.ax2.set_ylim(50, 50)
-      self.ax3.set_ylim(-200, 200)
+      self.ax2.set_ylim(-150, 150)
+      self.ax3.set_ylim(-150, 150)
       self.ax1.set_xticklabels([])
       self.ax2.set_xticklabels([])
       self.ax3.set_xticklabels([])
@@ -120,15 +121,15 @@ class PlotSensorData:
     fewerSSNSGdata = np.mean (read_data[6:14,:].reshape(8,-1,self.downsample_mult), axis=2) #Downsample the SSNSG data
     fewerCommSGdata = np.mean (read_data[14:16,:].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
     temp_np_C = np.mean(read_data[16])
-    SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp, r_total, r_wire, alpha_gold, alpha_constantan)
-    compSSNSGdata = SSNSG_temp_comp.compensate(self.ys[6:14], temp_np_C)
-    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
-    compCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C)
 
     slice_start = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples
     slice_end = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples + self.num_samples
     ys[0:6,slice_start:slice_end] = fewerPZTdata
     if plot_compensated_strains:
+      SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp, r_total, r_wire, alpha_gold, alpha_constantan)
+      compSSNSGdata = SSNSG_temp_comp.compensate(fewerSSNSGdata, temp_np_C)
+      commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
+      compCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(fewerCommSGdata, temp_np_C)
       ys[6:14,slice_start:slice_end] = compSSNSGdata
       ys[14:16,slice_start:slice_end] = compCommSGdata
     else:  

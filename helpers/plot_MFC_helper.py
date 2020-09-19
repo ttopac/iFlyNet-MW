@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import sys, os
 from matplotlib import cm
@@ -15,19 +16,24 @@ from multiprocessing import Process, Queue
 class PlotMFCShape:
   def __init__(self, plot_refresh_rate, XVAL, YVAL):
     self.plot_refresh_rate = plot_refresh_rate
-    self.fig = plt.figure(figsize=(3.0, 3.0))
+    self.fig = plt.figure(figsize=(3.75, 3.75))
+    plt.subplots_adjust(left=0, bottom=0, right=0.85, top=1.13, wspace=0, hspace=0)
 
     self.ax = self.fig.gca(projection='3d')
     self.xgrid, self.ygrid = np.meshgrid(XVAL, YVAL)
+    
+    self.ax.set_xlabel('chord (x)', labelpad=-12, fontsize=11)
+    self.ax.set_ylabel('span (y)', labelpad=-12, fontsize=11)
+    self.ax.set_zlabel('3D displacement (mm)', labelpad=4, fontsize=11)
+    self.ax.set_xticklabels([])
+    self.ax.set_yticklabels([])
+    self.ax.tick_params(labelsize="small")
 
-    self.ax.set_xlabel('chord (x) (mm)')
-    self.ax.set_ylabel('span (y) (mm)')
-    self.ax.set_zlabel('3D displacement (mm)')
     self.ax.set_zlim(-2, 2)
     # self.ax.auto_scale_xyz([0, 300], [0, 300], [-2, 2])
 
   def plot_twod_contour(self):
-    self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])), cmap=cm.coolwarm, linewidth=0)
+    self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])), cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
     # self.fig.colorbar(self.mysurf, shrink=0.5, aspect=5)
 
     # Create fake bounding box for scaling
@@ -41,13 +47,12 @@ class PlotMFCShape:
       self.ax.plot([xb], [yb], [zb], 'w')
 
   def plot_live(self, i, queue):
-    print ("Plotting live")
     while queue.qsize() > 1:
       read_shape = queue.get()
       # three_d_vertices = [list(zip(self.xgrid.reshape(-1), self.ygrid.reshape(-1), read_shape.reshape(-1)))]
       # self.mysurf.set_verts(three_d_vertices, closed=False)
       self.mysurf.remove()
-      self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, linewidth=0)
+      self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
       return (self.mysurf,)
 
 

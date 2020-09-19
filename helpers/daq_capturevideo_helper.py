@@ -3,6 +3,7 @@ import cv2
 
 import tkinter as tk
 from tkinter import Tk, Frame, Canvas, Label
+from tkinter import N, S, W, E
 import PIL.Image, PIL.ImageTk
 from threading import Thread
 from multiprocessing import Process, Queue
@@ -63,18 +64,18 @@ class DrawTKVideoCapture(Frame):
     self.endo_video = CaptureVideoWEndoscope(self.camnum)
     # Create a canvas that can fit the above video source size
     self.videocvs = Canvas(self.parent, width=self.endo_video.new_w, height=self.endo_video.new_h)
-    self.videolbl = Label(self.parent, text=window_title)
+    self.videolbl = Label(self.parent, text=window_title, font=("Helvetica", 16))
 
   def update(self, delay=15):    
       ret, frame = self.endo_video.get_frame_for_TK()
       if ret:
         self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
-        self.videocvs.create_image(0, 0, image = self.photo, anchor = tk.NW)
+        self.videocvs.create_image(0,0,image = self.photo, anchor = tk.NW)
       self.parent.after(delay, self.update, delay)
 
   def place_on_grid (self, row, column, rowspan, columnspan):
     self.videocvs.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
-    self.videolbl.grid(row=row-1, column=column, rowspan=1, columnspan=1)
+    self.videolbl.grid(row=row-1, column=column, rowspan=1, columnspan=columnspan, sticky=S)
 
   def multithreaded_capture(self, delay=15, init_call=False):
     if init_call:
