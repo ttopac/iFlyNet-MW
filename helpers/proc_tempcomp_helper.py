@@ -1,13 +1,29 @@
+import numpy as np
+
+#Comm. SG compensation parameters for Sept2020 tests
+poly_coeffs = (-23.65, 2.06, -5.02E-2, 2.26E-4, 0.3, 0.219)
+poly_coeffs_newchar = [17.14, -8.573, 0.4876, -0.004384, 0, 0] #Only tempup part
+gage_fact, k_poly = 2, 2
+gage_fact_CTE, SG_matl_CTE = 93E-6, 10.8E-6
+al6061_CTE = 23.6E-6
+
+#SSN SG compensation parameters for Sept2020 tests (skipping SG8)
+r_total = np.asarray ([14, 14.4, 14.1, 15.3, 14.7, 14, 14.3, 13.9])
+r_wire = np.asarray ([0.65, 0.6, 0.65, 1.3, 0, 0.2, 0.5, 0.2]) #Values from Sept16. From Xiyuan: [0.4, 0.6, 0.3, 1.5, 0.9, 0.2, 0.5, 0.1]
+# r_wire = np.asarray ([0.2, 0.2, 0.3, 1.1, 0.2, 0.2, 0.5, 0.1]) #Approx from drift8_Sept15_0_3 test.
+alpha_gold = 1857.5
+alpha_constantan = 21.758
+
 class CommSG_Temp_Comp():
-  def __init__ (self, poly_coeffs, gage_fact_CTE, SG_matl_CTE, substrate_matl_CTE, ref_temp, ownchar, gage_fact=2, k_poly=2):
-    self.poly_coeffs = poly_coeffs
+  def __init__ (self, ref_temp, ownchar=True):
     self.gage_fact_CTE = gage_fact_CTE
     self.gage_fact = gage_fact
     self.k_poly = k_poly
     self.SG_matl_CTE = SG_matl_CTE
-    self.substrate_matl_CTE = substrate_matl_CTE
+    self.substrate_matl_CTE = al6061_CTE
     self.ref_temp = ref_temp
     self.ownchar = ownchar
+    self.poly_coeffs = poly_coeffs_newchar if ownchar else poly_coeffs
 
   def comp_steel (self, temp):
     e_therm = self.poly_coeffs[0] + self.poly_coeffs[1]*temp + self.poly_coeffs[2]*temp**2 + self.poly_coeffs[3]*temp**3
@@ -36,7 +52,7 @@ class CommSG_Temp_Comp():
 
   
 class SSNSG_Temp_Comp():
-  def __init__ (self, ref_temp, r_total, r_wire, alpha_gold, alpha_constantan):
+  def __init__ (self, ref_temp):
     self.ref_temp = ref_temp
     self.r_total = r_total
     self.r_wire = r_wire
