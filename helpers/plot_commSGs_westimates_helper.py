@@ -38,14 +38,15 @@ class PlotData:
     self.ax2.grid(False)
 
   def term_common_params(self, realtime):
-    # self.leg1 = self.ax1.legend(fontsize=7, loc="upper right", ncol=1, columnspacing=1)
+    # Add legend for lift plot (if there's no stall)
+    self.leg1 = self.ax1.legend(fontsize=7, loc="upper right", ncol=1, columnspacing=1)
     # Add legend for drag plot
     self.leg2 = self.ax2.legend(fontsize=7, loc="upper right", ncol=1, columnspacing=1)
     
-    # Legend for lift is a little more complicated
-    lns = self.ln1+self.ln2+self.ln3
-    labs = [l.get_label() for l in lns]
-    self.leg1 = self.ax1.legend(lns, labs, fontsize=7, loc="upper right", ncol=1, columnspacing=1)
+    # Legend for lift is a little more complicated if there's stall too
+    # lns = self.ln1+self.ln2+self.ln3
+    # labs = [l.get_label() for l in lns]
+    # self.leg1 = self.ax1.legend(lns, labs, fontsize=7, loc="upper right", ncol=1, columnspacing=1)
 
     for line in self.leg1.get_lines():
       line.set_linewidth(1.5)
