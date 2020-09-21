@@ -6,8 +6,7 @@ from matplotlib import cm
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 sys.path.append(os.path.abspath('./helpers'))
-from proc_tempcomp_helper import CommSG_Temp_Comp
-from proc_MFCshape_helper import CalcMFCShape
+import proc_MFCshape_helper
 import tkinter as tk
 from multiprocessing import Process, Queue
 
@@ -59,10 +58,10 @@ class PlotMFCShape:
 if __name__ == "__main__":
   #Test plotting in TK with fake data streaming in real-time.
   root = tk.Tk()
-  root.title ("Real-time MFC Plotting")
+  root.title ("MFC Plotting")
   plot_refresh_rate = 1 #seconds
 
-  mfc_shape = CalcMFCShape()
+  mfc_shape = proc_MFCshape_helper.CalcMFCShape()
   q1 = Queue()
   p1 = Process(target = mfc_shape.supply_data, args=(q1, False, True))
   p1.start()
