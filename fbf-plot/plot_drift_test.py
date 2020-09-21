@@ -26,20 +26,6 @@ plot_SSNSG_comp = True
 if temp_source == None:
   plot_temp_line, plot_commSG_comp, plot_SSNSG_comp = False, False, False
 
-#Comm. SG compensation parameters
-# poly_coeffs = (-23.65, 2.06, -5.02E-2, 2.26E-4, 0.3, 0.219)
-# poly_coeffs_newchar = [-1441, 162, -6.006, 0.07589, 0, 0] #Full data
-poly_coeffs_newchar = [17.14, -8.573, 0.4876, -0.004384, 0, 0] #Only tempup part
-gage_fact, k_poly = 2, 2
-gage_fact_CTE, SG_matl_CTE = 93E-6, 10.8E-6
-al6061_CTE = 23.6E-6
-
-#SSN SG compensation parameters (skipping SG8)
-r_total = np.asarray ([14, 14.4, 14.1, 15.3, 14.7, 14, 14.3, 13.9])
-r_wire = np.asarray ([0.65, 0.6, 0.65, 1.3, 0, 0.2, 0.5, 0.2]) #Values from Sept16. From Xiyuan: [0.4, 0.6, 0.3, 1.5, 0.9, 0.2, 0.5, 0.1]
-# r_wire = np.asarray ([0.2, 0.2, 0.3, 1.1, 0.2, 0.2, 0.5, 0.1]) #Approx from drift8_Sept15_0_3 test.
-alpha_gold = 1857.5
-alpha_constantan = 21.758
 
 if __name__ == "__main__":
   # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
@@ -73,10 +59,10 @@ if __name__ == "__main__":
       plot.plot_RTD_data (temp_np_C)
 
   if plot_commSG_comp:
-    plot.plot_commSG_tempcomp_lines(temp_np_C, poly_coeffs_newchar, gage_fact_CTE, SG_matl_CTE, al6061_CTE, gage_fact, k_poly, ownchar=True)
+    plot.plot_commSG_tempcomp_lines(temp_np_C, ownchar=True)
 
   if plot_SSNSG_comp:
-    plot.plot_SSNSG_tempcomp_lines(temp_np_C, r_total, r_wire, alpha_gold, alpha_constantan)
+    plot.plot_SSNSG_tempcomp_lines(temp_np_C)
 
   plot.term_common_params(realtime=False)
   plt.show()
