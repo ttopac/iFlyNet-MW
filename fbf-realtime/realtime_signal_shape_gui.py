@@ -65,12 +65,6 @@ class RawSignalAndShapeWindow(Frame):
     self.update()
 
   def draw_MFCshapes(self, params, plot_refresh_rate):    
-    #Only have this section enabled MFCshapes is alone
-    # self.data_queue = Queue()
-    # get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue))
-    # get_data_proc.start()
-    ###
-
     mfc_shape = proc_MFCshape_helper.CalcMFCShape(plot_refresh_rate)
     shape_queue = Queue()
     p2 = Process(target = mfc_shape.supply_data, args=(shape_queue, self.data_queue, False)) #THIS REMOVES FROM DATA_QUEUE
