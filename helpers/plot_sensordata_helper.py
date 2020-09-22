@@ -126,9 +126,9 @@ class PlotSensorData:
     slice_end = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples + self.num_samples
     ys[0:6,slice_start:slice_end] = fewerPZTdata
     if plot_compensated_strains:
-      SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp, r_total, r_wire, alpha_gold, alpha_constantan)
+      SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp)
       compSSNSGdata = SSNSG_temp_comp.compensate(fewerSSNSGdata, temp_np_C)
-      commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, gage_fact, k_poly)
+      commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp)
       compCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(fewerCommSGdata, temp_np_C)
       ys[6:14,slice_start:slice_end] = compSSNSGdata
       ys[14:16,slice_start:slice_end] = compCommSGdata
