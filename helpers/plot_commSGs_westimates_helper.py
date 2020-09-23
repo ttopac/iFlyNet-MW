@@ -8,15 +8,14 @@ import proc_keras_estimates_helper
 import proc_tempcomp_helper
 
 class PlotData:
-  def __init__(self, xs, pred_freq, stall_model_path, liftdrag_model_path, singleplot=False, realtime=False):
-    self.xs = xs
+  def __init__(self, pred_freq, stall_model_path, liftdrag_model_path, singleplot=False, realtime=False):
     self.pred_freq = pred_freq
     self.stall_model_path = stall_model_path
     self.liftdrag_model_path = liftdrag_model_path
     self.singleplot = singleplot
     self.realtime = realtime
-    
     self.fig = plt.figure()
+
     if not realtime: self.estimates = proc_keras_estimates_helper.iFlyNetEstimates(pred_freq, stall_model_path, liftdrag_model_path) #Initialize Keras estimates if this is not running in realtime
     self.init_common_params()
 
@@ -27,7 +26,7 @@ class PlotData:
     self.plot_refresh_rate = plot_refresh_rate
 
   def init_common_params (self):
-    plt.style.use ('fivethirtyeight')
+    # plt.style.use ('fivethirtyeight')
     mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=['#1f77b4', '#ff7f0e', '#2ca02c', '#bcbd22', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#17becf', '#d62728']) 
     mpl.rcParams['axes.edgecolor'] = 'black'
     mpl.rcParams['axes.linewidth'] = 1
@@ -70,23 +69,25 @@ class PlotData:
         line.set_linewidth(1.5)
     
     if self.realtime:
-      self.fig.set_size_inches(4.0, 4.0)
+      self.fig.set_size_inches(4.0, 3.0) #width, height
     else:
       self.fig.set_size_inches(6.0, 6.0)
       plt.tight_layout(pad=1.3)
       plt.show()
 
-  def plot_liftdrag (self, ys=None, ref_temp=None): #Tempcomp is not implemented yet.
+  def plot_liftdrag (self, xs, ys, ref_temp=None): #Tempcomp is not implemented yet.
     if not self.realtime:
       if not self.singleplot:
-        self.ln1 = self.ax1.plot(self.xs, -ys[14], linewidth=1.0, label="SG Lift")
-        self.ax2.plot(self.xs, -ys[15], color='#ff7f0e', linewidth=1.0, label="SG Drag")
+        self.ln1 = self.ax1.plot(xs, -ys[14], linewidth=1.0, label="SG Lift")
+        self.ax2.plot(xs, -ys[15], color='#ff7f0e', linewidth=1.0, label="SG Drag")
     else: #Realtime is only for singleplot
-      self.xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
+      self.xs = xs
       self.ys = ys
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
-      self.ax1.set_ylim(0, 200)
+      self.ax1.set_ylim(-25, 200)
       self.ax1.set_xticklabels([])
+      self.liftline, = self.ax1.plot(self.xs, -self.ys[0], linewidth=0.5, label="Lift") #Comm. LiftSG
+      self.dragline, = self.ax1.plot(self.xs, -self.ys[1], linewidth=0.5, label="Drag") #Comm. DragSG
 
   def plot_stall_est (self, ys): #Realtime not supported
     preds = self.estimates.estimate_stall(ys, False)
@@ -101,8 +102,8 @@ class PlotData:
     ax1_stalltwin.tick_params(colors = 'r', labelsize="x-small")
     ax1_stalltwin.grid(False)
 
-  def plot_live(self, i, ys, queue, plot_refresh_rate, plot_compensated_strains=True, only_plot=True, estimate_data=False):
-    start_index = 0 if estimate_data else 14
+  def plot_live(self, i, ys, queue, plot_compensated_strains=True, only_plot=True, estimate_data=False):
+    sensor_start_index = 0 if estimate_data else 14
     if estimate_data:
       plot_compensated_strains = False
     if only_plot:
@@ -112,22 +113,26 @@ class PlotData:
       queue.put_nowait(read_data)
     if i == 0 and not estimate_data: #Set initial temperature at the beginning
       ref_temp = np.mean(read_data[16])
-    if not estimate_data: temp_np_C = np.mean(read_data[start_index+2])
-    
-    if (i%int(self.visible_duration/plot_refresh_rate) == 0): #Reset data once the period is filled.
+    if (i%int(self.visible_duration/self.plot_refresh_rate) == 0): #Reset data once the period is filled.
       ys [:,:] = 0
     
-    fewerCommSGdata = np.mean (read_data[start_index:start_index+2,:].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
+    if not estimate_data:
+      temp_np_C = np.mean(read_data[sensor_start_index+2])
+      useful_data_start, useful_data_end = 0, int(read_data.shape[1]/self.downsample_mult)*self.downsample_mult
+      fewerCommSGdata = np.mean (read_data[sensor_start_index:sensor_start_index+2,useful_data_start:useful_data_end].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
+    else:
+      fewerCommSGdata = read_data.T
 
-    slice_start = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples
-    slice_end = i%(int(self.visible_duration/plot_refresh_rate))*self.num_samples + self.num_samples
+    slice_start = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples
+    slice_end = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples + self.num_samples
     if plot_compensated_strains:
       commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp)
-      compCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(fewerCommSGdata, temp_np_C)
-      ys[start_index:start_index+2,slice_start:slice_end] = compCommSGdata
-    else:  
-      ys[start_index:start_index,slice_start:slice_end] = fewerCommSGdata
-      
-    self.liftline.set_ydata(-ys[start_index])
-    self.dragline.set_ydata(-ys[start_index+1])
+      fewerCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(fewerCommSGdata, temp_np_C)
+    if slice_end > ys.shape[1]:
+      ys[:,slice_start:slice_end] = fewerCommSGdata[:,0]
+    else:
+      ys[:,slice_start:slice_end] = fewerCommSGdata
+    
+    self.liftline.set_ydata(-ys[0])
+    self.dragline.set_ydata(-ys[1])
     return list((self.liftline,self.dragline))

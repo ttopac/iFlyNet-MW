@@ -64,7 +64,7 @@ class DrawTKVideoCapture(Frame):
     self.endo_video = CaptureVideoWEndoscope(self.camnum)
     # Create a canvas that can fit the above video source size
     self.videocvs = Canvas(self.parent, width=self.endo_video.new_w, height=self.endo_video.new_h)
-    self.videolbl = Label(self.parent, text=window_title, font=("Helvetica", 16))
+    self.videolbl = Label(self.parent, text=window_title, font=("Helvetica", 18))
 
   def update(self, delay=15):    
       ret, frame = self.endo_video.get_frame_for_TK()

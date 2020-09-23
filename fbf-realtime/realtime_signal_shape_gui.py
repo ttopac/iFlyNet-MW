@@ -90,7 +90,7 @@ if __name__ == "__main__":
   downsample_mult = 1
   ys = np.zeros((16,int(visible_duration*params["sample_rate"]/downsample_mult)))
   video_names = ("Side view of the outer MFC", "Side-view of wing fixture")
-  camnums = (1,2)
+  camnums = (1,0)
   
   root = Tk()
   root.title ("Real-time Raw Signal and Estimated Shape")
