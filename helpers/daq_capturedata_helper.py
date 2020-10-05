@@ -69,6 +69,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
+    print ("WARNING: CHANGE INIT BRIDGE VOLTAGE VALUES")
 
     while True:
       while queue.qsize() > 1: #This is here to keep up with delay in plotting.

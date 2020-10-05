@@ -191,7 +191,7 @@ if __name__ == "__main__":
   ys_truth = np.zeros((2,int(visible_duration*params["sample_rate"]/downsample_mult))) #Here ys only has commlift & commdrag
   ys_preds = np.zeros((2,int(visible_duration*params["sample_rate"]/downsample_mult))) #Here ys only has commlift & commdrag
   video_names = ("AoA view", "Outer MFC view")
-  camnums = (1,2)
+  camnums = (1,0)
 
   stall_model_filename = 'stall_train993_val_988' #stall_train993_val_988
   liftdrag_model_filename = 'lift_train_loss0461'
