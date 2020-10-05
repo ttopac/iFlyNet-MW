@@ -67,8 +67,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
   def draw_MFCshapes(self):    
     mfc_shape = proc_MFCshape_helper.CalcMFCShape(self.plot_refresh_rate)
-    shape_queue = Queue()
-    p2 = Process(target = mfc_shape.supply_data, args=(shape_queue, self.data_queue, False)) #THIS REMOVES FROM DATA QUEUE
+    self.shape_queue = Queue()
+    p2 = Process(target = mfc_shape.supply_data, args=(self.shape_queue, self.data_queue, False)) #THIS DOESN'T REMOVE FROM DATA QUEUE
     p2.start()
 
     plot = plot_MFC_helper.PlotMFCShape(self.plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL)
@@ -78,7 +78,10 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     mfc_lbl.grid(row=3, column=3, rowspan=1, columnspan=1, padx=65)
     mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     mfc_canvas.get_tk_widget().grid(row=3, column=4, rowspan=1, columnspan=2, sticky=W)
-    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue,), interval=self.plot_refresh_rate*1000, blit=False)
+    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(self.shape_queue,), interval=self.plot_refresh_rate*1000, blit=False)
+    
+    # t_qlens = Thread(target = self.print_queuelens)
+    # t_qlens.start()
     self.update()
 
   def draw_stall_lbl (self):
@@ -88,9 +91,9 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.stall_cond_lbl.grid(row=1, column=4, rowspan=1, columnspan=1, sticky=W)
 
   def draw_liftdrag_lbl (self):
-    self.liftdrag_truth_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.truth_lift_val, self.truth_drag_val), font=("Helvetica", 16), justify='center')
+    self.liftdrag_truth_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.truth_lift_val, self.truth_drag_val), font=("Helvetica", 16), width=20)
     self.liftdrag_truth_lbl.grid(row=2, column=1, rowspan=1, columnspan=1, sticky=W)
-    self.liftdrag_est_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.est_lift_val, self.est_drag_val), font=("Helvetica", 16), justify='center')
+    self.liftdrag_est_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.est_lift_val, self.est_drag_val), font=("Helvetica", 16), width=20)
     self.liftdrag_est_lbl.grid(row=2, column=4, rowspan=1, columnspan=1, sticky=W)  
 
   def initialize_estimates (self, pred_freq, stall_model_path, liftdrag_model_path, plot_refresh_rate, temperature_compensation=False):
@@ -103,33 +106,48 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
   def update_estimations(self):
     while True:
       try:
-        read_data = self.data_queue.get()
-        self.data_queue.put_nowait(read_data) #THIS DOESN'T REMOVE FROM DATA QUEUE
+        read_data = self.data_queue.get_nowait() #THIS REMOVES FROM DATA QUEUE
         useful_data_start, useful_data_end = 0, int(read_data.shape[1]/self.downsample_mult)*self.downsample_mult
         stall_predictors = np.concatenate ((read_data[0:6], read_data[14:16]), axis=0)
-        self.stallest_queue.put (self.estimates.estimate_stall(stall_predictors[:,useful_data_start:useful_data_end])[-1])
+        self.stallest_queue.put_nowait (np.any(self.estimates.estimate_stall(stall_predictors[:,useful_data_start:useful_data_end])))
         liftdrag_predictors = read_data[0:6]
-        self.liftdragest_queue.put (self.estimates.estimate_liftdrag(liftdrag_predictors[:,useful_data_start:useful_data_end]))
+        self.liftdragest_queue.put_nowait (self.estimates.estimate_liftdrag(liftdrag_predictors[:,useful_data_start:useful_data_end]))
       except:
         pass
       time.sleep(self.plot_refresh_rate)
 
   def update_stallest_lbls (self):
-    stall_cond = self.stallest_queue.get() #THIS REMOVES FROM STALLEST QUEUE
-    stalltext = "Yes" if stall_cond else "No"
-    self.stall_cond_lbl.config(text=stalltext)
+    while self.stallest_queue.qsize() > 1: #This is here to keep up with delay in plotting.
+      try:  
+        a = self.stallest_queue.get_nowait()
+      except:
+        pass
+    try:
+      stall_cond = self.stallest_queue.get_nowait() #THIS REMOVES FROM STALLEST QUEUE
+      stalltext = "Yes" if stall_cond else "No"
+      self.stall_cond_lbl.config(text=stalltext)
+    except:
+      pass
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_stallest_lbls)
 
   def update_liftdrag_lbls (self):
+    while self.liftdragest_queue.qsize() > 1: #This is here to keep up with delay in plotting.
+      try:
+        a = self.liftdragest_queue.get_nowait()
+      except:
+        pass
     try:
-      read_data = self.data_queue.get() #THIS DOESN'T REMOVE FROM DATA QUEUE
-      self.data_queue.put_nowait(read_data)
-      truth_liftdrag = read_data[14:16]
-      self.liftdrag_truth_lbl.config(text='Lift SG = {:.2f} ue \n Drag SG = {:.2f} ue'.format(-truth_liftdrag[0,-1], -truth_liftdrag[1,-1])) #Rawdata is shape:(sensor_count, data_count)
-      est_liftdrag = self.liftdragest_queue.get() #THIS REMOVES FROM LIFTDRAGEST QUEUE
-      self.liftdrag_est_lbl.config(text='Lift SG = {:.2f} ue \n Drag SG = {:.2f} ue'.format(-est_liftdrag[-1,0], -est_liftdrag[-1,1])) #Predictions are shape:(pred_count, sensor_count)
+      est_liftdrag = self.liftdragest_queue.get_nowait() #THIS REMOVES FROM LIFTDRAGEST QUEUE
+      self.liftdrag_est_lbl.config(text='Lift SG = {:6.1f} ue \n Drag SG = {:6.1f} ue'.format(-est_liftdrag[-1,0], -est_liftdrag[-1,1])) #Predictions are shape:(pred_count, sensor_count)
     except:
       pass
+    try:
+      read_data = self.data_queue.get_nowait() #THIS DOESN'T REMOVE FROM DATA QUEUE
+      self.data_queue.put_nowait(read_data)
+      truth_liftdrag = read_data[14:16]
+      self.liftdrag_truth_lbl.config(text='Lift SG = {:6.1f} ue \n Drag SG = {:6.1f} ue'.format(-truth_liftdrag[0,-1], -truth_liftdrag[1,-1])) #Rawdata is shape:(sensor_count, data_count)
+    except:
+      pass     
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_liftdrag_lbls)
 
   def draw_liftdrag_plots(self, xs, ys, visible_duration, params, pred_sample_size, stall_model_path, liftdrag_model_path, plot_compensated_strains, onlyplot, row, col, label):
@@ -147,6 +165,14 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     canvas.get_tk_widget().grid(row=row, column=col, rowspan=1, columnspan=1)
     truth_ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys,queue,plot_compensated_strains,onlyplot,estimate), interval=self.plot_refresh_rate*1000, blit=True) #THIS DOESN'T REMOVE FROM DATA QUEUE
     self.update()
+  
+  def print_queuelens(self):
+    while True:
+      print ("Data queue: {}".format(self.data_queue.qsize()))
+      print ("Lift/drag queue: {}".format(self.liftdragest_queue.qsize()))
+      print ("Stall queue: {}".format(self.stallest_queue.qsize()))
+      print ("Shape queue: {}".format(self.shape_queue.qsize()))
+      time.sleep (1)
 
 if __name__ == "__main__":
   #Define parameters
@@ -167,11 +193,10 @@ if __name__ == "__main__":
   video_names = ("AoA view", "Outer MFC view")
   camnums = (1,0)
 
-  stall_model_filename = 'stall_train993_val_988'
+  stall_model_filename = 'stall_train993_val_988' #stall_train993_val_988
   liftdrag_model_filename = 'lift_train_loss0461'
   stall_model_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Kerasfiles/{}.hdf5'.format(stall_model_filename)
   liftdrag_model_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Kerasfiles/{}.hdf5'.format(liftdrag_model_filename)
-  
 
   root = Tk()
   root.title ("Real-time Ground Truth and i-FlyNet Estimation")
@@ -191,7 +216,6 @@ if __name__ == "__main__":
 
   app.draw_liftdrag_plots(xs, ys_truth, visible_duration, params, downsample_mult, stall_model_path, liftdrag_model_path, plot_compensated_strains, onlyplot, 2, 0, "(Measured)")
   app.draw_liftdrag_plots(xs, ys_preds, visible_duration, params, downsample_mult, stall_model_path, liftdrag_model_path, plot_compensated_strains, onlyplot, 2, 5, "(Predicted)")
-  time.sleep(2)
   app.draw_MFCshapes()
-  
+
   root.mainloop()

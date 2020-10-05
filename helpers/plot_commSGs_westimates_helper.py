@@ -84,7 +84,7 @@ class PlotData:
       self.xs = xs
       self.ys = ys
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
-      self.ax1.set_ylim(-25, 200)
+      self.ax1.set_ylim(-25, 275)
       self.ax1.set_xticklabels([])
       self.liftline, = self.ax1.plot(self.xs, -self.ys[0], linewidth=0.5, label="Lift") #Comm. LiftSG
       self.dragline, = self.ax1.plot(self.xs, -self.ys[1], linewidth=0.5, label="Drag") #Comm. DragSG

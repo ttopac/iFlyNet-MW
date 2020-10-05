@@ -17,12 +17,12 @@ class iFlyNetEstimates:
     self.stddevs = stddevs
 
   def estimate_stall (self, sensordata):
-    # Standardize sensordata
-    sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq)
-    sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0)) #shape= (-1, 233, 8) for Sept. 2020.
-    sensordata_rshp_t_std = (sensordata_rshp_t-self.means)/self.stddevs  
+    # Standardize sensordata shape= (8, -1) PZT + COMMSG data
+    sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq) #WORKED shape= (8, -1, 233) for Sept. 2020
+    sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0)) #WORKED shape= (-1, 233, 8) for Sept. 2020.
+    sensordata_rshp_t_std = (sensordata_rshp_t-self.means)/self.stddevs 
     preds = self.stall_model.predict(sensordata_rshp_t_std)
-    cond = preds[:,0] < 0.5 #No stall is True
+    cond = preds[:,0] < 0.5 #NoStall: False
     return cond
 
   def estimate_liftdrag (self, sensordata):
