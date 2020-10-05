@@ -29,7 +29,7 @@ ave_lift_comp = list()
 
 # vel = input ("Enter the vel to plot: ")
 # aoa = input ("Enter the aoa to plot: ")
-vel = '16'
+vel = '20'
 aoa = [0,2,4,6,8,10,12,14,16,17,18,19,20]
 
 for a in aoa:
@@ -42,34 +42,34 @@ for a in aoa:
   #Handle temperature compensation
   ref_temp = init_temps[0] if vel!='14_3' else init_temps[1]
   #SG1 temp. comp.
-  SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp, r_total, r_wire, alpha_gold, alpha_constantan)
+  SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp)
   comp_SSNSG = SSNSG_temp_comp.compensate(trainData[6:14], trainData[16])
   ave_SG1_comp.append (np.mean(-comp_SSNSG[0]))
 
   #CommSG temp. comp.
-  commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(poly_coeffs_newchar, gage_fact_CTE, SG_matl_CTE, al6061_CTE, ref_temp, True, gage_fact, k_poly)
+  commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp)
   comp_commSG, comp_commSG_var = commSG_temp_comp.compensate(trainData[14:16], trainData[16])
   ave_lift_comp.append (np.mean(-comp_commSG[0]))
 
-fig = plt.figure(figsize=(6.0, 6.0))
-ax1 = fig.add_subplot(3,1,1)
-ax2 = fig.add_subplot(3,1,2)
-ax3 = fig.add_subplot(3,1,3)
+fig = plt.figure(figsize=(4.0, 4.0))
+ax1 = fig.add_subplot(2,1,1)
+# ax2 = fig.add_subplot(3,1,2)
+ax3 = fig.add_subplot(2,1,2)
 ax1.set_title("Sum of PZT1 signals".format(vel), fontsize=12)
 ax1.set_xlabel("Angle (deg)", fontsize=11)
 ax1.set_ylabel("Voltage (V)", fontsize=11)
-ax2.set_title("-SG1 readings for V = {}m/s".format(vel), fontsize=12)
-ax2.set_xlabel("Angle (deg)", fontsize=11)
-ax2.set_ylabel("Microstrain (ue)", fontsize=11)
+# ax2.set_title("-SG1 readings for V = {}m/s".format(vel), fontsize=12)
+# ax2.set_xlabel("Angle (deg)", fontsize=11)
+# ax2.set_ylabel("Microstrain (ue)", fontsize=11)
 ax3.set_title("-SG Lift for V = {}m/s".format(vel), fontsize=12)
 ax3.set_xlabel("Angle (deg)", fontsize=11)
 ax3.set_ylabel("Microstrain (ue)", fontsize=11)
 
 
 ax1.plot(aoa, sum_PZT1, '-', linewidth=0.5, label="PZT1")
-ax2.plot(aoa, ave_SG1, '-', linewidth=0.5, label="-SG1")
-ax2.plot(aoa, ave_SG1_comp, ':', color=ax1.lines[0].get_color(), linewidth=0.5, label="-SG1 (compensated)")
+# ax2.plot(aoa, ave_SG1, '-', linewidth=0.5, label="-SG1")
+# ax2.plot(aoa, ave_SG1_comp, ':', color=ax1.lines[0].get_color(), linewidth=0.5, label="-SG1 (compensated)")
 ax3.plot(aoa, ave_lift, '-', linewidth=0.5, label="SG Lift")
-ax3.plot(aoa, ave_lift_comp, ':', color=ax2.lines[0].get_color(), linewidth=0.5, label="SG Lift (compensated)")
+# ax3.plot(aoa, ave_lift_comp, ':', color=ax2.lines[0].get_color(), linewidth=0.5, label="SG Lift (compensated)")
 plt.tight_layout(pad=2.0)
 plt.show()
