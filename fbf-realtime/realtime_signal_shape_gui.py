@@ -9,6 +9,8 @@ from multiprocessing import Process, Queue
 import time
 import sys
 import os
+
+from numpy.lib.npyio import save
 sys.path.append(os.path.abspath('./fbf-DAQ'))
 sys.path.append(os.path.abspath('./helpers'))
 from daq_captureSGoffsets_helper import send_SG_offsets
@@ -29,17 +31,17 @@ class RawSignalAndShapeWindow(Frame):
     for c in range(2):
       self.parent.columnconfigure(c, weight=1)
 
-  def draw_videos(self, video_names, camnums):
+  def draw_videos(self, video_names, camnums, save_video):
     video1 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[0], camnums[0])
     video1.videolbl.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=S)
     video1.videocvs.grid(row=2, column=0, rowspan=1, columnspan=1, sticky=N)
-    video1.multithreaded_capture(init_call=True) #Use for multi-threaded executions
+    video1.multithreaded_capture(init_call=True, save_video=save_video) #Use for multi-threaded executions
     # video1.update() #Use for single threaded executions
 
     video2 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[1], camnums[1])
     video2.videolbl.grid(row=14, column=0, rowspan=1, columnspan=1, pady=5, sticky=S)
     video2.videocvs.grid(row=15, column=0, rowspan=1, columnspan=1, sticky=N)
-    video2.multithreaded_capture(init_call=True) #Use for multi-threaded executions
+    video2.multithreaded_capture(init_call=True, save_video=save_video) #Use for multi-threaded executions
     # video2.update() #Use for single threaded executions
 
   def getSGoffsets (self, params):
@@ -50,10 +52,13 @@ class RawSignalAndShapeWindow(Frame):
     self.SGoffsets = q1.get()
     p1.join()
 
-  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True):
+  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True, save_data=False):
     # Run capture data in background
     self.data_queue = Queue()
-    get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue))
+    if save_data:
+      get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue, save_duration))
+    else:  
+      get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue))
     get_data_proc.start()
     # Plot the data
     plot = plot_sensordata_helper.PlotSensorData(visible_duration, downsample_mult, params)
@@ -91,6 +96,9 @@ if __name__ == "__main__":
   ys = np.zeros((16,int(visible_duration*params["sample_rate"]/downsample_mult)))
   video_names = ("Side view of the outer MFC", "Side-view of wing fixture")
   camnums = (1,0)
+
+  #Define save parameters
+  save_duration = 0 #seconds
   
   root = Tk()
   root.title ("Real-time Raw Signal and Estimated Shape")
@@ -98,7 +106,7 @@ if __name__ == "__main__":
 
   app = RawSignalAndShapeWindow(parent=root)
   app.getSGoffsets(params)
-  app.draw_videos(video_names, camnums)
-  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False)
+  app.draw_videos(video_names, camnums, save_video=False)
+  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False, save_data=False)
   app.draw_MFCshapes(params, plot_refresh_rate)
   root.mainloop()

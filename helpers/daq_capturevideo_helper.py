@@ -22,6 +22,7 @@ class CaptureVideoWEndoscope:
     h = self.cap.get(4)
     self.new_w = int(w/2)
     self.new_h = int(h/2)
+    self.size = (self.new_w, self.new_h)
 
   def show_video_standalone (self):
     while(True):
@@ -59,6 +60,7 @@ class CaptureVideoWEndoscope:
 class DrawTKVideoCapture(Frame):
   def __init__(self, parent, window_title, camnum=0):
     Frame.__init__(self,parent)
+    self.window_title = window_title
     self.camnum = camnum
     self.parent = parent
     self.endo_video = CaptureVideoWEndoscope(self.camnum)
@@ -77,17 +79,21 @@ class DrawTKVideoCapture(Frame):
     self.videocvs.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
     self.videolbl.grid(row=row-1, column=column, rowspan=1, columnspan=columnspan, sticky=S)
 
-  def multithreaded_capture(self, delay=15, init_call=False):
+  def multithreaded_capture(self, delay=15, init_call=False, save_video=False):
     if init_call:
+      if save_video:
+        self.video_writer = cv2.VideoWriter(self.window_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, self.endo_video.size)
       thr = Thread(target=self.endo_video.get_frame_for_TK, args=(True,))
       thr.start()
     delay = 15
     try:
+      if save_video:
+        self.video_writer.write(PIL.Image.fromarray(self.endo_video.viddeque[-1]))
       self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.endo_video.viddeque[-1]))
       self.videocvs.create_image(0, 0, image = self.photo, anchor = tk.NW)
-      self.parent.after (delay, self.multithreaded_capture, delay)
+      self.parent.after (delay, self.multithreaded_capture, delay, save_video=save_video)
     except:
-      self.parent.after (delay, self.multithreaded_capture, delay)
+      self.parent.after (delay, self.multithreaded_capture, delay, save_video=save_video)
 
 if __name__ == "__main__":
   aoavideo = CaptureVideoWEndoscope(0)
