@@ -43,7 +43,7 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     print ("DAQ sampling rate was: {}".format(task.timing.samp_clk_rate))
     return read_data
 
-def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
+def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save_duration):
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #0: PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #1: PZT_2
@@ -65,11 +65,13 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=samples_to_read*100)
 
     read_data = np.zeros((17, samples_to_read))
+    if save_duration > 0:
+      all_data = np.zeros((17, save_duration*sample_rate))
+      datacounter = 0
 
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
-    print ("WARNING: CHANGE INIT BRIDGE VOLTAGE VALUES")
 
     while True:
       while queue.qsize() > 1: #This is here to keep up with delay in plotting.
@@ -81,6 +83,14 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
       read_data[6:14,:] -= SGoffsets[0:8].reshape(8,-1) #Subtract the offset from SSN SGs to obtain zeros. CommSGs are already zeroed above with initial voltage.
       read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
       read_data[6:16,:] *= 1000000 #Convert all SGs to microstrains
+      if save_duration > 0:
+        try:
+          all_data[:,datacounter*samples_to_read : (datacounter+1)*samples_to_read] = read_data
+          datacounter += 1
+        except: #we captured all the data we need
+          queue.put_nowait(all_data)
+          break
+
       queue.put_nowait(read_data)
 
 

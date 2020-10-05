@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt
 
 # vel = input ("Enter the vel to plot: ")
 # aoa = input ("Enter the aoa to plot: ")
-vel = [12]
-aoa = [19]
+vel = [0]
+aoa = [0]
 
 for v in vel:
   for a in aoa:
-    # data = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/')
-    data = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,a))
+    data = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline1_Oct6')
+    # data = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,a))
     # data = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/test2_Sept19/test2.npy')
     
     fig = plt.figure()
@@ -48,7 +48,7 @@ for v in vel:
       line.set_linewidth(1.5)
     ax3.set_title("L/D", fontsize=12)
     ax3.set_xlabel("Time", fontsize=11)
-    ax3.set_ylabel("Strain (s)", labelpad=1, fontsize=11)
+    ax3.set_ylabel("Microstrain (ue)", labelpad=1, fontsize=11)
     ax3.tick_params(labelsize="small")
 
     plt.show()

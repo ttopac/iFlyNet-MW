@@ -106,12 +106,18 @@ class PlotSensorData:
 
 
   #Function to generate real-time plots.
-  def plot_live(self, i, ys, queue, plot_refresh_rate, plot_compensated_strains=True, only_plot=True):
+  def plot_live(self, i, ys, queue, plot_refresh_rate, plot_compensated_strains=True, only_plot=True, data_saver=None):
     if only_plot:
       read_data = queue.get()
     else:
       read_data = queue.get()
       queue.put_nowait(read_data)
+    
+    if read_data.shape[1] > 100000: #If there's a lot of data in the array we assume this data is here to be saved
+      data_saver.save_to_np(read_data)
+      print ("Data saved")
+      break
+    
     if i == 0: #Set initial temperature at the beginning
       ref_temp = np.mean(read_data[16])
     if (i%int(self.visible_duration/plot_refresh_rate) == 0): #Reset data once the period is filled.
