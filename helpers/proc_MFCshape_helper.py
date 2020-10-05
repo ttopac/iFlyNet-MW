@@ -76,8 +76,16 @@ class CalcMFCShape():
         time.sleep(1)
     else:
       while True:
-        while data_queue.qsize() > 2:
-          sensordata = data_queue.get()
+        while data_queue.qsize() > 1: #This is here to keep up with delay in plotting.
+          try:  
+            a = data_queue.get_nowait()
+          except:
+            pass
+        try:
+          sensordata = data_queue.get_nowait()
+          data_queue.put_nowait(sensordata)
           self.estimate_shape_analytic(sensordata, shape_queue)
-          time.sleep(self.plot_refresh_rate)
+        except:
+          pass
+        time.sleep(self.plot_refresh_rate*4.5)
 	

@@ -97,8 +97,8 @@ if __name__ == "__main__":
   # root.geometry("1000x1200")
 
   app = RawSignalAndShapeWindow(parent=root)
-  app.getSGoffsets(params)
+  # app.getSGoffsets(params)
   app.draw_videos(video_names, camnums)
-  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False)
-  app.draw_MFCshapes(params, plot_refresh_rate)
+  # app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False)
+  # app.draw_MFCshapes(params, plot_refresh_rate)
   root.mainloop()

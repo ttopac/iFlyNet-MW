@@ -46,12 +46,19 @@ class PlotMFCShape:
       self.ax.plot([xb], [yb], [zb], 'w')
 
   def plot_live(self, i, queue):
-    while queue.qsize() > 1:
+    while queue.qsize() > 1: #This is here to keep up with delay in plotting.
+      try:
+        a = queue.get_nowait()
+      except:
+        pass
+    try:
       read_shape = queue.get()
-      # three_d_vertices = [list(zip(self.xgrid.reshape(-1), self.ygrid.reshape(-1), read_shape.reshape(-1)))]
+      # three_d_vertices = [list(zip(self.xgrid.reshape(-1), self.ygrid.reshape(-1), read_shape.reshape(-1)))] #Attempt to plot with blit, but doesn't seem to be working
       # self.mysurf.set_verts(three_d_vertices, closed=False)
       self.mysurf.remove()
       self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
+    except:
+      pass  
       return (self.mysurf,)
 
 
