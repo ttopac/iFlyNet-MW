@@ -1,3 +1,5 @@
+# THIS SCRIPT IS NOW OBSELETE. USE SIGNAL_SHAPE_GUI INSTEAD.
+
 # This script can be used to plot several sensor signals in real-time.
 import numpy as np
 import tkinter as tk

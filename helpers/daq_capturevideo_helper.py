@@ -91,9 +91,9 @@ class DrawTKVideoCapture(Frame):
         self.video_writer.write(PIL.Image.fromarray(self.endo_video.viddeque[-1]))
       self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.endo_video.viddeque[-1]))
       self.videocvs.create_image(0, 0, image = self.photo, anchor = tk.NW)
-      self.parent.after (delay, self.multithreaded_capture, delay, save_video=save_video)
+      self.parent.after (delay, self.multithreaded_capture, (delay, False, save_video))
     except:
-      self.parent.after (delay, self.multithreaded_capture, delay, save_video=save_video)
+      self.parent.after (delay, self.multithreaded_capture, (delay, False, save_video))
 
 if __name__ == "__main__":
   aoavideo = CaptureVideoWEndoscope(0)

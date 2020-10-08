@@ -116,7 +116,6 @@ class PlotSensorData:
     if read_data.shape[1] > 100000: #If there's a lot of data in the array we assume this data is here to be saved
       data_saver.save_to_np(read_data)
       print ("Data saved")
-      break
     
     if i == 0: #Set initial temperature at the beginning
       ref_temp = np.mean(read_data[16])
