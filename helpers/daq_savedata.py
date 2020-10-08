@@ -5,4 +5,4 @@ class DataSaverToNP():
     self.filename = filename
 
   def save_to_np(self, data):
-    np.save(filename+'.np', data)
+    np.save(self.filename+"testNP.npy", data)

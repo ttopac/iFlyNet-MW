@@ -79,10 +79,10 @@ class DrawTKVideoCapture(Frame):
     self.videocvs.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
     self.videolbl.grid(row=row-1, column=column, rowspan=1, columnspan=columnspan, sticky=S)
 
-  def multithreaded_capture(self, delay=15, init_call=False, save_video=False):
+  def multithreaded_capture(self, delay=15, init_call=False, save_video=False, save_path=None):
     if init_call:
       if save_video:
-        self.video_writer = cv2.VideoWriter(self.window_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, self.endo_video.size)
+        self.video_writer = cv2.VideoWriter(save_path+self.window_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), 10, self.endo_video.size)
       thr = Thread(target=self.endo_video.get_frame_for_TK, args=(True,))
       thr.start()
     delay = 15

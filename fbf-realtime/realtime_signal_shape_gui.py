@@ -31,17 +31,17 @@ class RawSignalAndShapeWindow(Frame):
     for c in range(2):
       self.parent.columnconfigure(c, weight=1)
 
-  def draw_videos(self, video_names, camnums, save_video):
+  def draw_videos(self, video_names, camnums, save_video, save_path=None):
     video1 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[0], camnums[0])
     video1.videolbl.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=S)
     video1.videocvs.grid(row=2, column=0, rowspan=1, columnspan=1, sticky=N)
-    video1.multithreaded_capture(init_call=True, save_video=save_video) #Use for multi-threaded executions
+    video1.multithreaded_capture(init_call=True, save_video=save_video, save_path=save_path) #Use for multi-threaded executions
     # video1.update() #Use for single threaded executions
 
     video2 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[1], camnums[1])
     video2.videolbl.grid(row=14, column=0, rowspan=1, columnspan=1, pady=5, sticky=S)
     video2.videocvs.grid(row=15, column=0, rowspan=1, columnspan=1, sticky=N)
-    video2.multithreaded_capture(init_call=True, save_video=save_video) #Use for multi-threaded executions
+    video2.multithreaded_capture(init_call=True, save_video=save_video, save_path=save_path) #Use for multi-threaded executions
     # video2.update() #Use for single threaded executions
 
   def getSGoffsets (self, params):
@@ -52,7 +52,7 @@ class RawSignalAndShapeWindow(Frame):
     self.SGoffsets = q1.get()
     p1.join()
 
-  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True, data_saver=None):
+  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True, data_saver=None, save_duration=0):
     # Run capture data in background
     self.data_queue = Queue()
     if data_saver != None:
@@ -94,7 +94,7 @@ if __name__ == "__main__":
   plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1
   ys = np.zeros((17,int(visible_duration*params["sample_rate"]/downsample_mult)))
-  video_names = ("Side view of the outer MFC", "Side-view of wing fixture")
+  video_names = ("Side view of the outer MFC", "Side view of wing fixture")
   camnums = (1,0)
 
   #Define save parameters
