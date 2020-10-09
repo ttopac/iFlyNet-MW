@@ -3,9 +3,18 @@ import realtime_signal_shape_gui
 sys.path.append(os.path.abspath('./helpers'))
 import daq_savedata
 
-
 import numpy as np
 from tkinter import Tk
+
+class SaveVideoAndSignals():
+  def __init__ (self, ):
+    pass
+
+  def save_video (self):
+    pass
+
+  def save_signal (self):
+    pass
 
 if __name__ == "__main__":
   #Define show parameters
@@ -25,11 +34,15 @@ if __name__ == "__main__":
   
   #Start he GUI
   root = Tk()
-  root.title ("Real-time Raw Signal and Estimated Shape")
+  root.title ("Video previews")
 
-  app = realtime_signal_shape_gui.RawSignalAndShapeWindow(parent=root)
-  app.getSGoffsets(params)
-  app.draw_videos(video_names, camnums, save_video=True, save_path=save_path, save_duration=save_duration)
-  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False, data_saver=saver, save_duration=save_duration)
-  app.draw_MFCshapes(params, plot_refresh_rate)
-  root.mainloop()
+  #First display the videos for preview
+  preview = realtime_signal_shape_gui.RawSignalAndShapeWindow(parent=root)
+  preview.draw_videos(video_names, camnums)
+  input ("If happy with videos, press any key to continue...")
+  root.destroy()
+
+  #Capture the SG offsets
+  preview.getSGoffsets(params)
+  SGOffsets = preview.SGoffsets
+  print ("SG offsets are captured")
