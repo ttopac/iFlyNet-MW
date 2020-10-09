@@ -31,18 +31,22 @@ class RawSignalAndShapeWindow(Frame):
     for c in range(2):
       self.parent.columnconfigure(c, weight=1)
 
-  def draw_videos(self, video_names, camnums, save_video, save_path=None, save_duration=None):
-    video1 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[0], camnums[0], save_video=save_video, save_path=save_path, save_duration=save_duration)
+  def draw_videos(self, video_names, camnums):
+    video1 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[0], camnums[0])
     video1.videolbl.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=S)
     video1.videocvs.grid(row=2, column=0, rowspan=1, columnspan=1, sticky=N)
-    video1.multithreaded_capture(delay=33, init_call=True) #Use for multi-threaded executions
-    # video1.update() #Use for single threaded executions
+    self.video1 = video1
+    t1 = Thread(target=video1.multithreaded_capture, args=(33, True))
+    t1.start()
+    # video1.capture() #Use for single threaded executions
 
-    video2 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[1], camnums[1], save_video=save_video, save_path=save_path, save_duration=save_duration)
+    video2 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[1], camnums[1])
     video2.videolbl.grid(row=14, column=0, rowspan=1, columnspan=1, pady=5, sticky=S)
     video2.videocvs.grid(row=15, column=0, rowspan=1, columnspan=1, sticky=N)
-    video2.multithreaded_capture(delay=33, init_call=True) #Use for multi-threaded executions
-    # video2.update() #Use for single threaded executions
+    self.video2 = video2
+    t2 = Thread(target=video2.multithreaded_capture, args=(33, True))
+    t2.start()
+    # video2.capture() #Use for single threaded executions
 
   def getSGoffsets (self, params):
     #Capture SG offsets:
@@ -94,7 +98,7 @@ if __name__ == "__main__":
   plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1
   ys = np.zeros((17,int(visible_duration*params["sample_rate"]/downsample_mult)))
-  video_names = ("Side view of the outer MFC", "Side view of wing fixture")
+  video_titles = ("Side view of the outer MFC", "Side view of wing fixture")
   camnums = (1,0)
 
   #Define save parameters
@@ -106,7 +110,7 @@ if __name__ == "__main__":
 
   app = RawSignalAndShapeWindow(parent=root)
   app.getSGoffsets(params)
-  app.draw_videos(video_names, camnums, save_video=False)
+  app.draw_videos(video_titles, camnums)
   app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False, data_saver=None)
   app.draw_MFCshapes(params, plot_refresh_rate)
   root.mainloop()

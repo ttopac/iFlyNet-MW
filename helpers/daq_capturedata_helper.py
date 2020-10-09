@@ -5,6 +5,8 @@ from nidaqmx.constants import AcquisitionType
 from nidaqmx.constants import StrainGageBridgeType
 from nidaqmx import stream_readers
 import numpy as np
+sys.path.append(os.path.abspath('./fbf-realtime'))
+from realtime_signal_shape_gui_Wsave_data import save_signal_flag
 
 SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
@@ -44,6 +46,7 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     return read_data
 
 def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save_duration):
+  global save_signal_flag
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #0: PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #1: PZT_2
@@ -74,16 +77,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
     print ("FIX SGOFFSETS FOR DRAG!!!!!!")
     while True:
-      while queue.qsize() > 1: #This is here to keep up with delay in plotting.
-        try:  
-          a = queue.get_nowait()
-        except:
-          pass
-      reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
-      read_data[6:14,:] -= SGoffsets[0:8].reshape(8,-1) #Subtract the offset from SSN SGs to obtain zeros. CommSGs are already zeroed above with initial voltage.
-      read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
-      read_data[6:16,:] *= 1000000 #Convert all SGs to microstrains
-      if save_duration > 0:
+      if save_duration > 0 and save_signal_flag:
         try:
           all_data[:,datacounter*samples_to_read : (datacounter+1)*samples_to_read] = read_data
           if datacounter == 0: print ("First databatch recorded.")
@@ -91,7 +85,16 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save
         except: #we captured all the data we need
           queue.put_nowait(all_data)
           break
-
+      else:  
+        while queue.qsize() > 1: #This is here to keep up with delay in plotting (empty the extra elements in queue)
+          try:  
+            a = queue.get_nowait()
+          except:
+            pass
+      reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
+      read_data[6:14,:] -= SGoffsets[0:8].reshape(8,-1) #Subtract the offset from SSN SGs to obtain zeros. CommSGs are already zeroed above with initial voltage.
+      read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
+      read_data[6:16,:] *= 1000000 #Convert all SGs to microstrains
       queue.put_nowait(read_data)
 
 

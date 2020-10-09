@@ -23,6 +23,7 @@ class CaptureVideoWEndoscope:
     self.new_w = int(w/2)
     self.new_h = int(h/2)
     self.size = (self.new_w, self.new_h)
+    self.stopflag = False
 
   def show_video_standalone (self):
     while(True):
@@ -36,7 +37,7 @@ class CaptureVideoWEndoscope:
         if cv2.waitKey(1) & 0xFF == ord('q'):
           break
 
-  def get_frame_for_TK (self, multithreaded=False): #Multithreaded is recommended for more than 1 camera
+  def get_frames (self, multithreaded=False): #Multithreaded is recommended for more than 1 camera
     if multithreaded:
       while True:
         if self.cap.isOpened():
@@ -44,6 +45,8 @@ class CaptureVideoWEndoscope:
           if ret:
             resized = cv2.resize(frame, (self.new_w, self.new_h))
             self.viddeque.append(resized)
+        if self.stopflag:
+          break
 
     else:
       if self.cap.isOpened():
@@ -56,27 +59,53 @@ class CaptureVideoWEndoscope:
     if self.cap.isOpened():
       self.cap.release()
 
+class SaveVideoCapture():
+  def __init__(self, video_title, camnum, save_path, save_duration):
+    self.video_title = video_title
+    self.camnum = camnum
+    self.save_path = save_path
+    self.save_duration = save_duration
+    self.endo_video = CaptureVideoWEndoscope(self.camnum)
+  
+  def multithreaded_save(self, delay=1/30, init_call=False):
+    if init_call:
+      self.videocount = 0
+      self.thr = Thread(target=self.endo_video.get_frames, args=(True,))
+      self.thr.start()
+      self.video_writer = cv2.VideoWriter(self.save_path+self.video_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, self.endo_video.size)        
+      self.multithreaded_save(delay, False)
+    
+    while True:
+      try:
+        cv2image = self.endo_video.viddeque[-1]
+        self.video_writer.write(cv2image)
+        if self.videocount == 0: 
+          print("First frame recorded")
+        elif self.videocount == 30*self.save_duration:
+          self.video_writer.release()
+          print ("Video created.")
+          break
+        self.videocount += 1
+        time.sleep(delay)
+      except Exception:
+        pass
 
 class DrawTKVideoCapture(Frame):
-  def __init__(self, parent, window_title, camnum=0, save_video=False, save_path=None, save_duration=None):
+  def __init__(self, parent, window_title, camnum):
     Frame.__init__(self,parent)
     self.window_title = window_title
     self.camnum = camnum
     self.parent = parent
-    self.save_video = save_video
-    self.save_path = save_path
-    self.save_duration = save_duration
     self.endo_video = CaptureVideoWEndoscope(self.camnum)
-    # Create a canvas that can fit the above video source size
     self.videocvs = Canvas(self.parent, width=self.endo_video.new_w, height=self.endo_video.new_h)
     self.videolbl = Label(self.parent, text=window_title, font=("Helvetica", 18))
 
-  def update(self, delay=15):    
-      ret, frame = self.endo_video.get_frame_for_TK()
+  def capture(self, delay=15):    
+      ret, frame = self.endo_video.get_frames()
       if ret:
         self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
         self.videocvs.create_image(0,0,image = self.photo, anchor = tk.NW)
-      self.parent.after(delay, self.update, delay)
+      self.parent.after(delay, self.capture, delay)
 
   def place_on_grid (self, row, column, rowspan, columnspan):
     self.videocvs.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
@@ -85,31 +114,24 @@ class DrawTKVideoCapture(Frame):
   def multithreaded_capture(self, delay=33, init_call=False):
     if init_call:
       self.videocount = 0
-      thr = Thread(target=self.endo_video.get_frame_for_TK, args=(True,))
-      thr.start()
-      if self.save_video:
-        self.video_writer = cv2.VideoWriter(self.save_path+self.window_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, self.endo_video.size)        
-
+      self.thr = Thread(target=self.endo_video.get_frames, args=(True,))
+      self.thr.start()
+    
     try:
       cv2image = self.endo_video.viddeque[-1]
-      if self.save_video:
-        self.video_writer.write(cv2image)
-        if self.videocount == 0: print("First frame recorded")
+      tkimage = PIL.Image.fromarray(cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB))
+      self.photo = PIL.ImageTk.PhotoImage(tkimage)
+      if self.videocount == 0: 
+        self.video = self.videocvs.create_image(0, 0, image=self.photo, anchor=tk.NW)
       else:
-        tkimage = PIL.Image.fromarray(cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB))
-        self.photo = PIL.ImageTk.PhotoImage(tkimage)
-        if self.videocount == 0: self.video = self.videocvs.create_image(0, 0, image = self.photo, anchor = tk.NW)
         self.videocvs.itemconfig(self.video, image=self.photo)
-      if self.save_video and self.videocount==delay*self.save_duration:
-        self.video_writer.release()
-        print ("Video created.")
-        self.save_video = False
-        self.parent.after (delay, self.videocap_ended)
-      self.videocount += 1
-      self.parent.after (delay, self.multithreaded_capture, delay, False)
-    except Exception as inst:
-      print (inst)
-      self.parent.after (delay, self.multithreaded_capture, delay, False)
+      if self.endo_video.stopflag:
+        self.after (delay, self.videocap_ended)
+      else:
+        self.videocount += 1
+        self.after (delay, self.multithreaded_capture, delay, False)
+    except Exception:
+      self.after (delay, self.multithreaded_capture, delay, False)
 
   def videocap_ended(self):
     print ("Video capture ended.")
