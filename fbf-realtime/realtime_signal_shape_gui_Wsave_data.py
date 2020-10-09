@@ -67,10 +67,10 @@ if __name__ == "__main__":
   main = SaveVideoAndSignals(preview)
 
   #Display the videos for preview
-  # preview.getSGoffsets(params)
+  preview.getSGoffsets(params)
   preview.draw_videos(video_titles, camnums)
-  # preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False, data_saver=saver, save_duration=save_duration)
-  # preview.draw_MFCshapes(params, plot_refresh_rate)
+  preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False, data_saver=saver, save_duration=save_duration)
+  preview.draw_MFCshapes(params, plot_refresh_rate)
   main.skip_preview_button()
   root.mainloop()
   

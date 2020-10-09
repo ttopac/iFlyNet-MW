@@ -5,8 +5,9 @@ from nidaqmx.constants import AcquisitionType
 from nidaqmx.constants import StrainGageBridgeType
 from nidaqmx import stream_readers
 import numpy as np
+import sys, os
 sys.path.append(os.path.abspath('./fbf-realtime'))
-from realtime_signal_shape_gui_Wsave_data import save_signal_flag
+# from realtime_signal_shape_gui_Wsave_data import save_signal_flag
 
 SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
@@ -46,7 +47,7 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     return read_data
 
 def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save_duration):
-  global save_signal_flag
+  save_signal_flag = False
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #0: PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #1: PZT_2
