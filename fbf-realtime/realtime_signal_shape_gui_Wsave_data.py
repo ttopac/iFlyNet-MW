@@ -1,4 +1,5 @@
 import sys, os
+import time
 import realtime_signal_shape_gui
 sys.path.append(os.path.abspath('./helpers'))
 import daq_savedata
@@ -38,11 +39,13 @@ if __name__ == "__main__":
 
   #First display the videos for preview
   preview = realtime_signal_shape_gui.RawSignalAndShapeWindow(parent=root)
-  preview.draw_videos(video_names, camnums)
-  input ("If happy with videos, press any key to continue...")
+  preview.draw_videos(video_names, camnums, save_video=False)
+  time.sleep(1)
+  root.update()
+  input ("If happy with videos, press enter to continue...")
   root.destroy()
 
   #Capture the SG offsets
   preview.getSGoffsets(params)
   SGOffsets = preview.SGoffsets
-  print ("SG offsets are captured")
+  print ("SG offsets are captured.")
