@@ -31,17 +31,17 @@ class RawSignalAndShapeWindow(Frame):
     for c in range(2):
       self.parent.columnconfigure(c, weight=1)
 
-  def draw_videos(self, video_names, camnums, save_video, save_path=None):
-    video1 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[0], camnums[0])
+  def draw_videos(self, video_names, camnums, save_video, save_path=None, save_duration=None):
+    video1 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[0], camnums[0], save_video=save_video, save_path=save_path, save_duration=save_duration)
     video1.videolbl.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=S)
     video1.videocvs.grid(row=2, column=0, rowspan=1, columnspan=1, sticky=N)
-    video1.multithreaded_capture(init_call=True, save_video=save_video, save_path=save_path) #Use for multi-threaded executions
+    video1.multithreaded_capture(delay=33, init_call=True) #Use for multi-threaded executions
     # video1.update() #Use for single threaded executions
 
-    video2 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[1], camnums[1])
+    video2 = daq_capturevideo_helper.DrawTKVideoCapture(self.parent, video_names[1], camnums[1], save_video=save_video, save_path=save_path, save_duration=save_duration)
     video2.videolbl.grid(row=14, column=0, rowspan=1, columnspan=1, pady=5, sticky=S)
     video2.videocvs.grid(row=15, column=0, rowspan=1, columnspan=1, sticky=N)
-    video2.multithreaded_capture(init_call=True, save_video=save_video, save_path=save_path) #Use for multi-threaded executions
+    video2.multithreaded_capture(delay=33, init_call=True) #Use for multi-threaded executions
     # video2.update() #Use for single threaded executions
 
   def getSGoffsets (self, params):

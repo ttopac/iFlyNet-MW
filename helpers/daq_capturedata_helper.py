@@ -86,6 +86,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save
       if save_duration > 0:
         try:
           all_data[:,datacounter*samples_to_read : (datacounter+1)*samples_to_read] = read_data
+          if datacounter == 0: print ("First databatch recorded.")
           datacounter += 1
         except: #we captured all the data we need
           queue.put_nowait(all_data)
