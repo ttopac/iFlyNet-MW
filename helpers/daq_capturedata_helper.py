@@ -12,7 +12,6 @@ SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
-save_signal_flag = False
 
 def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
   with nidaqmx.Task() as task:
@@ -77,6 +76,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
     print ("FIX SGOFFSETS FOR DRAG!!!!!!")
     while True:
+      from realtime_signal_shape_gui_Wsave_data import save_signal_flag
       if save_duration > 0 and save_signal_flag:
         try:
           all_data[:,datacounter*samples_to_read : (datacounter+1)*samples_to_read] = read_data

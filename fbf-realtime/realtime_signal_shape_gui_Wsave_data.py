@@ -25,8 +25,9 @@ class SaveVideoAndSignals():
     button.grid(row=17, column=0, rowspan=1, columnspan=1, sticky=S)
 
   def skip_preview(self):
+    global save_signal_flag
     self.save_videos()
-    daq_capturedata_helper.save_signal_flag = True
+    save_signal_flag = True
 
   def save_videos (self):
     print ("Starting to save videos.")
