@@ -57,11 +57,11 @@ class RawSignalAndShapeWindow(Frame):
     self.SGoffsets = q1.get()
     p1.join()
 
-  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot, plot_compensated_strains=False):
+  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot, plot_compensated_strains=False, saveflag_queue=None, save_duration=0, saver=None):
     # Run capture data in background
     self.data_queue = Queue()
     self.saveflag_queue = Queue()
-    self.get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue))
+    self.get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue, saveflag_queue, save_duration, saver))
     self.get_data_proc.start()
     # Plot the data
     plot = plot_sensordata_helper.PlotSensorData(visible_duration, downsample_mult, params)

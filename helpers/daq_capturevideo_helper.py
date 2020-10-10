@@ -78,7 +78,7 @@ class SaveVideoCapture():
       try:
         cv2image = self.endo_video.viddeque[-1]
         sleepdur = delay - (time.time() - prevtime + writerdelay)
-        time.sleep (sleepdur)
+        time.sleep (abs(sleepdur))
         prevtime = time.time()
         self.video_writer.write(cv2image)
         if self.videocount == 0:

@@ -1,5 +1,7 @@
 import sys, os
 import time
+
+from numpy.lib.npyio import save
 import realtime_signal_shape_gui
 from tkinter import Tk, Frame, Button
 sys.path.append(os.path.abspath('./helpers'))
@@ -16,44 +18,53 @@ from multiprocessing import Process, Queue, Pipe
 save_signal_flag = False
 
 class SaveVideoAndSignals():
-  def __init__ (self, root, preview):
+  def __init__ (self, root, preview, params, save_duration, saveflag_queue, saver, preview_while_saving=False):
     self.root = root
     self.preview = preview
+    self.params = params
+    self.save_duration = save_duration
+    self.saveflag_queue = saveflag_queue
+    self.saver = saver
+    self.preview_while_saving = preview_while_saving
 
   def skip_preview_button(self):
     button = Button(self.preview, text = 'Happy with the previews? Continue...', command=self.skip_preview)
     button.grid(row=17, column=0, rowspan=1, columnspan=1, sticky=S)
 
   def skip_preview(self):
-    #Stop camera plotting and DAQ altogether.
-    self.preview.get_data_proc.terminate()
-    self.preview.video1.capture_stopflag = True
-    self.preview.video2.capture_stopflag = True
-    
-    #Restart stuff. First DAQ
-    parent_conn, child_conn = Pipe()
-    saveflag_queue = Queue()
-    p = Process(target = daq_capturedata_helper.send_data, args=(self.preview.SGoffsets, params["sample_rate"], int(params["sample_rate"]*save_duration), "fixedlen", child_conn, saveflag_queue))
-    p.start()
+    if self.preview_while_saving: #KEEP PREVIEW
+      self.saveflag_queue.put(True)
+      self.save_videos()
+      savetime = time.time()
 
-    #Then videos
-    while True: #Wait
-      if saveflag_queue.qsize() > 0:
-        _ = saveflag_queue.get()
-        saveflag_queue.put(True) #Start collecting data as soon as video recording starts.
-        break #Break when DAQ is ready to capture data 
-    self.save_videos()
+    else: #KILL PREVIEW
+      #Stop camera plotting and DAQ altogether.
+      self.preview.get_data_proc.terminate()
+      self.preview.video1.capture_stopflag = True
+      self.preview.video2.capture_stopflag = True
+      
+      #Restart stuff. First DAQ
+      parent_conn, child_conn = Pipe()
+      p = Process(target = daq_capturedata_helper.send_data, args=(self.preview.SGoffsets, self.params["sample_rate"], int(self.params["sample_rate"]*self.save_duration), "fixedlen", child_conn, self.saveflag_queue))
+      p.start()
 
-    #Save the data once we receive it.
-    read_data = parent_conn.recv()
-    p.join()
-    np.save(save_path+'test.npy',read_data)
-    
-    time.sleep(1) #Wait a little for video to finish.
-    print ("Done!")
-    self.preview.video1.endo_video.stopflag=True
-    self.preview.video2.endo_video.stopflag=True
-    self.root.destroy()
+      #Then videos
+      while True: #Wait
+        if self.saveflag_queue.qsize() > 0:
+          _ = self.saveflag_queue.get()
+          self.saveflag_queue.put(True) #Start collecting data as soon as video recording starts.
+          break #Break when DAQ is ready to capture data 
+      self.save_videos()
+
+      #Save the data once we receive it.
+      read_data = parent_conn.recv()
+      p.join()
+      self.saver.save_to_np(read_data)
+      
+      time.sleep(1) #Wait a little for video to finish.
+      self.preview.video1.endo_video.stopflag=True
+      self.preview.video2.endo_video.stopflag=True
+      self.root.destroy()
 
 
   def save_videos (self):
@@ -82,19 +93,26 @@ if __name__ == "__main__":
   save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline1_Oct6/'
   save_duration = 20 #seconds
   saver = daq_savedata.DataSaverToNP(save_path)
-  
+  saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
+  preview_while_saving = True #Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution.
+
   #Start he GUI
   root = Tk()
   root.title ("Video previews")
 
   #Define TK windows
   preview = realtime_signal_shape_gui.RawSignalAndShapeWindow(parent=root)
-  main = SaveVideoAndSignals(root, preview)
+  main = SaveVideoAndSignals(root, preview, params, save_duration, saveflag_queue, saver, preview_while_saving)
 
   #Display the videos for preview
   preview.getSGoffsets(params)
   preview.draw_videos(video_titles, camnums)
-  preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False)
+  if preview_while_saving:
+    preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False, saveflag_queue=saveflag_queue, save_duration=save_duration, saver=saver)
+  else:
+    preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False)
+  
+  #Save the data
   main.skip_preview_button()
   root.mainloop()
   

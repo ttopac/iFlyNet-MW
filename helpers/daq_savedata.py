@@ -6,3 +6,4 @@ class DataSaverToNP():
 
   def save_to_np(self, data):
     np.save(self.filename+"testNP.npy", data)
+    print ("Signal data saved.")
