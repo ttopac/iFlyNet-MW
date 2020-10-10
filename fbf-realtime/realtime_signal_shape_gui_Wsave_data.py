@@ -13,9 +13,11 @@ from tkinter import N, S, W, E
 from threading import Thread
 from multiprocessing import Process, Queue
 
+save_signal_flag = False
 
 class SaveVideoAndSignals():
-  def __init__ (self, preview):
+  def __init__ (self, root, preview):
+    self.root = root
     self.preview = preview
 
   def skip_preview_button(self):
@@ -23,23 +25,20 @@ class SaveVideoAndSignals():
     button.grid(row=17, column=0, rowspan=1, columnspan=1, sticky=S)
 
   def skip_preview(self):
-    self.preview.video1.endo_video.stopflag = True
-    self.preview.video2.endo_video.stopflag = True
     self.save_videos()
-    save_signal_flag = True
+    daq_capturedata_helper.save_signal_flag = True
 
   def save_videos (self):
     print ("Starting to save videos.")
     
-    video1 = daq_capturevideo_helper.SaveVideoCapture(video_titles[0], camnums[0], save_path, save_duration)
-    self.video1 = video1
-    t1 = Thread(target=video1.multithreaded_save, args=(33, True))    
-    video2 = daq_capturevideo_helper.SaveVideoCapture(video_titles[1], camnums[1], save_path, save_duration)
-    self.video2 = video2
-    t2 = Thread(target=video2.multithreaded_save, args=(33, True))
+    save1 = daq_capturevideo_helper.SaveVideoCapture(self.preview.video1.endo_video, video_titles[0], camnums[0], save_path, save_duration)
+    t1 = Thread(target=save1.multithreaded_save, args=(1/30, True))    
+    save2 = daq_capturevideo_helper.SaveVideoCapture(self.preview.video2.endo_video, video_titles[1], camnums[1], save_path, save_duration)
+    t2 = Thread(target=save2.multithreaded_save, args=(1/30, True))
     
     t1.start()
     t2.start()
+    
 
 if __name__ == "__main__":
   #Define show parameters
@@ -56,7 +55,6 @@ if __name__ == "__main__":
   save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline1_Oct6/'
   save_duration = 20 #seconds
   saver = daq_savedata.DataSaverToNP(save_path)
-  save_signal_flag = False
   
   #Start he GUI
   root = Tk()
@@ -64,13 +62,12 @@ if __name__ == "__main__":
 
   #Define TK windows
   preview = realtime_signal_shape_gui.RawSignalAndShapeWindow(parent=root)
-  main = SaveVideoAndSignals(preview)
+  main = SaveVideoAndSignals(root, preview)
 
   #Display the videos for preview
   preview.getSGoffsets(params)
   preview.draw_videos(video_titles, camnums)
-  preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=False, data_saver=saver, save_duration=save_duration)
-  preview.draw_MFCshapes(params, plot_refresh_rate)
+  preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True, data_saver=saver, save_duration=save_duration)
   main.skip_preview_button()
   root.mainloop()
   

@@ -7,12 +7,12 @@ from nidaqmx import stream_readers
 import numpy as np
 import sys, os
 sys.path.append(os.path.abspath('./fbf-realtime'))
-# from realtime_signal_shape_gui_Wsave_data import save_signal_flag
 
 SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
+save_signal_flag = False
 
 def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
   with nidaqmx.Task() as task:
@@ -47,7 +47,6 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     return read_data
 
 def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save_duration):
-  save_signal_flag = False
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #0: PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #1: PZT_2
@@ -96,6 +95,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save
       read_data[6:14,:] -= SGoffsets[0:8].reshape(8,-1) #Subtract the offset from SSN SGs to obtain zeros. CommSGs are already zeroed above with initial voltage.
       read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
       read_data[6:16,:] *= 1000000 #Convert all SGs to microstrains
+      print (save_signal_flag)
       queue.put_nowait(read_data)
 
 
