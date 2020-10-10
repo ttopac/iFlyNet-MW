@@ -6,14 +6,13 @@ from nidaqmx.constants import StrainGageBridgeType
 from nidaqmx import stream_readers
 import numpy as np
 import sys, os
-sys.path.append(os.path.abspath('./fbf-realtime')) 
 
 SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
 SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
 
-def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
+def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read, saveflag_conn):
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #0: PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #1: PZT_2
@@ -29,23 +28,34 @@ def capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod3/ai3") #11: SG_6
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai0") #12: SG_7
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #13: SG_9
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, initial_bridge_voltage=SGoffsets[8], nominal_gage_resistance=351.2) #Lift
-    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, initial_bridge_voltage=SGoffsets[9], nominal_gage_resistance=351.2) #Drag
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai0", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, initial_bridge_voltage=SGoffsets[8], nominal_gage_resistance=351.2) #Lift SGoffsets[8]
+    task.ai_channels.add_ai_strain_gage_chan("cDAQ1Mod8/ai2", strain_config=StrainGageBridgeType.QUARTER_BRIDGE_I, voltage_excit_val=3.3, initial_bridge_voltage=0.0, nominal_gage_resistance=351.2) #Drag SGoffsets[9]
     task.ai_channels.add_ai_rtd_chan("cDAQ1Mod7/ai0", rtd_type=nidaqmx.constants.RTDType.PT_3851, resistance_config=nidaqmx.constants.ResistanceConfiguration.FOUR_WIRE, current_excit_source=nidaqmx.constants.ExcitationSource.INTERNAL, current_excit_val=0.001, r_0=100)
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.FINITE, samps_per_chan=samples_to_read)
     
     read_data = np.zeros((17, samples_to_read))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
+    saveflag = True
+    saveflag_conn.put_nowait(saveflag)
+    print ("FIX SGOFFSETS FOR DRAG!!!!!!")
 
-    reader.read_many_sample(read_data, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
-    read_data[6:14,:] -= SGoffsets[0:8].reshape(SGoffsets[0:8].shape[0],-1) #Subtract the offset to obtain calibrated data
-    read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
-    read_data[6:16,:] *= 1000000 #Convert all SGs to microstrains
-    print ("DAQ sampling rate was: {}".format(task.timing.samp_clk_rate))
+    while True:
+      if saveflag_conn.qsize() >= 1:
+        saveflag = saveflag_conn.get()
+      if saveflag:
+        print ("Started capturing data")
+        reader.read_many_sample(read_data, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
+        read_data[6:14,:] -= SGoffsets[0:8].reshape(SGoffsets[0:8].shape[0],-1) #Subtract the offset to obtain calibrated data
+        read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
+        read_data[6:16,:] *= 1000000 #Convert all SGs to microstrains
+        print ("DAQ sampling rate was: {}".format(task.timing.samp_clk_rate))
+        break
+      else:
+        pass
     return read_data
 
-def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save_duration):
+def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue):
   with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai0") #0: PZT_1
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod1/ai1") #1: PZT_2
@@ -67,42 +77,28 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, queue, save
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.CONTINUOUS, samps_per_chan=samples_to_read*100)
 
     read_data = np.zeros((17, samples_to_read))
-    if save_duration > 0:
-      all_data = np.zeros((17, save_duration*sample_rate))
-      datacounter = 0
-
+   
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     print ("DAQ sampling rate will be: {}".format(task.timing.samp_clk_rate))
     print ("FIX SGOFFSETS FOR DRAG!!!!!!")
     while True:
-      from realtime_signal_shape_gui_Wsave_data import save_signal_flag
-      if save_duration > 0 and save_signal_flag:
-        try:
-          all_data[:,datacounter*samples_to_read : (datacounter+1)*samples_to_read] = read_data
-          if datacounter == 0: print ("First databatch recorded.")
-          datacounter += 1
-        except: #we captured all the data we need
-          queue.put_nowait(all_data)
-          break
-      else:  
-        while queue.qsize() > 1: #This is here to keep up with delay in plotting (empty the extra elements in queue)
-          try:  
-            a = queue.get_nowait()
-          except:
-            pass
+      while queue.qsize() > 1: #This is here to keep up with delay in plotting (empty the extra elements in queue)
+        try:  
+          a = queue.get_nowait()
+        except:
+          pass
       reader.read_many_sample(read_data, number_of_samples_per_channel=samples_to_read, timeout=nidaqmx.constants.WAIT_INFINITELY)
       read_data[6:14,:] -= SGoffsets[0:8].reshape(8,-1) #Subtract the offset from SSN SGs to obtain zeros. CommSGs are already zeroed above with initial voltage.
       read_data[6:14] = (4*read_data[6:14]/SGcoeffs["amplifier_coeff"]) / (2*read_data[6:14]/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
       read_data[6:16,:] *= 1000000 #Convert all SGs to microstrains
-      print (save_signal_flag)
       queue.put_nowait(read_data)
 
 
-def send_data(SGoffsets, sample_rate, samples_to_read, captype, child_conn=None, save_duration=0):
+def send_data(SGoffsets, sample_rate, samples_to_read, captype, data_conn=None, saveflag_conn=None):
   if captype == "fixedlen":
-    read_data = capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read)
-    child_conn.send(read_data)
-    child_conn.close()
+    read_data = capture_data_fixedlen(SGoffsets, sample_rate, samples_to_read, saveflag_conn)
+    data_conn.send(read_data)
+    data_conn.close()
   if captype == "continuous":
-    capture_data_continuous(SGoffsets, sample_rate, samples_to_read, child_conn, save_duration)
+    capture_data_continuous(SGoffsets, sample_rate, samples_to_read, data_conn)

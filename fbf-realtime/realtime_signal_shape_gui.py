@@ -57,21 +57,19 @@ class RawSignalAndShapeWindow(Frame):
     self.SGoffsets = q1.get()
     p1.join()
 
-  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True, data_saver=None, save_duration=0):
+  def plot_signals(self, ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot, plot_compensated_strains=False):
     # Run capture data in background
     self.data_queue = Queue()
-    if data_saver != None:
-      get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue, save_duration))
-    else:  
-      get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue))
-    get_data_proc.start()
+    self.saveflag_queue = Queue()
+    self.get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue))
+    self.get_data_proc.start()
     # Plot the data
     plot = plot_sensordata_helper.PlotSensorData(visible_duration, downsample_mult, params)
     plot.plot_raw_lines(realtime=True, plot_refresh_rate=plot_refresh_rate)
     plot.term_common_params(realtime=True)
     canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     canvas.get_tk_widget().grid(row=1, column=1, rowspan=13, columnspan=1)
-    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys, self.data_queue, plot_refresh_rate, plot_compensated_strains, onlyplot, data_saver), interval=plot_refresh_rate*1000, blit=True) #THIS DOESN'T REMOVE FROM DATA_QUEUE
+    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys, self.data_queue, plot_refresh_rate, plot_compensated_strains, onlyplot), interval=plot_refresh_rate*1000, blit=True) #THIS DOESN'T REMOVE FROM DATA_QUEUE
     self.update()
 
   def draw_MFCshapes(self, params, plot_refresh_rate):    
@@ -102,9 +100,6 @@ if __name__ == "__main__":
   video_titles = ("Side view of the outer MFC", "Side view of wing fixture")
   camnums = (1,0)
 
-  #Define save parameters
-  save_duration = 0 #seconds
-
   #Start the GUI  
   root = Tk()
   root.title ("Real-time Raw Signal and Estimated Shape")
@@ -112,6 +107,6 @@ if __name__ == "__main__":
   app = RawSignalAndShapeWindow(parent=root)
   app.getSGoffsets(params)
   app.draw_videos(video_titles, camnums)
-  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True, data_saver=None)
+  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False)
   # app.draw_MFCshapes(params, plot_refresh_rate) #MFCshapes is temporarily not working (slowing down the system very significantly)
   root.mainloop()

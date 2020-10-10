@@ -11,7 +11,7 @@ import numpy as np
 from tkinter import Tk
 from tkinter import N, S, W, E
 from threading import Thread
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pipe
 
 save_signal_flag = False
 
@@ -25,13 +25,39 @@ class SaveVideoAndSignals():
     button.grid(row=17, column=0, rowspan=1, columnspan=1, sticky=S)
 
   def skip_preview(self):
-    global save_signal_flag
+    #Stop camera plotting and DAQ altogether.
+    self.preview.get_data_proc.terminate()
+    self.preview.video1.capture_stopflag = True
+    self.preview.video2.capture_stopflag = True
+    
+    #Restart stuff. First DAQ
+    parent_conn, child_conn = Pipe()
+    saveflag_queue = Queue()
+    p = Process(target = daq_capturedata_helper.send_data, args=(self.preview.SGoffsets, params["sample_rate"], int(params["sample_rate"]*save_duration), "fixedlen", child_conn, saveflag_queue))
+    p.start()
+
+    #Then videos
+    while True: #Wait
+      if saveflag_queue.qsize() > 0:
+        _ = saveflag_queue.get()
+        saveflag_queue.put(True) #Start collecting data as soon as video recording starts.
+        break #Break when DAQ is ready to capture data 
     self.save_videos()
-    save_signal_flag = True
+
+    #Save the data once we receive it.
+    read_data = parent_conn.recv()
+    p.join()
+    np.save(save_path+'test.npy',read_data)
+    
+    time.sleep(2) #Wait a couple of seconds for video to finish
+    print ("Done!")
+    self.preview.video1.endo_video.stopflag=True
+    self.preview.video2.endo_video.stopflag=True
+    self.root.destroy()
+
 
   def save_videos (self):
     print ("Starting to save videos.")
-    
     save1 = daq_capturevideo_helper.SaveVideoCapture(self.preview.video1.endo_video, video_titles[0], camnums[0], save_path, save_duration)
     t1 = Thread(target=save1.multithreaded_save, args=(1/30, True))    
     save2 = daq_capturevideo_helper.SaveVideoCapture(self.preview.video2.endo_video, video_titles[1], camnums[1], save_path, save_duration)
@@ -68,8 +94,8 @@ if __name__ == "__main__":
   #Display the videos for preview
   preview.getSGoffsets(params)
   preview.draw_videos(video_titles, camnums)
-  preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, plot_compensated_strains=False, onlyplot=True, data_saver=saver, save_duration=save_duration)
+  preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False)
   main.skip_preview_button()
   root.mainloop()
   
-  print ("End")
+  print ("End!")

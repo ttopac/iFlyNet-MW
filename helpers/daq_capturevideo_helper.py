@@ -70,21 +70,28 @@ class SaveVideoCapture():
   def multithreaded_save(self, delay=1/30, init_call=False):
     if init_call:
       self.videocount = 0
-      self.video_writer = cv2.VideoWriter(self.save_path+self.video_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), 0, self.endo_video.size)        
+      self.video_writer = cv2.VideoWriter(self.save_path+self.video_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), int(1/delay), self.endo_video.size)        
       starttime = time.time()
+      prevtime = starttime
+      writerdelay = 0
     while True:
       try:
         cv2image = self.endo_video.viddeque[-1]
+        sleepdur = delay - (time.time() - prevtime + writerdelay)
+        time.sleep (sleepdur)
+        prevtime = time.time()
         self.video_writer.write(cv2image)
-        if self.videocount == 0: 
+        if self.videocount == 0:
+          writerdelay=time.time() - prevtime
           print("First frame recorded.")
+          print ("Writer takes "+ str(writerdelay) +" seconds")
         elif time.time()-starttime > self.save_duration:
           self.video_writer.release()
           print ("Video created.")
-          print ("!!!Add functionality to change duration of video to what we want!!!")
           break
         self.videocount += 1
-      except Exception:
+      except Exception as inst:
+        print (inst)
         pass
 
 class DrawTKVideoCapture(Frame):
@@ -129,8 +136,6 @@ class DrawTKVideoCapture(Frame):
         self.videocount += 1
         self.after (delay, self.multithreaded_capture, delay, False)
     except Exception:
-      # time.sleep(20)
-      # self.after (delay, self.multithreaded_capture, delay, False)
       result = None
       while result is None:
         try:
@@ -141,6 +146,7 @@ class DrawTKVideoCapture(Frame):
 
   def videocap_ended(self):
     print ("Video capture ended.")
+    self.parent.destroy()
 
 if __name__ == "__main__":
   aoavideo = CaptureVideoWEndoscope(0)
