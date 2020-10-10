@@ -6,7 +6,7 @@ from nidaqmx.constants import StrainGageBridgeType
 from nidaqmx import stream_readers
 import numpy as np
 import sys, os
-sys.path.append(os.path.abspath('./fbf-realtime'))
+sys.path.append(os.path.abspath('./fbf-realtime')) 
 
 SGcoeffs = dict()
 SGcoeffs["amplifier_coeff"] = 100
