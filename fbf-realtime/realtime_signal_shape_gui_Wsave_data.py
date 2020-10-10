@@ -49,7 +49,7 @@ class SaveVideoAndSignals():
     p.join()
     np.save(save_path+'test.npy',read_data)
     
-    time.sleep(2) #Wait a couple of seconds for video to finish
+    time.sleep(1) #Wait a little for video to finish.
     print ("Done!")
     self.preview.video1.endo_video.stopflag=True
     self.preview.video2.endo_video.stopflag=True

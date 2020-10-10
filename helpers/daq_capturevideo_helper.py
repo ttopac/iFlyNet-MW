@@ -70,7 +70,7 @@ class SaveVideoCapture():
   def multithreaded_save(self, delay=1/30, init_call=False):
     if init_call:
       self.videocount = 0
-      self.video_writer = cv2.VideoWriter(self.save_path+self.video_title+'.avi', cv2.VideoWriter_fourcc(*'XVID'), int(1/delay), self.endo_video.size)        
+      self.video_writer = cv2.VideoWriter(self.save_path+self.video_title+'.mp4', cv2.VideoWriter_fourcc(*'mp4v'), int(1/delay), self.endo_video.size)        
       starttime = time.time()
       prevtime = starttime
       writerdelay = 0
