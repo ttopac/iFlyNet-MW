@@ -94,7 +94,7 @@ if __name__ == "__main__":
   save_duration = 20 #seconds
   saver = daq_savedata.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
-  preview_while_saving = True #Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution.
+  preview_while_saving = True #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution.
 
   #Start he GUI
   root = Tk()
