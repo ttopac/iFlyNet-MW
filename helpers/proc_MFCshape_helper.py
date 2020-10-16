@@ -21,8 +21,9 @@ class CalcMFCShape():
     self.plot_refresh_rate = plot_refresh_rate
     # Wing shape estimation constants
     self.ZTOP = 0.59531  # half of thickness (mm)
-    self.XVAL = np.arange(100)  # (chord) continuous x from 0 to 100 mm
-    self.YVAL = np.arange(304)  # (span) continuous y from 0 to 304 mm
+    DOWNSCALE_FACTOR = 4
+    self.XVAL = np.arange(0,100,DOWNSCALE_FACTOR)  # (chord) continuous x from 0 to 100 mm
+    self.YVAL = np.arange(0,304,DOWNSCALE_FACTOR)  # (span) continuous y from 0 to 304 mm
     self.X1LOC = np.asarray([15, 75]) #Middle 45 is missing because SG5 is not working.
     self.X2LOC = np.asarray([15, 75]) #Middle 45 is missing because SG8 is not working.
     self.YLOC = np.asarray([0, 126.6, 258.6])

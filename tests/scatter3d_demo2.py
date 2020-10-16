@@ -1,35 +1,42 @@
-'''
-==============
-3D scatterplot
-==============
-
-Demonstration of a basic scatterplot in 3D.
-'''
-
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-def randrange(n, vmin, vmax):
-    '''
-    Helper function to make an array of random numbers having shape (n, )
-    with each number distributed Uniform(vmin, vmax).
-    '''
-    return (vmax - vmin)*np.random.rand(n) + vmin
+from matplotlib.animation import FuncAnimation
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-
-XVAL = np.arange(100)
-YVAL = np.arange(304)
+XVAL = np.arange(0,100,4)
+YVAL = np.arange(0,304,4)
 xgrid, ygrid = np.meshgrid(XVAL, YVAL)
+zgrid = np.zeros((xgrid.shape[0], xgrid.shape[1])) #76,25
 
-for c, m, zlow, zhigh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
-    myplot = ax.scatter(xgrid, ygrid, np.zeros((xgrid.shape[0], xgrid.shape[1])))
+myplot = ax.plot_surface(xgrid, ygrid, zgrid)
+initvec = myplot._vec
 
-ax.set_xlabel('X Label')
-ax.set_ylabel('Y Label')
-ax.set_zlabel('Z Label')
+def randinc(zgrid):
+  '''
+  Helper function to randomly increase (37,17) portion of the surface (about half)
+  '''
+  randarr = np.random.rand(37,17)
+  zgrid[0:37, 0:17] += randarr
+  return zgrid
 
+# def plot_init():
+#   myplot.set_verts(np.ones((xgrid.shape[0], xgrid.shape[1])).flatten(), '-z')
+#   return myplot,
+
+def plot_live(i, zgrid):
+  newzgrid = randinc(zgrid)
+  # myplot.set_verts((xgrid, ygrid, newzgrid.T.flatten()))
+  myplot.set_verts(((initvec+i/100)[0:3].T))
+  myplot.do_3d_projection(fig._cachedRenderer)
+  print (myplot._vec[0][0])
+  return myplot,
+
+
+ani = FuncAnimation(fig, plot_live, fargs=(zgrid,), interval=0.5*1000, blit=True)
+
+ax.set_xlabel('chord')
+ax.set_ylabel('span')
+ax.set_zlabel('deflection')
 plt.show()
