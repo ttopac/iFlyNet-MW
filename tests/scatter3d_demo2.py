@@ -5,8 +5,8 @@ from matplotlib.animation import FuncAnimation
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-XVAL = np.arange(0,100,4)
-YVAL = np.arange(0,304,4)
+XVAL = np.arange(0,8,4) #100
+YVAL = np.arange(0,12,4) #304
 xgrid, ygrid = np.meshgrid(XVAL, YVAL)
 zgrid = np.zeros((xgrid.shape[0], xgrid.shape[1])) #76,25
 
