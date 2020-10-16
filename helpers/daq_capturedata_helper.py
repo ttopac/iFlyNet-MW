@@ -88,7 +88,7 @@ def capture_data_continuous(SGoffsets, sample_rate, samples_to_read, data_queue,
     print ("FIX SGOFFSETS FOR DRAG!!!!!!")   
     
     while True:
-      if saveflag_queue.qsize() > 0:
+      if save_duration>0 and saveflag_queue.qsize() > 0:
         saveflag = saveflag_queue.get()
       if save_duration > 0 and saveflag:
         try:
