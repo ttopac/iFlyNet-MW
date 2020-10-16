@@ -1,4 +1,3 @@
-from tests.scatter3d_demo2 import XVAL
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -37,20 +36,21 @@ class PlotMFCShape:
     # self.ax.auto_scale_xyz([0, 300], [0, 300], [-2, 2])
 
   def gen_vertices(self, Z):
-    rows, cols = Z.shape
+    Xn,Yn,Zn = np.broadcast_arrays(self.xgrid, self.ygrid, Z)
+    rows, cols = (Zn).shape
     stride=4 #This should be same as the downsampling number in proc_MFC_helper
+    # row_inds = list(range(0, self.XVAL[-1]+stride-1, stride)) + [self.XVAL[-1]+stride]
+    # col_inds = list(range(0, self.YVAL[-1]+stride-1, stride)) + [self.YVAL[-1]+stride]
     row_inds = list(range(0, rows-1, stride)) + [rows-1]
     col_inds = list(range(0, cols-1, stride)) + [cols-1]
 
     polys = []
     for rs, rs_next in zip(row_inds[:-1], row_inds[1:]):
       for cs, cs_next in zip(col_inds[:-1], col_inds[1:]):
-        ps = [
-          cbook._array_perimeter(a[rs:rs_next+1, cs:cs_next+1])
-          for a in (self.xgrid, self.ygrid, Z)
-        ]
+        ps = [cbook._array_perimeter(a[rs:rs_next+1, cs:cs_next+1]) for a in (self.xgrid, self.ygrid, Z)]
         ps = np.array(ps).T
         polys.append(ps)
+    print ("All appended")
     return polys
 
 
@@ -77,7 +77,7 @@ class PlotMFCShape:
         pass
     try:
       read_shape = queue.get()
-      new_verts = self.gen_vertices(read_shape)
+      new_verts = self.gen_vertices(read_shape.T)
       self.mysurf.set_verts(new_verts)
       self.mysurf.do_3d_projection(self.fig._cachedRenderer)
       # self.mysurf.remove()
