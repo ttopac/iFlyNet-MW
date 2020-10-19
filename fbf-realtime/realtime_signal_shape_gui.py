@@ -48,6 +48,7 @@ class RawSignalAndShapeWindow(Frame):
 
     self.t1.start()
     self.t2.start()
+    self.update()
 
   def getSGoffsets (self, params):
     #Capture SG offsets:
@@ -94,7 +95,7 @@ if __name__ == "__main__":
   params = dict()
   params["sample_rate"] = 1700 #NI uses sample rate values around this, not exactly this.
   visible_duration = 30 #seconds
-  plot_refresh_rate = 0.2 #seconds
+  plot_refresh_rate = 0.05 #seconds
   downsample_mult = 1
   ys = np.zeros((17,int(visible_duration*params["sample_rate"]/downsample_mult)))
   video_titles = ("Side view of the outer MFC", "Side view of wing fixture")
@@ -107,6 +108,8 @@ if __name__ == "__main__":
   app = RawSignalAndShapeWindow(parent=root)
   app.getSGoffsets(params)
   app.draw_videos(video_titles, camnums)
-  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False)
-  app.draw_MFCshapes(params, plot_refresh_rate) #MFCshapes is temporarily not working (slowing down the system very significantly)
+  time.sleep(1)
+  app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False, plot_compensated_strains=False)
+  time.sleep(1)
+  app.draw_MFCshapes(params, plot_refresh_rate)
   root.mainloop()
