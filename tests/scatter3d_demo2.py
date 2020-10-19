@@ -26,7 +26,7 @@ def randinc(zgrid):
 #   return myplot,
 
 def plot_live(i, zgrid):
-  newzgrid = randinc(zgrid)
+  # newzgrid = randinc(zgrid)
   # myplot.set_verts((xgrid, ygrid, newzgrid.T.flatten()))
   myplot.set_verts(((initvec+i/100)[0:3].T))
   myplot.do_3d_projection(fig._cachedRenderer)

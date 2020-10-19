@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -37,26 +38,24 @@ class PlotMFCShape:
 
   def gen_vertices(self, Z):
     Xn,Yn,Zn = np.broadcast_arrays(self.xgrid, self.ygrid, Z)
-    rows, cols = (Zn).shape
-    stride=4 #This should be same as the downsampling number in proc_MFC_helper
-    # row_inds = list(range(0, self.XVAL[-1]+stride-1, stride)) + [self.XVAL[-1]+stride]
-    # col_inds = list(range(0, self.YVAL[-1]+stride-1, stride)) + [self.YVAL[-1]+stride]
+    rows, cols = Zn.shape
+    stride=1 #This should be same as the downsampling number in proc_MFC_helper
     row_inds = list(range(0, rows-1, stride)) + [rows-1]
     col_inds = list(range(0, cols-1, stride)) + [cols-1]
 
     polys = []
     for rs, rs_next in zip(row_inds[:-1], row_inds[1:]):
       for cs, cs_next in zip(col_inds[:-1], col_inds[1:]):
-        ps = [cbook._array_perimeter(a[rs:rs_next+1, cs:cs_next+1]) for a in (self.xgrid, self.ygrid, Z)]
+        ps = [cbook._array_perimeter(a[rs:rs_next+1, cs:cs_next+1]) for a in (Xn, Yn, Zn)]
         ps = np.array(ps).T
         polys.append(ps)
-    print ("All appended")
-    return polys
+    npolys = np.asarray(polys).reshape(-1,3)
+    return npolys
 
 
   def plot_twod_contour(self):
-    self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])))
-    self.initvec = self.mysurf._vec
+    self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])), rstride=1, cstride=1)
+    # self.mysurf.do_3d_projection(self.fig._cachedRenderer)
     # self.fig.colorbar(self.mysurf, shrink=0.5, aspect=5)
 
     # Create fake bounding box for scaling
@@ -76,12 +75,17 @@ class PlotMFCShape:
       except:
         pass
     try:
+      t1 = time.time()
       read_shape = queue.get()
-      new_verts = self.gen_vertices(read_shape.T)
-      self.mysurf.set_verts(new_verts)
-      self.mysurf.do_3d_projection(self.fig._cachedRenderer)
-      # self.mysurf.remove()
-      # self.mysurf, = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
+      #FOR BLIT=TRUE
+      #new_verts = self.gen_vertices(read_shape.T) #new_verts:(7600,3)
+      #self.mysurf.set_verts(new_verts)
+      #self.mysurf.do_3d_projection(self.fig._cachedRenderer)
+
+      #FOR BLIT=FALSE
+      self.mysurf.remove()
+      self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, rstride=1, cstride=1) #, cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
+      print ("Elapsed time: {}".format(time.time() - t1))
     except:
       pass  
     return (self.mysurf,)

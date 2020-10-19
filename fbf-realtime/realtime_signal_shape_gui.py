@@ -85,7 +85,7 @@ class RawSignalAndShapeWindow(Frame):
     mfc_lbl.grid(row=14, column=1, rowspan=1, columnspan=1, pady=5, sticky=S)
     mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     mfc_canvas.get_tk_widget().grid(row=15, column=1, rowspan=1, columnspan=1, sticky=N)
-    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue,), interval=plot_refresh_rate*1000, blit=True)
+    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue,), interval=plot_refresh_rate*1000, blit=False)
     self.update()
 
 
