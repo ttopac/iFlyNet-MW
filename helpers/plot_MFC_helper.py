@@ -20,19 +20,7 @@ class PlotMFCShape:
     self.XVAL = XVAL
     self.YVAL = YVAL
     self.fig = plt.figure(figsize=(4.75, 3.25)) #(width, height)
-    #plt.subplots_adjust(left=0, bottom=0, right=0.85, top=1.13, wspace=0, hspace=0)
-
-    self.ax = self.fig.add_subplot(111)
     self.xgrid, self.ygrid = np.meshgrid(XVAL, YVAL)
-    
-    self.ax.set_xlabel('Chord (x)', labelpad=0, fontsize=12)
-    self.ax.set_ylabel('Span (y)', labelpad=0, fontsize=12)
-    self.ax.set_xticklabels([])
-    self.ax.set_yticklabels([])
-    self.ax.tick_params(labelsize="small")
-
-    self.ax.set_xlim(-400, 150)
-    self.ax.set_ylim(-100, 450)
     self.levels = MaxNLocator(nbins=15).tick_values(-3,3)
 
   
@@ -61,11 +49,19 @@ class PlotMFCShape:
 
 
   def plot_3D_surface(self):
+    plt.subplots_adjust(left=0, bottom=0, right=1.02, top=1.02, wspace=0, hspace=0)
     self.ax = plt.subplot(111, projection='3d')
-    self.ax.set_zlabel('3D displacement (mm)', labelpad=4, fontsize=11)
-    self.ax.set_zlim(-2, 2)
-    self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])))
-    self.fig.colorbar(self.mysurf, shrink=0.6, aspect=10)
+    self.ax.set_xlabel('chord (x)', labelpad=-12, fontsize=11)
+    self.ax.set_ylabel('span (y)', labelpad=-12, fontsize=11)
+    self.ax.set_zlim(-3, 3)
+    self.ax.set_xticklabels([])
+    self.ax.set_yticklabels([])
+    self.ax.set_zticklabels([])
+    self.ax.tick_params(labelsize="small")
+    self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])), cmap=cm.coolwarm, shade=True, vmin=-3, vmax=3, linewidth=0)
+    colorbar = self.fig.colorbar(self.mysurf, shrink=0.6, aspect=10)
+    colorbar.set_label("Displacement (mm)", fontsize=12)
+    colorbar.ax.tick_params(labelsize="x-small")
     
     # Create fake bounding box for scaling
     minz, maxz = -3, 3 #mm
@@ -85,12 +81,23 @@ class PlotMFCShape:
     self.xrootgrid, self.yrootgrid = np.meshgrid(XVALROOT, YVALROOT)
     self.xlegrid, self.ylegrid = np.meshgrid(XVALLE, YVALLE)
 
+    self.ax = plt.subplot(111)
+    self.ax.set_xlabel('Chord (x)', labelpad=0, fontsize=12)
+    self.ax.set_ylabel('Span (y)', labelpad=0, fontsize=12)
+    self.ax.set_xticklabels([])
+    self.ax.set_yticklabels([])
+    self.ax.set_aspect('equal')
+    self.ax.set_xlim(-250, 150)
+    self.ax.set_ylim(-125, 350)
+    self.ax.tick_params(labelsize="small")
+
     self.mysurf = [self.ax.contourf (self.xgrid, self.ygrid, np.random.rand(self.xgrid.shape[0], self.xgrid.shape[1]), levels=self.levels, cmap=cm.coolwarm)]
     self.mysurf.append(self.ax.contourf (self.xrootgrid, self.yrootgrid, np.zeros_like(self.xrootgrid), levels=self.levels, cmap=cm.coolwarm))
     self.mysurf.append(self.ax.contourf (self.xlegrid, self.ylegrid, np.zeros_like(self.xlegrid), levels=self.levels, cmap=cm.coolwarm))
     colorbar = self.fig.colorbar(self.mysurf[0], shrink=0.6, aspect=10)
-    colorbar.set_label("Displacement (mm)")
-    self.ax.set_aspect('equal')
+    colorbar.set_label("Displacement (mm)", fontsize=12)
+    colorbar.ax.tick_params(labelsize="x-small")
+
 
 
   def plot_live(self, i, queue, plot_type, blit):
@@ -104,7 +111,7 @@ class PlotMFCShape:
       read_shape = queue.get()
       
       if plot_type == "contour":
-        if blit == "True":
+        if blit == True:
           for tp in self.mysurf[0].collections:
             tp.remove()
           self.mysurf[0] = self.ax.contourf (self.xgrid, self.ygrid, read_shape.T, levels=self.levels, cmap=cm.coolwarm)
@@ -115,7 +122,7 @@ class PlotMFCShape:
 
       elif plot_type == "surface": #Assume blit=False
         self.mysurf.remove()
-        self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
+        self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, cmap=cm.coolwarm, shade=True, vmin=-3, vmax=3, linewidth=0)
     except:
       pass  
 

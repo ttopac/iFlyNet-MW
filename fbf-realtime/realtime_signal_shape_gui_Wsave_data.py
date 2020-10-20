@@ -28,7 +28,7 @@ class SaveVideoAndSignals():
     self.preview_while_saving = preview_while_saving
 
   def skip_preview_button(self):
-    button = Button(self.preview, text = 'Happy with the previews? Continue...', command=self.skip_preview)
+    button = Button(self.preview, text = 'Happy with the previews? Continue with save...', command=self.skip_preview)
     button.grid(row=17, column=0, rowspan=1, columnspan=1, sticky=S)
 
   def skip_preview(self):
@@ -40,6 +40,7 @@ class SaveVideoAndSignals():
     else: #KILL PREVIEW
       #Stop camera plotting and DAQ altogether.
       self.preview.get_data_proc.terminate()
+      self.preview.draw_MFC_proc.terminate()
       self.preview.video1.capture_stopflag = True
       self.preview.video2.capture_stopflag = True
       
@@ -86,7 +87,7 @@ if __name__ == "__main__":
   plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1
   ys = np.zeros((17,int(visible_duration*params["sample_rate"]/downsample_mult)))
-  video_titles = ("Side view of the outer MFC", "Side view of wing fixture")
+  video_titles = ("Side view of the outer MFC", "Side view of the wing fixture")
   camnums = (0,1)
 
   #Define save parameters
@@ -94,8 +95,7 @@ if __name__ == "__main__":
   save_duration = 20 #seconds
   saver = daq_savedata.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
-  preview_while_saving = True #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution.
-
+  preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!
   #Start he GUI
   root = Tk()
   root.title ("Video previews")
@@ -104,14 +104,16 @@ if __name__ == "__main__":
   preview = realtime_signal_shape_gui.RawSignalAndShapeWindow(parent=root)
   main = SaveVideoAndSignals(root, preview, params, save_duration, saveflag_queue, saver, preview_while_saving)
 
-  #Display the videos for preview
+  #Display the videos and wing shape for preview
   preview.getSGoffsets(params)
   preview.draw_videos(video_titles, camnums)
   if preview_while_saving:
-    preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False, saveflag_queue=saveflag_queue, save_duration=save_duration, saver=saver)
+    preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False, plot_compensated_strains=False, saveflag_queue=saveflag_queue, save_duration=save_duration, saver=saver)
+    preview.draw_MFCshapes(plot_refresh_rate, 'contour', True)
   else:
-    preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=True, plot_compensated_strains=False)
-  
+    preview.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False, plot_compensated_strains=False)
+    preview.draw_MFCshapes(plot_refresh_rate, 'contour', True)
+
   #Save the data
   main.skip_preview_button()
   root.mainloop()

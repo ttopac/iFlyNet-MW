@@ -76,17 +76,17 @@ class RawSignalAndShapeWindow(Frame):
 
   def draw_MFCshapes(self, plot_refresh_rate, plot_type, blit):    
     mfc_shape = proc_MFCshape_helper.CalcMFCShape(plot_refresh_rate)
-    shape_queue = Queue()
-    p2 = Process(target = mfc_shape.supply_data, args=(shape_queue, self.data_queue, False)) #THIS REMOVES FROM DATA_QUEUE
-    p2.start()
+    self.shape_queue = Queue()
+    self.draw_MFC_proc = Process(target = mfc_shape.supply_data, args=(self.shape_queue, self.data_queue, False)) #THIS REMOVES FROM DATA_QUEUE
+    self.draw_MFC_proc.start()
 
     plot = plot_MFC_helper.PlotMFCShape(plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL)
     plot.init_plot(plot_type)
     mfc_lbl = Label(self.parent, text="Shape of morphing trailing edge section", font=("Helvetica", 16))
-    mfc_lbl.grid(row=14, column=1, rowspan=1, columnspan=1, pady=5, sticky=S)
+    mfc_lbl.grid(row=14, column=1, rowspan=1, columnspan=1, sticky=S)
     mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     mfc_canvas.get_tk_widget().grid(row=15, column=1, rowspan=1, columnspan=1, sticky=N)
-    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue, plot_type, blit), interval=plot_refresh_rate*1000, blit=blit)
+    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(self.shape_queue, plot_type, blit), interval=plot_refresh_rate*1000, blit=blit)
     self.update()
 
 
@@ -95,10 +95,10 @@ if __name__ == "__main__":
   params = dict()
   params["sample_rate"] = 1700 #NI uses sample rate values around this, not exactly this.
   visible_duration = 30 #seconds
-  plot_refresh_rate = 0.1 #seconds
+  plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1
   ys = np.zeros((17,int(visible_duration*params["sample_rate"]/downsample_mult)))
-  video_titles = ("Side view of the outer MFC", "Side view of wing fixture")
+  video_titles = ("Side view of the outer MFC", "Side view of the wing fixture")
   camnums = (1,0)
 
   #Start the GUI  
@@ -109,5 +109,5 @@ if __name__ == "__main__":
   app.getSGoffsets(params)
   app.draw_videos(video_titles, camnums)
   app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False, plot_compensated_strains=False)
-  app.draw_MFCshapes(plot_refresh_rate, "contour", True)
+  app.draw_MFCshapes(plot_refresh_rate, "surface", False)
   root.mainloop()
