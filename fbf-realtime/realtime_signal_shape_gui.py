@@ -95,7 +95,7 @@ if __name__ == "__main__":
   params = dict()
   params["sample_rate"] = 1700 #NI uses sample rate values around this, not exactly this.
   visible_duration = 30 #seconds
-  plot_refresh_rate = 0.05 #seconds
+  plot_refresh_rate = 0.1 #seconds
   downsample_mult = 1
   ys = np.zeros((17,int(visible_duration*params["sample_rate"]/downsample_mult)))
   video_titles = ("Side view of the outer MFC", "Side view of wing fixture")

@@ -1,11 +1,11 @@
 import time
-import types
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 import sys, os
 from matplotlib import cm
+from matplotlib.ticker import MaxNLocator
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 sys.path.append(os.path.abspath('./helpers'))
@@ -20,28 +20,27 @@ class PlotMFCShape:
     self.plot_refresh_rate = plot_refresh_rate
     self.XVAL = XVAL
     self.YVAL = YVAL
-    self.fig = plt.figure(figsize=(3.75, 3.75))
-    plt.subplots_adjust(left=0, bottom=0, right=0.85, top=1.13, wspace=0, hspace=0)
+    self.fig = plt.figure(figsize=(4.75, 3.25)) #(width, height)
+    #plt.subplots_adjust(left=0, bottom=0, right=0.85, top=1.13, wspace=0, hspace=0)
 
     #self.ax = self.fig.add_subplot(111, projection='3d')
     self.ax = self.fig.add_subplot(111)
     self.xgrid, self.ygrid = np.meshgrid(XVAL, YVAL)
     
-    self.ax.set_xlabel('chord (x)', labelpad=-12, fontsize=11)
-    self.ax.set_ylabel('span (y)', labelpad=-12, fontsize=11)
+    self.ax.set_xlabel('Chord (x)', labelpad=0, fontsize=12)
+    self.ax.set_ylabel('Span (y)', labelpad=0, fontsize=12)
     #self.ax.set_zlabel('3D displacement (mm)', labelpad=4, fontsize=11)
     self.ax.set_xticklabels([])
     self.ax.set_yticklabels([])
     self.ax.tick_params(labelsize="small")
-    # self.ax.view_init(azim=0, elev=90)
 
+    self.ax.set_xlim(-400, 150)
+    self.ax.set_ylim(-100, 450)
     #self.ax.set_zlim(-2, 2)
-    # self.ax.auto_scale_xyz([0, 300], [0, 300], [-2, 2])
+    self.levels = MaxNLocator(nbins=15).tick_values(-2,2)
 
-  def setvisible(self, vis):
-    for c in self.collections: c.set_visible(vis)
   
-  def gen_vertices(self, Z):
+  def gen_vertices(self, Z): #DEPRECATED. THIS IS NOT USEFUL SINCE PLOT_SURFACE WITH BLIT DOESN'T MAKE ANYTHING FASTER.
     Xn,Yn,Zn = np.broadcast_arrays(self.xgrid, self.ygrid, Z)
     rows, cols = Zn.shape
     stride=1 #This should be same as the downsampling number in proc_MFC_helper
@@ -60,8 +59,8 @@ class PlotMFCShape:
 
   def plot_twod_contour(self):
     #self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])), rstride=1, cstride=1)
-    self.mysurf = [self.ax.contourf (self.xgrid, self.ygrid, np.random.rand(self.xgrid.shape[0], self.xgrid.shape[1]))]
-    # self.fig.colorbar(self.mysurf, shrink=0.5, aspect=5)
+    self.mysurf = [self.ax.contourf (self.xgrid, self.ygrid, np.random.rand(self.xgrid.shape[0], self.xgrid.shape[1]), levels=self.levels, cmap=cm.coolwarm)]
+    self.fig.colorbar(self.mysurf[0], shrink=0.6, aspect=10)
 
     # Create fake bounding box for scaling
     minz, maxz = -3, 3 #mm
@@ -69,9 +68,9 @@ class PlotMFCShape:
     Xb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (self.xgrid.max() + self.xgrid.min())
     Yb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (self.ygrid.max() + self.ygrid.min())
     Zb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (maxz + minz)
-    # Uncomment following both lines to test the fake bounding box:
-    for xb, yb, zb in zip(Xb, Yb, Zb):
-      self.ax.plot([xb], [yb], [zb], 'w')
+    # Uncomment following 2 lines to test the fake bounding box:
+    #for xb, yb, zb in zip(Xb, Yb, Zb):
+    #  self.ax.plot([xb], [yb], [zb], 'w')
 
   def plot_live(self, i, queue):
     while queue.qsize() > 1: #This is here to keep up with the delay in plotting.
@@ -83,21 +82,15 @@ class PlotMFCShape:
       read_shape = queue.get()
       
       #FOR BLIT=TRUE
-      #FOR plot_surface
-      t1 = time.time()
+      #FOR pcolormesh and contourf (plot_surface is very slow due to do_3dprojection being very slow)
       for tp in self.mysurf[0].collections:
         tp.remove()
-      #new_verts = self.gen_vertices(read_shape.T) #new_verts:(7600,3)
-      #self.mysurf.set_verts(new_verts)
-      #self.mysurf.do_3d_projection(self.fig._cachedRenderer)
-      #FOR pcolormesh and contourf (not working)
-      self.mysurf[0] = self.ax.contourf (self.xgrid, self.ygrid, read_shape.T)
+      self.mysurf[0] = self.ax.contourf (self.xgrid, self.ygrid, read_shape.T, levels=self.levels, cmap=cm.coolwarm)
 
       #FOR BLIT=FALSE
       #self.mysurf.remove()
       #self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, rstride=1, cstride=1) #, cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
       #self.mysurf = self.ax.contourf (self.xgrid, self.ygrid, read_shape.T)
-      print ("Elapsed time: {}".format(time.time() - t1))
     except:
       pass  
     return self.mysurf[0].collections

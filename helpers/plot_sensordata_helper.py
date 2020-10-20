@@ -95,14 +95,14 @@ class PlotSensorData:
       self.ax3.set_xlabel("Time (min)", fontsize=11)
 
     for i in range(6): #PZTs
-      self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1))[0])
+      self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1), animated=True, aa=False)[0])
     for i in range(8): #SSNSGs
       if i == 7:
-        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2))[0])
+        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2), animated=True, aa=False)[0])
       else:
-        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1))[0])
-    self.liftline, = self.ax3.plot(self.xs, -self.ys[14], linewidth=0.5, label="Lift") #Comm. LiftSG
-    self.dragline, = self.ax3.plot(self.xs, -self.ys[15], linewidth=0.5, label="Drag") #Comm. DragSG
+        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1), animated=True, aa=False)[0])
+    self.liftline, = self.ax3.plot(self.xs, -self.ys[14], linewidth=0.5, label="Lift", animated=True, aa=False) #Comm. LiftSG
+    self.dragline, = self.ax3.plot(self.xs, -self.ys[15], linewidth=0.5, label="Drag", animated=True, aa=False) #Comm. DragSG
 
 
   #Function to generate real-time plots.
