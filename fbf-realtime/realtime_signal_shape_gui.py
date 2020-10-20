@@ -13,8 +13,8 @@ import os
 from numpy.lib.npyio import save
 sys.path.append(os.path.abspath('./fbf-DAQ'))
 sys.path.append(os.path.abspath('./helpers'))
-from daq_captureSGoffsets_helper import send_SG_offsets
-from daq_capturedata_helper import send_data
+import daq_captureSGoffsets_helper
+import daq_capturedata_helper
 import plot_sensordata_helper
 import daq_capturevideo_helper
 import proc_MFCshape_helper
@@ -53,7 +53,7 @@ class RawSignalAndShapeWindow(Frame):
   def getSGoffsets (self, params):
     #Capture SG offsets:
     q1 = Queue()
-    p1 = Thread(target = send_SG_offsets, args=(params["sample_rate"], int(params["sample_rate"]), q1))
+    p1 = Thread(target = daq_captureSGoffsets_helper.send_SG_offsets, args=(params["sample_rate"], int(params["sample_rate"]), q1))
     p1.start()
     self.SGoffsets = q1.get()
     p1.join()
@@ -62,8 +62,9 @@ class RawSignalAndShapeWindow(Frame):
     # Run capture data in background
     self.data_queue = Queue()
     self.saveflag_queue = Queue()
-    self.get_data_proc = Process(target = send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue, saveflag_queue, save_duration, saver))
+    self.get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*plot_refresh_rate), "continuous", self.data_queue, saveflag_queue, save_duration, saver))
     self.get_data_proc.start()
+    
     # Plot the data
     plot = plot_sensordata_helper.PlotSensorData(visible_duration, downsample_mult, params)
     plot.plot_raw_lines(realtime=True, plot_refresh_rate=plot_refresh_rate)
@@ -73,20 +74,19 @@ class RawSignalAndShapeWindow(Frame):
     ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys, self.data_queue, plot_refresh_rate, plot_compensated_strains, onlyplot), interval=plot_refresh_rate*1000, blit=True) #THIS DOESN'T REMOVE FROM DATA_QUEUE
     self.update()
 
-  def draw_MFCshapes(self, params, plot_refresh_rate):    
+  def draw_MFCshapes(self, plot_refresh_rate, plot_type, blit):    
     mfc_shape = proc_MFCshape_helper.CalcMFCShape(plot_refresh_rate)
     shape_queue = Queue()
     p2 = Process(target = mfc_shape.supply_data, args=(shape_queue, self.data_queue, False)) #THIS REMOVES FROM DATA_QUEUE
     p2.start()
 
     plot = plot_MFC_helper.PlotMFCShape(plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL)
-    plot.plot_twod_contour()
-
+    plot.init_plot(plot_type)
     mfc_lbl = Label(self.parent, text="Shape of morphing trailing edge section", font=("Helvetica", 16))
     mfc_lbl.grid(row=14, column=1, rowspan=1, columnspan=1, pady=5, sticky=S)
     mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     mfc_canvas.get_tk_widget().grid(row=15, column=1, rowspan=1, columnspan=1, sticky=N)
-    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue,), interval=plot_refresh_rate*1000, blit=True)
+    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue, plot_type, blit), interval=plot_refresh_rate*1000, blit=blit)
     self.update()
 
 
@@ -109,5 +109,5 @@ if __name__ == "__main__":
   app.getSGoffsets(params)
   app.draw_videos(video_titles, camnums)
   app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False, plot_compensated_strains=False)
-  app.draw_MFCshapes(params, plot_refresh_rate)
+  app.draw_MFCshapes(plot_refresh_rate, "contour", True)
   root.mainloop()
