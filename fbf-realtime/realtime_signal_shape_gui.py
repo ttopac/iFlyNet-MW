@@ -86,7 +86,7 @@ class RawSignalAndShapeWindow(Frame):
     mfc_lbl.grid(row=14, column=1, rowspan=1, columnspan=1, pady=5, sticky=S)
     mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     mfc_canvas.get_tk_widget().grid(row=15, column=1, rowspan=1, columnspan=1, sticky=N)
-    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue,), interval=plot_refresh_rate*1000, blit=False)
+    ani = FuncAnimation(plot.fig, plot.plot_live, fargs=(shape_queue,), interval=plot_refresh_rate*1000, blit=True)
     self.update()
 
 
@@ -108,8 +108,6 @@ if __name__ == "__main__":
   app = RawSignalAndShapeWindow(parent=root)
   app.getSGoffsets(params)
   app.draw_videos(video_titles, camnums)
-  time.sleep(1)
   app.plot_signals(ys, visible_duration, downsample_mult, params, plot_refresh_rate, onlyplot=False, plot_compensated_strains=False)
-  time.sleep(1)
   app.draw_MFCshapes(params, plot_refresh_rate)
   root.mainloop()

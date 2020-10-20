@@ -60,9 +60,7 @@ class PlotMFCShape:
 
   def plot_twod_contour(self):
     #self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, np.zeros((self.xgrid.shape[0], self.xgrid.shape[1])), rstride=1, cstride=1)
-    self.mysurf = self.ax.contourf (self.xgrid, self.ygrid, np.random.rand(self.xgrid.shape[0], self.xgrid.shape[1]))
-    #self.mysurf.set_visible = types.MethodType(self.setvisible, self.mysurf)
-    #self.mysurf.axes = plt.gca()
+    self.mysurf = [self.ax.contourf (self.xgrid, self.ygrid, np.random.rand(self.xgrid.shape[0], self.xgrid.shape[1]))]
     # self.fig.colorbar(self.mysurf, shrink=0.5, aspect=5)
 
     # Create fake bounding box for scaling
@@ -87,20 +85,22 @@ class PlotMFCShape:
       #FOR BLIT=TRUE
       #FOR plot_surface
       t1 = time.time()
+      for tp in self.mysurf[0].collections:
+        tp.remove()
       #new_verts = self.gen_vertices(read_shape.T) #new_verts:(7600,3)
       #self.mysurf.set_verts(new_verts)
       #self.mysurf.do_3d_projection(self.fig._cachedRenderer)
       #FOR pcolormesh and contourf (not working)
-      #self.mysurf.set_array(read_shape.T)
+      self.mysurf[0] = self.ax.contourf (self.xgrid, self.ygrid, read_shape.T)
 
       #FOR BLIT=FALSE
       #self.mysurf.remove()
       #self.mysurf = self.ax.plot_surface(self.xgrid, self.ygrid, read_shape.T, rstride=1, cstride=1) #, cmap=cm.coolwarm, shade=True, vmin=-0.75, vmax=0.75, linewidth=0)
-      self.mysurf = self.ax.contourf (self.xgrid, self.ygrid, read_shape.T)
+      #self.mysurf = self.ax.contourf (self.xgrid, self.ygrid, read_shape.T)
       print ("Elapsed time: {}".format(time.time() - t1))
     except:
       pass  
-    return (self.mysurf,)
+    return self.mysurf[0].collections
 
 
 if __name__ == "__main__":
