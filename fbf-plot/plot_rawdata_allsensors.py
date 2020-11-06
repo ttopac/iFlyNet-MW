@@ -1,3 +1,4 @@
+#This script is used for plotting short-term data capture results of all sensors.
 import numpy as np
 import matplotlib.pyplot as plt
 

@@ -1,3 +1,4 @@
+#This script is used to plot offline lift/drag SG histories overlaid with lift/drag + stall predictions.
 import numpy as np
 import sys, os
 sys.path.append(os.path.abspath('./helpers'))

@@ -1,3 +1,4 @@
+#This script is used for plotting long-term raw SG data along with compensated values (calculated in helper function) to test compensation performance.
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
