@@ -17,7 +17,7 @@ SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data
 commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data with -1 in all experiments before Sept. 13.
 vel = '0'
 aoa = '0'
-test_folder = 'tempcal1_Sept18'
+test_folder = 'drift11_Nov9'
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
 temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
@@ -30,7 +30,7 @@ if temp_source == None:
 
 if __name__ == "__main__":
   # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
-  driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/tempcal_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+  driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
   downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
   if SSNSG_voltage: downsampled_SSNSGs = 1e6*(4*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]) / (2*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
   downsampled_commSGs = np.mean (driftData[14:16,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
   if temp_source == 'anemometer':
     # tempdata = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
-    tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
+    tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttest_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
     df = pd.read_csv(tempdata, header=0, delim_whitespace=True)
     vel_np = df['Speed'].to_numpy()[0:downsampled_commSGs.shape[1]]
     temp_np_F = df['Temp.'].to_numpy()[0:downsampled_commSGs.shape[1]]
