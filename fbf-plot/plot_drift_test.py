@@ -38,9 +38,10 @@ if __name__ == "__main__":
   downsampled_PZTs = signal.resample(driftData[0:6,:], downsampled_commSGs.shape[1], axis=1)
   ys = np.concatenate ((downsampled_PZTs, downsampled_SSNSGs, downsampled_commSGs), axis=0)
   visible_duration = ys.shape[1]/60 #Here /60 converts everything from seconds to minutes.
+  xs = np.linspace(0,visible_duration,ys.shape[1]) 
 
-  plot = plot_sensordata_helper.PlotSensorData(visible_duration, downsample_mult)
-  plot.plot_raw_lines(realtime=False, ys=ys, vel=vel, aoa=aoa)
+  plot = plot_sensordata_helper.PlotSensorData(True, False, True)
+  plot.plot_raw_lines(xs, ys=ys, vel=vel, aoa=aoa)
 
   if temp_source == 'anemometer':
     # tempdata = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/drifttesttemp_{}ms_{}deg.txt'.format(test_folder,vel,aoa)

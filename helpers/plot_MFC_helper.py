@@ -15,13 +15,14 @@ from multiprocessing import Process, Queue
 
 
 class PlotMFCShape:
-  def __init__(self, plot_refresh_rate, XVAL, YVAL):
+  def __init__(self, plot_refresh_rate, XVAL, YVAL, offline=False):
     self.plot_refresh_rate = plot_refresh_rate
     self.XVAL = XVAL
     self.YVAL = YVAL
     self.fig = plt.figure(figsize=(4.75, 3.25)) #(width, height)
     self.xgrid, self.ygrid = np.meshgrid(XVAL, YVAL)
     self.levels = MaxNLocator(nbins=15).tick_values(-3,3)
+    self.offline = offline
 
   
   # def gen_vertices(self, Z): #OBSOLETE. THIS IS NOT USEFUL SINCE PLOT_SURFACE WITH BLIT DOESN'T MAKE ANYTHING FASTER.
@@ -100,16 +101,16 @@ class PlotMFCShape:
 
 
 
-  def plot_live(self, i, queue, plot_type, blit):
-    while queue.qsize() > 1: #This is here to keep up with the delay in plotting.
-      try:
-        _ = queue.get_nowait()
-      except:
-        pass
-    
+  def plot_live(self, i, queue, plot_type, blit, start_time=None):
     try:
-      read_shape = queue.get()
-      
+      if not self.offline:
+        read_shape = queue.get()
+        queue.put_nowait(read_shape)
+      else:
+        t0 = time.time()
+        cur_frame = int((t0-start_time)/self.plot_refresh_rate)
+        read_shape = queue[cur_frame]  
+          
       if plot_type == "contour":
         if blit == True:
           for tp in self.mysurf[0].collections:

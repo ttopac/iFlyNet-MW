@@ -19,11 +19,11 @@ if __name__ == "__main__":
   #Define parameters  
   visible_duration = 30 #seconds
   plot_refresh_rate = 0.1 #seconds
-  downsample_mult = 1
+  downsample_mult = 233
   use_compensated_strains = False
 
   root = Tk()
-  root.title ("Real-time Video, Signals, and Shapes")
+  root.title ("Real-time Video and Signals")
   video_names = ("AoA view", "Outer MFC view")
   camnums = (1,0)
 
@@ -35,11 +35,10 @@ if __name__ == "__main__":
   GUIapp.captureData(params)
   
   stream = streamdata_helper.StreamRealTime(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
-  stream.init_and_stream_sensordata(True)
-  stream.init_and_stream_estimates()
+  stream.init_and_stream_sensordata(False)
   queue_refresh_thread = Thread(target=stream.refresh_queues)
   queue_refresh_thread.start()
 
-  GUIapp.place_on_grid(True, False, True)
+  GUIapp.place_on_grid(True, False, False)
 
   root.mainloop()

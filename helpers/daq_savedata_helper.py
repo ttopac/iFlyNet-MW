@@ -5,5 +5,5 @@ class DataSaverToNP():
     self.filename = filename
 
   def save_to_np(self, data):
-    np.save(self.filename+"testNP.npy", data)
+    np.save(self.filename+"test.npy", data)
     print ("Signal data saved.")

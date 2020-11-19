@@ -1,12 +1,12 @@
 import sys, os
 import time
-
-from numpy.lib.npyio import save
-import realtime_signal_shape_gui
 from tkinter import Tk, Frame, Button
+
 sys.path.append(os.path.abspath('./helpers'))
-import daq_savedata
-import daq_capturevideo_helper
+sys.path.append(os.path.abspath('./fbf-realtime'))
+import realtime_signal_shape_gui
+import daq_savedata_helper
+import daq_captureANDstreamvideo_helper
 import daq_capturedata_helper
 
 import numpy as np
@@ -70,10 +70,10 @@ class SaveVideoAndSignals():
 
   def save_videos (self):
     print ("Starting to save videos.")
-    save1 = daq_capturevideo_helper.SaveVideoCapture(self.preview.video1.endo_video, video_titles[0], camnums[0], save_path, save_duration)
-    t1 = Thread(target=save1.multithreaded_save, args=(1/30, True))    
-    save2 = daq_capturevideo_helper.SaveVideoCapture(self.preview.video2.endo_video, video_titles[1], camnums[1], save_path, save_duration)
-    t2 = Thread(target=save2.multithreaded_save, args=(1/30, True))
+    save1 = daq_captureANDstreamvideo_helper.SaveVideoCapture(self.preview.video1.endo_video, camnums[0], save_path, save_duration, 30)
+    save2 = daq_captureANDstreamvideo_helper.SaveVideoCapture(self.preview.video2.endo_video, camnums[1], save_path, save_duration, 30)
+    t1 = Thread(target=save1.multithreaded_save, args=(time.time_ns(),))    
+    t2 = Thread(target=save2.multithreaded_save, args=(time.time_ns(),))
     
     t1.start()
     t2.start()
@@ -82,7 +82,7 @@ class SaveVideoAndSignals():
 if __name__ == "__main__":
   #Define show parameters
   params = dict()
-  params["sample_rate"] = 1700 #NI uses sample rate values around this, not exactly this.
+  params["sample_rate"] = 7000 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
   visible_duration = 30 #seconds
   plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1
@@ -91,12 +91,12 @@ if __name__ == "__main__":
   camnums = (0,1)
 
   #Define save parameters
-  save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline1_Oct6/'
-  save_duration = 20 #seconds
-  saver = daq_savedata.DataSaverToNP(save_path)
+  save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline3_Nov16/'
+  save_duration = 120 #seconds
+  saver = daq_savedata_helper.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
   preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!
-  #Start he GUI
+  #Start the GUI
   root = Tk()
   root.title ("Video previews")
 

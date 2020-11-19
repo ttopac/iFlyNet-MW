@@ -1,5 +1,6 @@
 from collections import deque
 import cv2
+import collections
 
 import tkinter as tk
 from tkinter import Tk, Frame, Canvas, Label
@@ -37,7 +38,7 @@ class CaptureVideoWEndoscope:
         if cv2.waitKey(1) & 0xFF == ord('q'):
           break
 
-  def get_frames (self, multithreaded=False): #Multithreaded is recommended for more than 1 camera
+  def get_frames (self, multithreaded=False, append_time=time.time()): #Multithreaded is recommended for more than 1 camera
     if multithreaded:
       while True:
         if self.cap.isOpened():
@@ -60,39 +61,28 @@ class CaptureVideoWEndoscope:
       self.cap.release()
 
 class SaveVideoCapture():
-  def __init__(self, endo_video, video_title, camnum, save_path, save_duration):
+  def __init__(self, endo_video, camnum, save_path, save_duration, fps):
     self.endo_video = endo_video
-    self.video_title = video_title
     self.camnum = camnum
     self.save_path = save_path
     self.save_duration = save_duration
+    self.delay = 1/fps
+    self.video_writer = cv2.VideoWriter(self.save_path+'video'+str(self.camnum)+'.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, self.endo_video.size)        
   
-  def multithreaded_save(self, delay=1/30, init_call=False):
-    if init_call:
-      self.videocount = 0
-      self.video_writer = cv2.VideoWriter(self.save_path+self.video_title+'.mp4', cv2.VideoWriter_fourcc(*'mp4v'), int(1/delay), self.endo_video.size)        
-      starttime = time.time()
-      prevtime = starttime
-      writerdelay = 0
+  def multithreaded_save(self, starttime=time.time_ns()):
+    print("Recording first frame.")
+    writestart_time = starttime
     while True:
-      try:
-        cv2image = self.endo_video.viddeque[-1]
-        sleepdur = delay - (time.time() - prevtime + writerdelay)
-        time.sleep (abs(sleepdur))
-        prevtime = time.time()
-        self.video_writer.write(cv2image)
-        if self.videocount == 0:
-          writerdelay=time.time() - prevtime
-          print("First frame recorded.")
-          print ("Writer takes "+ str(writerdelay) +" seconds")
-        elif time.time()-starttime > self.save_duration:
-          self.video_writer.release()
-          print ("Video created.")
-          break
-        self.videocount += 1
-      except Exception as inst:
-        print (inst)
+      cv2image = self.endo_video.viddeque[-1]
+      while ((time.time_ns() - (writestart_time - 0.0008*1e9))/1e9 < self.delay): #This - 0.0008 is empirical to negate the delay we couldn't pinpoint.
         pass
+      writestart_time=time.time_ns()
+      self.video_writer.write(cv2image)
+      if (time.time_ns()-starttime)/1e9 > self.save_duration:
+        self.video_writer.release()
+        print ("Video created.")
+        break
+
 
 class DrawTKVideoCapture(Frame):
   def __init__(self, parent, window_title, camnum):
@@ -109,7 +99,11 @@ class DrawTKVideoCapture(Frame):
       ret, frame = self.endo_video.get_frames()
       if ret:
         self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
-        self.videocvs.create_image(0,0,image = self.photo, anchor = tk.NW)
+        if self.video == None:
+          self.video = self.videocvs.create_image(0,0,image = self.photo, anchor = tk.NW)
+        else: 
+          self.videocvs.itemconfig(self.video, image=self.photo) #Added on Nov15,2020 but not tested. Remove if causing issues...
+          self.videocvs.image = self.photo #Added on Nov15,2020 but not tested. Remove if causing issues...
       self.parent.after(delay, self.capture, delay)
 
   def place_on_grid (self, row, column, rowspan, columnspan):
@@ -119,7 +113,7 @@ class DrawTKVideoCapture(Frame):
   def multithreaded_capture(self, delay=33, init_call=False):
     if init_call:
       self.videocount = 0
-      self.thr = Thread(target=self.endo_video.get_frames, args=(True,))
+      self.thr = Thread(target=self.endo_video.get_frames, args=(True,time.time()))
       self.thr.start()
     
     try:
@@ -130,6 +124,7 @@ class DrawTKVideoCapture(Frame):
         self.video = self.videocvs.create_image(0, 0, image=self.photo, anchor=tk.NW)
       else:
         self.videocvs.itemconfig(self.video, image=self.photo)
+        self.videocvs.image = self.photo #Added on Nov15,2020 but not tested. Remove if causing issues...
       if self.endo_video.stopflag or self.capture_stopflag:
         self.after (delay, self.videocap_ended)
       else:
@@ -147,6 +142,55 @@ class DrawTKVideoCapture(Frame):
   def videocap_ended(self):
     print ("Video capture ended.")
     self.parent.destroy()
+
+
+class DrawTKOfflineVideo(Frame):
+  def __init__(self, parent, window_title, camnum, videopath):
+    Frame.__init__(self,parent)
+    self.parent = parent
+    self.window_title = window_title
+    self.camnum = camnum
+    self.videopath = videopath
+    self.videocvs = Canvas(parent, width=640, height=360)
+    self.videolbl = Label(parent, text=window_title, font=("Helvetica", 18))
+    self.draw_and_process_image()
+
+  def draw_and_process_image(self):
+    step = 0
+    self.frame_photos = list()
+    self.cap = cv2.VideoCapture(self.videopath+'video'+str(self.camnum)+'.mp4')
+    if (self.cap.isOpened() == False):  
+      print("Error opening the video file") 
+
+    while True:
+      try:
+        _, frame = self.cap.read()
+        recolored_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(recolored_frame))
+        if step == 0:
+          self.vidframe = self.videocvs.create_image(0,0,image = frame_photo, anchor = tk.NW)
+        self.frame_photos.append (frame_photo)
+        step += 1
+      except:
+        break
+
+  def stream_images(self, start_time, delay=1/30):
+    try:
+      t0 = time.time()
+      cur_frame = int((t0-start_time)/delay)
+      frame_photo = self.frame_photos[cur_frame]
+      self.videocvs.itemconfig (self.vidframe, image=frame_photo)
+      self.videocvs.image = frame_photo
+      if time.time() - start_time < 1:
+        call_delay = 100
+      else:
+        call_delay = 30
+      
+    except Exception as e:
+      print (e)
+    
+    self.parent.after (call_delay, self.stream_images, start_time, delay)
+
 
 if __name__ == "__main__":
   aoavideo = CaptureVideoWEndoscope(0)

@@ -2,7 +2,6 @@
 # Only for shape estimation.
 import os
 from matplotlib.pyplot import plot
-from nidaqmx.constants import AcquisitionType
 import numpy as np
 import sympy as sym
 import pandas as pd
@@ -11,10 +10,6 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.animation as anim
 import time
-
-import sys, os
-sys.path.append(os.path.abspath('./helpers'))
-from daq_capturedata_helper import send_data
 
 class CalcMFCShape():
   def __init__(self, plot_refresh_rate=1):
