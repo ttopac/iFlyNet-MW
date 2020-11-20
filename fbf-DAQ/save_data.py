@@ -9,7 +9,7 @@ from daq_capturedata_helper import send_data
 params = dict()
 params["sample_rate"] = 1700 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 params["samples_read_offset"] = int(params["sample_rate"]) #Corresponds to ~1 sec of data.
-params["samples_read_main"] = int (6120000*3) #Use 420000 for training (1 min), 6120000 for drift (60 mins).
+params["samples_read_main"] = int (6120000*3) #Use 420000 for training (1 min), 6120000*3 for drift (180 mins).
 
 if __name__ == "__main__":
   q1 = Queue()
@@ -32,4 +32,4 @@ if __name__ == "__main__":
     p.start()
     read_data = parent_conn.recv()
     p.join()
-    np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift11_Nov9/train_{}ms_{}deg.npy'.format(vel,aoa),read_data)
+    np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift12_Nov18/train_{}ms_{}deg.npy'.format(vel,aoa),read_data)

@@ -19,7 +19,7 @@ main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 test_folder, ref_temp = 'offline2_Nov13', 20.6590 #Reftemp is unique for test_folder and captured at the beginning of experiments. Set to None if prefer using first datapoint.
 
 params = dict()
-params ['sample_rate'] = 7000 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+params ['sample_rate'] = 7142 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 params ['SG_offsets'] = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) #Change this based on initial zero velocity conditions
 
 

@@ -16,7 +16,7 @@ import streamdata_helper
 
 main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
-test_folder, ref_temp = 'offline2_Nov13', 20.6590 #Reftemp is unique for test_folder and captured at the beginning of experiments. Set to None if prefer using first datapoint.
+test_folder, ref_temp = 'offline5_Nov19', 20.6590 #Reftemp is unique for test_folder and captured at the beginning of experiments. Set to None if prefer using first datapoint.
 models = dict()
 models['types'] = ['stall', 'liftdrag']
 models['filenames'] = ['stall_train993_val_988', 'lift_PZTonly_train_loss0461']
@@ -26,7 +26,7 @@ models['means'] = [-2.0175109479796352e-05, 0.00010905074475577042, 0.0003945431
 models['stddevs'] = [0.0012517186084292822, 0.0018231860855292457, 0.0010487415470856675, 0.0027847121382814344, 0.0013364316889671896, 0.00208186772161978, 108.47167144875641, 19.360939493624215]
 
 params = dict()
-params ['sample_rate'] = 7000 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+params ['sample_rate'] = 7142 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 params ['SG_offsets'] = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) #Change this based on initial zero velocity conditions
 
 

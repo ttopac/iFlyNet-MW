@@ -70,7 +70,9 @@ class SaveVideoCapture():
     self.video_writer = cv2.VideoWriter(self.save_path+'video'+str(self.camnum)+'.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, self.endo_video.size)        
   
   def multithreaded_save(self, starttime=time.time_ns()):
-    print("Recording first frame.")
+    frame = 0
+    starttime = time.time_ns() #Correct starttime between process definition and process start.
+    print("Recording first frame at {}.".format(time.time()))
     writestart_time = starttime
     while True:
       cv2image = self.endo_video.viddeque[-1]
@@ -80,8 +82,9 @@ class SaveVideoCapture():
       self.video_writer.write(cv2image)
       if (time.time_ns()-starttime)/1e9 > self.save_duration:
         self.video_writer.release()
-        print ("Video created.")
+        print ("Video created at {}.".format(time.time()))
         break
+      frame += 1
 
 
 class DrawTKVideoCapture(Frame):

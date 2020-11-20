@@ -19,7 +19,7 @@ if __name__ == "__main__":
   #Define parameters  
   visible_duration = 30 #seconds
   plot_refresh_rate = 0.1 #seconds
-  downsample_mult = 1
+  downsample_mult = 233
   use_compensated_strains = False
 
   root = Tk()

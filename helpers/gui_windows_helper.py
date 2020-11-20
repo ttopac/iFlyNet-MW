@@ -45,11 +45,14 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.SGoffsets = q1.get()
     p1.join()
 
-  def captureData (self, params):
+  def captureData (self, params, saveflag_queue=None, save_duration=None, saver=None):
     # Run capture data in background
     import daq_capturedata_helper
-    get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*self.plot_refresh_rate), "continuous", self.data_queue))
-    get_data_proc.start()
+    if saver == None:
+      self.get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*self.plot_refresh_rate), "continuous", self.data_queue))
+    else:
+      self.get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*self.plot_refresh_rate), "continuous", self.data_queue, saveflag_queue, save_duration, saver))
+    self.get_data_proc.start()
 
   
   def init_UI (self, labels):
@@ -197,21 +200,21 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
 
   def draw_MFCshapes(self, plot_type='contour', blit=True):    
-      mfc_shape = proc_MFCshape_helper.CalcMFCShape(self.plot_refresh_rate)
-      if not self.offline:
-        p2 = Process(target = mfc_shape.supply_data, args=(self.shape_queue, self.data_queue, False))
-        p2.start()
+    mfc_shape = proc_MFCshape_helper.CalcMFCShape(self.plot_refresh_rate)
+    if not self.offline:
+      self.draw_MFC_proc = Process(target = mfc_shape.supply_data, args=(self.shape_queue, self.data_queue, False))
+      self.draw_MFC_proc.start()
 
-      plot = plot_MFC_helper.PlotMFCShape(self.plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL, offline=self.offline)
-      plot.plot_2D_contour()
-      self.mfc_lbl = Label(self.parent, text="Morphing\nsection shape", font=("Helvetica", 18), justify='center')
-      self.mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
-      
-      if not self.offline:
-        _ = FuncAnimation(plot.fig, plot.plot_live, fargs=(self.shape_queue, plot_type, blit, None), interval=self.plot_refresh_rate*1000, blit=blit)
-      else:
-        return plot
-      self.update()
+    plot = plot_MFC_helper.PlotMFCShape(self.plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL, offline=self.offline)
+    plot.plot_2D_contour()
+    self.mfc_lbl = Label(self.parent, text="Morphing\nsection shape", font=("Helvetica", 18), justify='center')
+    self.mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
+    
+    if not self.offline:
+      _ = FuncAnimation(plot.fig, plot.plot_live, fargs=(self.shape_queue, plot_type, blit, None), interval=self.plot_refresh_rate*1000, blit=blit)
+    else:
+      return plot
+    self.update()
 
 
   def place_on_grid(self, raw_signal, keras_preds, MFC_preds):

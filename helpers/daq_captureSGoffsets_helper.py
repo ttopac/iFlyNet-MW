@@ -21,21 +21,24 @@ def calibrate_SGs(sample_rate, samples_to_read):
     task.ai_channels.add_ai_voltage_chan("cDAQ1Mod4/ai2") #SG_9
     task.ai_channels.add_ai_bridge_chan("cDAQ1Mod8/ai0", bridge_config=nidaqmx.constants.BridgeConfiguration.QUARTER_BRIDGE, voltage_excit_val=3.3, nominal_bridge_resistance=351.2) #LiftSG read as ai bridge
     task.ai_channels.add_ai_bridge_chan("cDAQ1Mod8/ai2", bridge_config=nidaqmx.constants.BridgeConfiguration.QUARTER_BRIDGE, voltage_excit_val=3.3, nominal_bridge_resistance=351.2) #DragSG read as ai bridge
-    task.ai_channels.add_ai_rtd_chan("cDAQ1Mod7/ai0", rtd_type=nidaqmx.constants.RTDType.PT_3851, resistance_config=nidaqmx.constants.ResistanceConfiguration.FOUR_WIRE, current_excit_source=nidaqmx.constants.ExcitationSource.INTERNAL, current_excit_val=0.001, r_0=100)
+    task.ai_channels.add_ai_bridge_chan("cDAQ1Mod8/ai3", bridge_config=nidaqmx.constants.BridgeConfiguration.QUARTER_BRIDGE, voltage_excit_val=3.3, nominal_bridge_resistance=351.2) #CommSG1 read as ai bridge
+    task.ai_channels.add_ai_rtd_chan("cDAQ1Mod7/ai0", rtd_type=nidaqmx.constants.RTDType.PT_3851, resistance_config=nidaqmx.constants.ResistanceConfiguration.FOUR_WIRE, current_excit_source=nidaqmx.constants.ExcitationSource.INTERNAL, current_excit_val=0.001, r_0=100) #RTD on rod
+    task.ai_channels.add_ai_rtd_chan("cDAQ1Mod7/ai1", rtd_type=nidaqmx.constants.RTDType.PT_3851, resistance_config=nidaqmx.constants.ResistanceConfiguration.FOUR_WIRE, current_excit_source=nidaqmx.constants.ExcitationSource.INTERNAL, current_excit_val=0.001, r_0=100) #RTD on wing
     task.timing.cfg_samp_clk_timing(rate=sample_rate, sample_mode=AcquisitionType.FINITE, samps_per_chan=samples_to_read)
 
-    calib_samples = np.zeros((11, samples_to_read))
+    calib_samples = np.zeros((13, samples_to_read))
     in_stream = nidaqmx._task_modules.in_stream.InStream(task)
     reader = stream_readers.AnalogMultiChannelReader(in_stream)
     reader.read_many_sample(calib_samples, number_of_samples_per_channel=nidaqmx.constants.READ_ALL_AVAILABLE, timeout=nidaqmx.constants.WAIT_INFINITELY)
 
     sgmean = np.mean(calib_samples, axis=1)
-    sgmean[8:10] *= 3.3 #Multiply the ai values with excitation voltage to obtain initial voltage values.
+    sgmean[8:11] *= 3.3 #Multiply the ai values with excitation voltage to obtain initial voltage values.
     print ("SG initial voltages are (V): ", end="")
     print (sgmean)
-    print ("Initial temperature is: {}".format(sgmean[10]))
+    print ("Initial temperature at rod is: {}".format(sgmean[11]))
+    print ("Initial temperature at wing is: {}".format(sgmean[12]))
     print ("SG calibration sampling rate was: {}".format(task.timing.samp_clk_rate))
-    return sgmean[0:10]
+    return sgmean[0:11]
 
 def send_SG_offsets(sample_rate, samples_to_read, queue):
   sgmean = calibrate_SGs(sample_rate, samples_to_read)
