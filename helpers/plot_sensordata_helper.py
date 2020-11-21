@@ -7,6 +7,10 @@ import time
 sys.path.append(os.path.abspath('./helpers'))
 import proc_tempcomp_helper
 
+al6061_CTE = 23.4E-6
+vero_CTE = 73.3E-6
+vero_CTE = 38.3E-6 #self-determined
+
 class PlotSensorData:
   def __init__(self, downsample_mult, singleplot, ongui, offline):
     self.downsample_mult = downsample_mult
@@ -54,7 +58,7 @@ class PlotSensorData:
   def term_common_params(self, mfcplot_exists):
     self.leg1 = self.ax1.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
     self.leg2 = self.ax2.legend(fontsize=7, loc="upper right", ncol=3, columnspacing=1)
-    self.leg3 = self.ax3.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
+    self.leg3 = self.ax3.legend(fontsize=7, loc="lower left", ncol=2, columnspacing=1)
 
     for line in self.leg1.get_lines():
       line.set_linewidth(1.5)
@@ -75,23 +79,22 @@ class PlotSensorData:
 
 
   def plot_raw_lines (self, xs, ys, vel=None, aoa=None):
+    self.xs = xs
+    self.ys = ys
+    self.ax1.set_ylim(-0.05, 0.05)
     if self.ongui:
-      self.xs = xs
-      self.ys = ys
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
-      self.ax1.set_ylim(-0.05, 0.05)
       self.ax2.set_ylim(-150, 150)
       self.ax3.set_ylim(-150, 150)
       self.ax1.set_xticklabels([])
       self.ax2.set_xticklabels([])
       self.ax3.set_xticklabels([])
+      animated = True
     else:
       #TODO: Add downsampling!!
-      self.xs = xs
-      self.ys = ys
       self.fig.suptitle("Readings for V = {}m/s, AoA = {}deg".format(vel,aoa), fontsize=12)
-      self.ax1.set_ylim(-0.05, 0.05)
       self.ax3.set_xlabel("Time (min)", fontsize=11)
+      animated = False
 
     for i in range(6): #PZTs
       self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1), animated=True, aa=False)[0])
@@ -100,8 +103,9 @@ class PlotSensorData:
         self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2), animated=True, aa=False)[0])
       else:
         self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1), animated=True, aa=False)[0])
-    self.liftline, = self.ax3.plot(self.xs, -self.ys[14], linewidth=0.5, label="Lift", animated=True, aa=False) #Comm. LiftSG
-    self.dragline, = self.ax3.plot(self.xs, -self.ys[15], linewidth=0.5, label="Drag", animated=True, aa=False) #Comm. DragSG
+    self.liftline, = self.ax3.plot(self.xs, -self.ys[14], linewidth=0.5, label="Lift", animated=animated, aa=False) #Comm. LiftSG
+    self.dragline, = self.ax3.plot(self.xs, -self.ys[15], linewidth=0.5, label="Drag", animated=animated, aa=False) #Comm. DragSG
+    self.commSG1line = self.ax3.plot(self.xs, -self.ys[16], linewidth=0.5, label="CommSG1", animated=animated, aa=False) #CommSG1
 
   #Function to generate real-time plots.
   def plot_live(self, i, ys, queue, plot_compensated_strains=False, ref_temp=None, start_time=None):
@@ -154,13 +158,16 @@ class PlotSensorData:
     return self.PZTlines+self.SGlines+list((self.liftline,self.dragline))
 
   #Additional plots for plot_drift_test plots.
-  def plot_commSG_tempcomp_lines (self, temp_np_C, ref_temp=None, ownchar=False): #NOT IMPLEMENTED FOR REAL-TIME YET.
+  def plot_commSG_tempcomp_lines (self, temp_np_C_rod, temp_np_C_wing, ref_temp=None): #NOT IMPLEMENTED FOR REAL-TIME YET.
     #TODO: Add downsampling!!
-    ref_temp = temp_np_C[0]
-    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp, ownchar)
-    comp_downsampled_commSG, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C)
-    self.ax3.plot(self.xs, -comp_downsampled_commSG[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="SG Lift (compensated)")
-    self.ax3.plot(self.xs, -comp_downsampled_commSG[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="SG Drag (compensated)")
+    ref_temp_rod = temp_np_C_rod[0]
+    ref_temp_wing = temp_np_C_wing[0]
+    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_rod, ref_temp_wing)
+    comp_downsampled_liftdrag, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C_rod, 'rod', al6061_CTE, al6061_CTE)
+    comp_downsampled_commSG1, comp_commSG_var = commSG_temp_comp.compensate(self.ys[16], temp_np_C_wing, 'wing', al6061_CTE, vero_CTE)
+    self.ax3.plot(self.xs, -comp_downsampled_liftdrag[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="Lift (compensated)")
+    self.ax3.plot(self.xs, -comp_downsampled_liftdrag[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="Drag (compensated)")
+    self.ax3.plot(self.xs, -comp_downsampled_commSG1, ':', color=self.ax3.lines[2].get_color(), linewidth=0.5, label="CommSG1 (compensated)")
 
   def plot_SSNSG_tempcomp_lines (self, temp_np_C, ref_temp=None):
     #TODO: Add downsampling!!
@@ -206,20 +213,24 @@ class PlotSensorData:
     ax3_temptwin.grid(False)
     ax3_veltwin.grid(False)
 
-  def plot_RTD_data (self, temp_np_C):
+  def plot_RTD_data (self, temp_np_C_rod, temp_np_C_wing):
     #TODO: Add downsampling!!
     ax2_temptwin = self.ax2.twinx()
     ax2_temptwin.spines["right"].set_position(("axes", 1.02))
-    ax2_temptwin.plot (self.xs, temp_np_C, "r-", linewidth=0.8,  label="Wing Temp")
+    ax2_temptwin.plot (self.xs, temp_np_C_rod, "r-", linewidth=0.8,  label="Rod Temp")
+    ax2_temptwin.plot (self.xs, temp_np_C_wing, "y-", linewidth=1.0,  label="Wing Temp")
     ax2_temptwin.set_ylabel("Temperature (C)", fontsize=11)
     ax2_temptwin.yaxis.label.set_color('r')
     ax2_temptwin.tick_params(colors = 'r', labelsize="x-small")
     ax2_temptwin.grid(False)
+    ax2_temptwin.legend(fontsize=7, loc="lower right", ncol=1, columnspacing=1)
 
     ax3_temptwin = self.ax3.twinx()
     ax3_temptwin.spines["right"].set_position(("axes", 1.02))
-    ax3_temptwin.plot (self.xs, temp_np_C, "r-", linewidth=0.8,  label="Wing Temp")
+    ax3_temptwin.plot (self.xs, temp_np_C_rod, "r-", linewidth=0.8,  label="Rod Temp")
+    ax3_temptwin.plot (self.xs, temp_np_C_wing, "y-", linewidth=1.0,  label="Wing Temp")
     ax3_temptwin.set_ylabel("Temperature (C)", fontsize=11)
     ax3_temptwin.yaxis.label.set_color('r')
     ax3_temptwin.tick_params(colors = 'r', labelsize="x-small")
     ax3_temptwin.grid(False)
+    ax3_temptwin.legend(fontsize=7, loc="lower right", ncol=1, columnspacing=1)
