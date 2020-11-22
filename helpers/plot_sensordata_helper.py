@@ -105,7 +105,7 @@ class PlotSensorData:
         self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1), animated=True, aa=False)[0])
     self.liftline, = self.ax3.plot(self.xs, -self.ys[14], linewidth=0.5, label="Lift", animated=animated, aa=False) #Comm. LiftSG
     self.dragline, = self.ax3.plot(self.xs, -self.ys[15], linewidth=0.5, label="Drag", animated=animated, aa=False) #Comm. DragSG
-    self.commSG1line = self.ax3.plot(self.xs, -self.ys[16], linewidth=0.5, label="CommSG1", animated=animated, aa=False) #CommSG1
+    # self.commSG1line = self.ax3.plot(self.xs, -self.ys[16], linewidth=0.5, label="CommSG1", animated=animated, aa=False) #CommSG1
 
   #Function to generate real-time plots.
   def plot_live(self, i, ys, queue, plot_compensated_strains=False, ref_temp=None, start_time=None):
