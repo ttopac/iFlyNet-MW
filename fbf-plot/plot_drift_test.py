@@ -15,10 +15,10 @@ SGcoeffs["Vex"] = 12
 
 SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
 commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data with -1 in all experiments before Sept. 13.
-vel = '94'
-aoa = '94'
-test_len = '30' #minutes
-test_folder = 'drift13_Nov19'
+vel = '99'
+aoa = '99'
+test_len = '120' #minutes
+test_folder = 'drift14_Nov24'
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
 temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
@@ -36,14 +36,13 @@ if __name__ == "__main__":
   if driftData.shape[1] > 500000: #Not downsampled at capture time
     downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
     if SSNSG_voltage: downsampled_SSNSGs = 1e6*(4*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]) / (2*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
-    downsampled_commSGs = np.mean (driftData[14:17,:].reshape(3,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
+    downsampled_commSGs = np.mean (driftData[14:18,:].reshape(4,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
     if commSGdata_reverted: downsampled_commSGs *= -1
     downsampled_PZTs = signal.resample(driftData[0:6,:], downsampled_commSGs.shape[1], axis=1)
-    downsampled_RTDs = np.mean (driftData[17:19,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
+    downsampled_RTDs = np.mean (driftData[18:20,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
     ys = np.concatenate ((downsampled_PZTs, downsampled_SSNSGs, downsampled_commSGs, downsampled_RTDs), axis=0)
   else: #Data downsampled at capture time
     ys = driftData
-  ys [14,:] = 0 #TEMPORARY solution for absence of liftSG.
   xs = np.linspace(0,int(test_len),ys.shape[1]) 
 
   plot = plot_sensordata_helper.PlotSensorData(1, False, False, True)
@@ -58,8 +57,8 @@ if __name__ == "__main__":
     # temp_np_C = (temp_np_F-32) * 5 / 9
     raise NotImplementedError("Anemometer compensation is deprecated")
   elif temp_source == 'RTD':
-    temp_np_C_rod = ys[17]
-    temp_np_C_wing = ys[18]
+    temp_np_C_rod = ys[18]
+    temp_np_C_wing = ys[19]
 
   if plot_temp_line:
     if temp_source == 'anemometer':
