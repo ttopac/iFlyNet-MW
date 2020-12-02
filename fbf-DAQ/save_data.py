@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath('./helpers'))
 from daq_captureSGoffsets_helper import send_SG_offsets
 from daq_capturedata_helper import send_data
 
-test_len = 30 #minutes. >1 is assumed to be drift test data, else training data.
+test_len = 120 #minutes. >1 is assumed to be drift test data, else training data.
 params = dict()
 params["sample_rate"] = 1724 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 downsample_mult = 233 #Use 1 for training, use 233 for drifttest.
@@ -43,6 +43,6 @@ if __name__ == "__main__":
     downsampled_data = np.concatenate((fewerPZTdata, fewerotherdata), axis=0)
 
     if test_len > 1: #DriftTest
-      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/drift13_Nov19/drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len),downsampled_data)
+      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/drift16_Dec2/drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len),downsampled_data)
     else: #TrainingTest
-      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/drift13_Nov19/train_{}ms_{}deg.npy'.format(vel,aoa),downsampled_data)
+      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/.../train_{}ms_{}deg.npy'.format(vel,aoa),downsampled_data)
