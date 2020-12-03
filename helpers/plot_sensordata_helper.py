@@ -44,12 +44,12 @@ class PlotSensorData:
     self.ax1.grid(False)
 
     self.SGlines = list()
-    self.ax2.set_title("-SSN SGs", fontsize=11)
+    self.ax2.set_title("SSN SGs", fontsize=11)
     self.ax2.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
     self.ax2.tick_params(labelsize="small")
     self.ax2.grid(False)
 
-    self.ax3.set_title("-Commercial SGs", fontsize=11)
+    self.ax3.set_title("Commercial SGs", fontsize=11)
     self.ax3.set_xlabel("Time", fontsize=11)
     self.ax3.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
     self.ax3.tick_params(labelsize="small")
@@ -58,7 +58,7 @@ class PlotSensorData:
   def term_common_params(self, mfcplot_exists):
     self.leg1 = self.ax1.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
     self.leg2 = self.ax2.legend(fontsize=7, loc="upper right", ncol=3, columnspacing=1)
-    self.leg3 = self.ax3.legend(fontsize=7, loc="lower left", ncol=2, columnspacing=1)
+    self.leg3 = self.ax3.legend(fontsize=7, loc="upper right", ncol=2, columnspacing=1)
 
     for line in self.leg1.get_lines():
       line.set_linewidth(1.5)
@@ -97,15 +97,16 @@ class PlotSensorData:
       animated = False
 
     for i in range(6): #PZTs
-      self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1), animated=True, aa=False)[0])
+      self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1), animated=animated, aa=False)[0])
     for i in range(8): #SSNSGs
       if i == 7:
-        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2), animated=True, aa=False)[0])
+        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2), animated=animated, aa=False)[0])
       else:
-        self.SGlines.append(self.ax2.plot(self.xs, -self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1), animated=True, aa=False)[0])
-    self.liftline, = self.ax3.plot(self.xs, -self.ys[14], linewidth=0.5, label="Lift", animated=animated, aa=False) #Comm. LiftSG
-    self.dragline, = self.ax3.plot(self.xs, -self.ys[15], linewidth=0.5, label="Drag", animated=animated, aa=False) #Comm. DragSG
-    # self.commSG1line = self.ax3.plot(self.xs, -self.ys[16], linewidth=0.5, label="CommSG1", animated=animated, aa=False) #CommSG1
+        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1), animated=animated, aa=False)[0])
+    self.liftline, = self.ax3.plot(self.xs, self.ys[14], linewidth=0.5, label="Lift", animated=animated, aa=False) #Comm. LiftSG
+    self.dragline, = self.ax3.plot(self.xs, self.ys[15], linewidth=0.5, label="Drag", animated=animated, aa=False) #Comm. DragSG
+    self.commSG1line = self.ax3.plot(self.xs, self.ys[16], linewidth=0.5, label="CommSG1", animated=animated, aa=False) #CommSG1
+    self.commSG2line = self.ax3.plot(self.xs, self.ys[17], linewidth=0.5, label="CommSG2", animated=animated, aa=False) #CommSG2
 
   #Function to generate real-time plots.
   def plot_live(self, i, ys, queue, plot_compensated_strains=False, ref_temp=None, start_time=None):
@@ -126,7 +127,7 @@ class PlotSensorData:
     useful_data_start, useful_data_end = 0, int(read_data.shape[1]/self.downsample_mult)*self.downsample_mult
     fewerPZTdata = signal.resample(read_data[0:6,:], self.num_samples, axis=1) #Downsample the PZT data
     fewerSSNSGdata = np.mean (read_data[6:14,useful_data_start:useful_data_end].reshape(8,-1,self.downsample_mult), axis=2) #Downsample the SSNSG data
-    fewerCommSGdata = np.mean (read_data[14:16,useful_data_start:useful_data_end].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
+    fewerCommSGdata = np.mean (read_data[14:18,useful_data_start:useful_data_end].reshape(4,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
 
     #DEPRECATED
     # fewerPZTdata = signal.resample(read_data[0:6,:], self.num_samples, axis=1) #Downsample the PZT data
@@ -144,18 +145,20 @@ class PlotSensorData:
       commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp)
       compCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(fewerCommSGdata, temp_np_C)
       ys[6:14,slice_start:slice_end] = compSSNSGdata
-      ys[14:16,slice_start:slice_end] = compCommSGdata
+      ys[14:18,slice_start:slice_end] = compCommSGdata
     else:  
       ys[6:14,slice_start:slice_end] = fewerSSNSGdata
-      ys[14:16,slice_start:slice_end] = fewerCommSGdata
+      ys[14:18,slice_start:slice_end] = fewerCommSGdata
     
     for count,line in enumerate(self.PZTlines):
       line.set_ydata(ys[count])
     for count,line in enumerate(self.SGlines):
-      line.set_ydata(-ys[count+6])
-    self.liftline.set_ydata(-ys[14])
-    self.dragline.set_ydata(-ys[15])
-    return self.PZTlines+self.SGlines+list((self.liftline,self.dragline))
+      line.set_ydata(ys[count+6])
+    self.liftline.set_ydata(ys[14])
+    self.dragline.set_ydata(ys[15])
+    self.commSG1line.set_ydata(ys[16])
+    self.commSG2line.set_ydata(ys[17])
+    return self.PZTlines+self.SGlines+list((self.liftline,self.dragline,self.commSG1line,self.commSG2line))
 
   #Additional plots for plot_drift_test plots.
   def plot_commSG_tempcomp_lines (self, temp_np_C_rod, temp_np_C_wing, ref_temp=None): #NOT IMPLEMENTED FOR REAL-TIME YET.
@@ -165,9 +168,11 @@ class PlotSensorData:
     commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_rod, ref_temp_wing)
     comp_downsampled_liftdrag, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C_rod, 'rod', al6061_CTE, al6061_CTE)
     comp_downsampled_commSG1, comp_commSG_var = commSG_temp_comp.compensate(self.ys[16], temp_np_C_wing, 'wing', al6061_CTE, vero_CTE)
-    self.ax3.plot(self.xs, -comp_downsampled_liftdrag[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="Lift (compensated)")
-    self.ax3.plot(self.xs, -comp_downsampled_liftdrag[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="Drag (compensated)")
-    self.ax3.plot(self.xs, -comp_downsampled_commSG1, ':', color=self.ax3.lines[2].get_color(), linewidth=0.5, label="CommSG1 (compensated)")
+    comp_downsampled_commSG2, comp_commSG_var = commSG_temp_comp.compensate(self.ys[17], temp_np_C_wing, 'wing', al6061_CTE, vero_CTE)
+    self.ax3.plot(self.xs, comp_downsampled_liftdrag[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="Lift (comp.)")
+    self.ax3.plot(self.xs, comp_downsampled_liftdrag[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="Drag (comp.)")
+    self.ax3.plot(self.xs, comp_downsampled_commSG1, ':', color=self.ax3.lines[2].get_color(), linewidth=0.5, label="CommSG1 (comp.)")
+    self.ax3.plot(self.xs, comp_downsampled_commSG2, ':', color=self.ax3.lines[3].get_color(), linewidth=0.5, label="CommSG2 (comp.)")
 
   def plot_SSNSG_tempcomp_lines (self, temp_np_C, ref_temp=None):
     #TODO: Add downsampling!!
@@ -177,9 +182,9 @@ class PlotSensorData:
     self.compSGlines = list()
     for i in range(8):
       if i == 7:
-        self.compSGlines.append(self.ax2.plot(self.xs, -comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+2))[0])
+        self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+2))[0])
       else:
-        self.compSGlines.append(self.ax2.plot(self.xs, -comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+1))[0])
+        self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+1))[0])
 
   def plot_anemometer_data (self, vel_np, temp_np_C):  
     #TODO: Add downsampling!!

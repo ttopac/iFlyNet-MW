@@ -14,11 +14,11 @@ SGcoeffs["GF"] = 2.11
 SGcoeffs["Vex"] = 12
 
 SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
-commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data with -1 in all experiments before Sept. 13.
-vel = '99'
-aoa = '99'
+commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data by -1 in all experiments before Sept. 13.
+vel = '3'
+aoa = '3'
 test_len = '120' #minutes
-test_folder = 'drift14_Nov24'
+test_folder = 'drift17_Dec3'
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
 temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
@@ -30,8 +30,9 @@ if temp_source == None:
 
 
 if __name__ == "__main__":
-  # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
-  driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
+  # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
+  # driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
+  driftData = np.load('/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
   
   if driftData.shape[1] > 500000: #Not downsampled at capture time
     downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data

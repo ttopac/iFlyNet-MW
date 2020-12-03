@@ -43,6 +43,6 @@ if __name__ == "__main__":
     downsampled_data = np.concatenate((fewerPZTdata, fewerotherdata), axis=0)
 
     if test_len > 1: #DriftTest
-      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/drift16_Dec2/drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len),downsampled_data)
+      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/drift17_Dec3/drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len),downsampled_data)
     else: #TrainingTest
       np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/.../train_{}ms_{}deg.npy'.format(vel,aoa),downsampled_data)
