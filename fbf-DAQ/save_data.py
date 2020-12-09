@@ -7,10 +7,10 @@ sys.path.append(os.path.abspath('./helpers'))
 from daq_captureSGoffsets_helper import send_SG_offsets
 from daq_capturedata_helper import send_data
 
-continuous_collect = False
+continuous_collect = True
 test_type = 'drift' #drift or training
 test_folder = 'Drift_Tests/drift24_Dec9'
-test_len = 1 #minutes. >1 is assumed to be drift test data, else training data.
+test_len = 120 #minutes. >1 is assumed to be drift test data, else training data.
 
 params = dict()
 params["sample_rate"] = 1724 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 

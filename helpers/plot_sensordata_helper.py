@@ -11,11 +11,12 @@ commSG_CTEvar_wing = 51 #Obtained experimentally
 SSNSG_CTEvar_wing = 109
 
 class PlotSensorData:
-  def __init__(self, downsample_mult, singleplot, ongui, offline):
+  def __init__(self, downsample_mult, singleplot, ongui, offline, reftemp=None):
     self.downsample_mult = downsample_mult
     self.singleplot = singleplot
     self.ongui = ongui
     self.offline = offline
+    self.reftemp = reftemp
     self.fig = plt.figure()
     self.ax1 = self.fig.add_subplot(3,1,1)
     self.ax2 = self.fig.add_subplot(3,1,2)
@@ -160,20 +161,20 @@ class PlotSensorData:
     return self.PZTlines+self.SGlines+list((self.liftline,self.dragline,self.commSG1line))
 
   #Additional plots for plot_drift_test plots.
-  def plot_commSG_tempcomp_lines (self, temp_np_C_SG1, temp_np_C_wing, ref_temp=None): #NOT IMPLEMENTED FOR REAL-TIME YET.
+  def plot_commSG_tempcomp_lines (self, temp_np_C_SG1, temp_np_C_wing): #NOT IMPLEMENTED FOR REAL-TIME YET.
     #TODO: Add downsampling!!
-    ref_temp_SG1 = temp_np_C_SG1[0]
-    ref_temp_wing = temp_np_C_wing[0]
+    ref_temp_SG1 = self.reftemp[0]
+    ref_temp_wing = self.reftemp[1]
     commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
     comp_downsampled_commSG1, _ = commSG_temp_comp.compensate(self.ys[16], temp_np_C_SG1, 'SG1', commSG_CTEvar_wing)
     # comp_downsampled_commSG2, _ = commSG_temp_comp.compensate(self.ys[17], temp_np_C_wing, 'wing', commSG_CTEvar_wing)
     self.ax3.plot(self.xs, comp_downsampled_commSG1, ':', color=self.ax3.lines[2].get_color(), linewidth=0.5, label="CommSG1 (comp.)")
     # self.ax3.plot(self.xs, comp_downsampled_commSG2, ':', color=self.ax3.lines[3].get_color(), linewidth=0.5, label="CommSG2 (comp.)")
 
-  def plot_SSNSG_tempcomp_lines (self, temp_np_C_SG1, temp_np_C_wing, ref_temp=None):
+  def plot_SSNSG_tempcomp_lines (self, temp_np_C_SG1, temp_np_C_wing):
     #TODO: Add downsampling!!
-    ref_temp_SG1 = temp_np_C_SG1[0]
-    ref_temp_wing = temp_np_C_wing[0]
+    ref_temp_SG1 = self.reftemp[0]
+    ref_temp_wing = self.reftemp[1]
     SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
     comp_downsampled_SSNSG1 = SSNSG_temp_comp.compensate(self.ys[6], temp_np_C_SG1, 'SG1', SSNSG_CTEvar_wing)
     self.compSGlines = list()

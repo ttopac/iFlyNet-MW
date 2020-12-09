@@ -15,10 +15,12 @@ SGcoeffs["Vex"] = 12
 
 SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
 commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data by -1 in all experiments before Sept. 13.
-vel = '1'
-aoa = '1'
-test_len = '90' #minutes
+vel = '99'
+aoa = '99'
+test_len = '720' #minutes
 test_folder = 'drift23_Dec8'
+test_file = 'REF_drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len)
+ref_temp_file = test_file
 downsample_mult = 1700 #Only used if data is not already downsampled. 1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
 temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
@@ -30,11 +32,17 @@ if temp_source == None:
 
 
 if __name__ == "__main__":
-  # driftData = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
-  # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
-  # driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
-  # driftData = np.load('/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
-  driftData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
+  # driftData = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,test_file))
+  # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,test_file))
+  # driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,test_file))
+  # driftData = np.load('/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,test_file))
+  driftData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,test_file))
+  if ref_temp_file != test_file:
+    ref_temp_data = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,ref_temp_file))
+    ref_temp = ref_temp_data[18:20,0]
+  else:
+    ref_temp = driftData[18:20,0]
+
   
   if driftData.shape[1] > 500000: #Not downsampled at capture time
     downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
@@ -48,7 +56,7 @@ if __name__ == "__main__":
     ys = driftData
   xs = np.linspace(0,int(test_len),ys.shape[1]) 
 
-  plot = plot_sensordata_helper.PlotSensorData(1, False, False, True)
+  plot = plot_sensordata_helper.PlotSensorData(1, False, False, True, ref_temp)
   plot.plot_raw_lines(xs, ys=ys, vel=vel, aoa=aoa)
 
   if temp_source == 'RTD':
