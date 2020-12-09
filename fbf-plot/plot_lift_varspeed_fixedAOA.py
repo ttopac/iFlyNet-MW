@@ -32,8 +32,10 @@ vel_labels = [2,4,6,8,10,12,14,16,18,20,14,14,14]
 aoa = 6
 
 for v in vel:
+  # trainData = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/')
   # trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/')
-  trainData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,aoa))
+  # trainData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,aoa))
+  trainData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,aoa))
   ave_SG1.append(np.mean(-trainData[6])) #6 is SG1 at root.
   ave_lift.append(np.mean(-trainData[14])) #14 is Lift CommSG
 
@@ -66,6 +68,7 @@ ax2.set_ylabel("Microstrain (ue)", fontsize=11)
 #Add post-experiment datapoint:
 # vel.append(14)
 # postExpData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_14_2ms_{}deg.npy'.format(aoa))
+# postExpData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Training_Tests/train3_Sept17/train_14_2ms_{}deg.npy'.format(aoa))
 # ave_lift.append(np.mean(postExpData[14])) #14 is Lift CommSG
 # ave_root_SG.append(np.mean(-1*postExpData[6])) #6 is SG1 at root.
 

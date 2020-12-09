@@ -64,6 +64,7 @@ class CalcMFCShape():
     if fakedata:
       excel_file_path = 'g:/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx'
       # excel_file_path = '//Volumes/GoogleDrive/My Drive/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx'
+      # excel_file_path = '//Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Research_Projects/2017_BRI_Project/May20_ShapeEstimation/exampleStrains.xlsx'
       data = self.read_from_xls(excel_file_path)
       i = 0
       while i < data.shape[0]:

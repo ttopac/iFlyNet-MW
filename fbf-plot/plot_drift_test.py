@@ -30,9 +30,11 @@ if temp_source == None:
 
 
 if __name__ == "__main__":
+  # driftData = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
   # driftData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
   # driftData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
-  driftData = np.load('/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
+  # driftData = np.load('/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
+  driftData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg_{}min.npy'.format(test_folder,vel,aoa,test_len))
   
   if driftData.shape[1] > 500000: #Not downsampled at capture time
     downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
@@ -49,15 +51,7 @@ if __name__ == "__main__":
   plot = plot_sensordata_helper.PlotSensorData(1, False, False, True)
   plot.plot_raw_lines(xs, ys=ys, vel=vel, aoa=aoa)
 
-  if temp_source == 'anemometer': #OBSOLETE NOW. CODE NOT UPDATED
-    # tempdata = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drifttemp_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
-    # tempdata = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/{}/drift_{}ms_{}deg.txt'.format(test_folder,vel,aoa)
-    # df = pd.read_csv(tempdata, header=0, delim_whitespace=True)
-    # vel_np = df['Speed'].to_numpy()[0:downsampled_commSGs.shape[1]]
-    # temp_np_F = df['Temp.'].to_numpy()[0:downsampled_commSGs.shape[1]]
-    # temp_np_C = (temp_np_F-32) * 5 / 9
-    raise NotImplementedError("Anemometer compensation is deprecated")
-  elif temp_source == 'RTD':
+  if temp_source == 'RTD':
     temp_np_C_SG1 = ys[18]
     temp_np_C_wing = ys[19]
 

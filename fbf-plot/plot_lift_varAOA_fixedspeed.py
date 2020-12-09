@@ -33,8 +33,11 @@ vel = '20'
 aoa = [0,2,4,6,8,10,12,14,16,17,18,19,20]
 
 for a in aoa:
+  # trainData = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/')
   # trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/')
-  trainData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(vel,a))
+  # trainData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(vel,a))
+  trainData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(vel,a))
+
   sum_PZT1.append(np.mean(np.sum(trainData[1]**2)))
   ave_SG1.append(np.mean(-trainData[6])) #6 is SG1 at root.
   ave_lift.append(np.mean(-trainData[14])) #14 is Lift CommSG

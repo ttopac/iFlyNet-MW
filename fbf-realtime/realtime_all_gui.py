@@ -11,8 +11,9 @@ sys.path.append(os.path.abspath('./helpers'))
 import gui_windows_helper
 import streamdata_helper
 
+main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
+# main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 
-main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 models = dict()
 models['types'] = ['stall', 'liftdrag']
 models['filenames'] = ['stall_train993_val_988', 'lift_PZTonly_train_loss0461']

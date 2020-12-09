@@ -61,4 +61,5 @@ if __name__ == "__main__":
     downsampled_data = np.concatenate((fewerPZTdata, fewerotherdata), axis=0)
     ref_test = False
 
-    np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/{}/{}'.format(test_folder,filename),downsampled_data)
+    # np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/{}/{}'.format(test_folder,filename),downsampled_data)
+    np.save('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/{}/{}'.format(test_folder,filename),downsampled_data)

@@ -13,9 +13,11 @@ sys.path.append(os.path.abspath('./helpers'))
 import gui_windows_helper
 import streamdata_helper
 
-main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
+# main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
+main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
+# main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
 test_folder, ref_temp = 'offline5_Nov19', 20.6590 #Reftemp is unique for test_folder and captured at the beginning of experiments. Set to None if prefer using first datapoint.
 
 params = dict()

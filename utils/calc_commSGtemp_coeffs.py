@@ -14,7 +14,8 @@ aoa = '0'
 test_folder = 'tempcal1_Sept18'
 visible_duration = 10 #(minutes) duration of temptest
 downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
-testData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/tempcal_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+# testData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/{}/tempcal_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
+testData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Training_Tests/{}/tempcal_{}ms_{}deg.npy'.format(test_folder,vel,aoa))
 commSGdata = testData[15,0:299200]
 tempdata = testData[16,0:299200]
 

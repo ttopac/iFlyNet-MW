@@ -9,9 +9,11 @@ aoa = [0]
 
 for v in vel:
   for a in aoa:
-    data = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline1_Oct6')
+    # data = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline1_Oct6')
+    # data = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline1_Oct6')
     # data = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,a))
-    # data = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/test2_Sept19/test2.npy')
+    data = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(v,a))
+    
     
     fig = plt.figure()
     ax1 = fig.add_subplot(3,1,1)

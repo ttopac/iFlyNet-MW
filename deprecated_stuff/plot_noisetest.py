@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-read_data = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/noisetest_2.npy')
+# read_data = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/noisetest_2.npy')
+read_data = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Training_Tests/noisetest_2.npy')
 
 fig = plt.figure(figsize=(12.0, 6.0))
 plt.style.use ('fivethirtyeight')
