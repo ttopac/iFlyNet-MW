@@ -7,9 +7,8 @@ import time
 sys.path.append(os.path.abspath('./helpers'))
 import proc_tempcomp_helper
 
-al6061_CTE = 23.4E-6
-vero_CTE = 73.3E-6
-vero_CTE = 38.3E-6 #self-determined
+commSG_CTEvar_wing = 51 #Obtained experimentally
+SSNSG_CTEvar_wing = 109
 
 class PlotSensorData:
   def __init__(self, downsample_mult, singleplot, ongui, offline):
@@ -98,7 +97,7 @@ class PlotSensorData:
 
     for i in range(6): #PZTs
       self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1), animated=animated, aa=False)[0])
-    for i in range(8): #SSNSGs
+    for i in range(1): #SSNSGs
       if i == 7:
         self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2), animated=animated, aa=False)[0])
       else:
@@ -106,7 +105,7 @@ class PlotSensorData:
     self.liftline, = self.ax3.plot(self.xs, self.ys[14], linewidth=0.5, label="Lift", animated=animated, aa=False) #Comm. LiftSG
     self.dragline, = self.ax3.plot(self.xs, self.ys[15], linewidth=0.5, label="Drag", animated=animated, aa=False) #Comm. DragSG
     self.commSG1line = self.ax3.plot(self.xs, self.ys[16], linewidth=0.5, label="CommSG1", animated=animated, aa=False) #CommSG1
-    self.commSG2line = self.ax3.plot(self.xs, self.ys[17], linewidth=0.5, label="CommSG2", animated=animated, aa=False) #CommSG2
+    # self.commSG2line = self.ax3.plot(self.xs, self.ys[17], linewidth=0.5, label="CommSG2", animated=animated, aa=False) #CommSG2
 
   #Function to generate real-time plots.
   def plot_live(self, i, ys, queue, plot_compensated_strains=False, ref_temp=None, start_time=None):
@@ -157,34 +156,33 @@ class PlotSensorData:
     self.liftline.set_ydata(ys[14])
     self.dragline.set_ydata(ys[15])
     self.commSG1line.set_ydata(ys[16])
-    self.commSG2line.set_ydata(ys[17])
-    return self.PZTlines+self.SGlines+list((self.liftline,self.dragline,self.commSG1line,self.commSG2line))
+    # self.commSG2line.set_ydata(ys[17])
+    return self.PZTlines+self.SGlines+list((self.liftline,self.dragline,self.commSG1line))
 
   #Additional plots for plot_drift_test plots.
-  def plot_commSG_tempcomp_lines (self, temp_np_C_rod, temp_np_C_wing, ref_temp=None): #NOT IMPLEMENTED FOR REAL-TIME YET.
+  def plot_commSG_tempcomp_lines (self, temp_np_C_SG1, temp_np_C_wing, ref_temp=None): #NOT IMPLEMENTED FOR REAL-TIME YET.
     #TODO: Add downsampling!!
-    ref_temp_rod = temp_np_C_rod[0]
+    ref_temp_SG1 = temp_np_C_SG1[0]
     ref_temp_wing = temp_np_C_wing[0]
-    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_rod, ref_temp_wing)
-    comp_downsampled_liftdrag, comp_commSG_var = commSG_temp_comp.compensate(self.ys[14:16], temp_np_C_rod, 'rod', al6061_CTE, al6061_CTE)
-    comp_downsampled_commSG1, comp_commSG_var = commSG_temp_comp.compensate(self.ys[16], temp_np_C_wing, 'wing', al6061_CTE, vero_CTE)
-    comp_downsampled_commSG2, comp_commSG_var = commSG_temp_comp.compensate(self.ys[17], temp_np_C_wing, 'wing', al6061_CTE, vero_CTE)
-    self.ax3.plot(self.xs, comp_downsampled_liftdrag[0], ':', color=self.ax3.lines[0].get_color(), linewidth=0.5, label="Lift (comp.)")
-    self.ax3.plot(self.xs, comp_downsampled_liftdrag[1], ':', color=self.ax3.lines[1].get_color(), linewidth=0.5, label="Drag (comp.)")
+    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
+    comp_downsampled_commSG1, _ = commSG_temp_comp.compensate(self.ys[16], temp_np_C_SG1, 'SG1', commSG_CTEvar_wing)
+    # comp_downsampled_commSG2, _ = commSG_temp_comp.compensate(self.ys[17], temp_np_C_wing, 'wing', commSG_CTEvar_wing)
     self.ax3.plot(self.xs, comp_downsampled_commSG1, ':', color=self.ax3.lines[2].get_color(), linewidth=0.5, label="CommSG1 (comp.)")
-    self.ax3.plot(self.xs, comp_downsampled_commSG2, ':', color=self.ax3.lines[3].get_color(), linewidth=0.5, label="CommSG2 (comp.)")
+    # self.ax3.plot(self.xs, comp_downsampled_commSG2, ':', color=self.ax3.lines[3].get_color(), linewidth=0.5, label="CommSG2 (comp.)")
 
-  def plot_SSNSG_tempcomp_lines (self, temp_np_C, ref_temp=None):
+  def plot_SSNSG_tempcomp_lines (self, temp_np_C_SG1, temp_np_C_wing, ref_temp=None):
     #TODO: Add downsampling!!
-    ref_temp = temp_np_C[0]
-    SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp)
-    comp_downsampled_SSNSG = SSNSG_temp_comp.compensate(self.ys[6:14], temp_np_C)
+    ref_temp_SG1 = temp_np_C_SG1[0]
+    ref_temp_wing = temp_np_C_wing[0]
+    SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
+    comp_downsampled_SSNSG1 = SSNSG_temp_comp.compensate(self.ys[6], temp_np_C_SG1, 'SG1', SSNSG_CTEvar_wing)
     self.compSGlines = list()
-    for i in range(8):
-      if i == 7:
-        self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+2))[0])
-      else:
-        self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+1))[0])
+    self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG1, ':', color=self.SGlines[0].get_color(), linewidth=0.5, label="SG1 (comp)")[0])
+    # for i in range(8):
+    #   if i == 7:
+    #     self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+2))[0])
+    #   else:
+    #     self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+1))[0])
 
   def plot_anemometer_data (self, vel_np, temp_np_C):  
     #TODO: Add downsampling!!
@@ -218,11 +216,11 @@ class PlotSensorData:
     ax3_temptwin.grid(False)
     ax3_veltwin.grid(False)
 
-  def plot_RTD_data (self, temp_np_C_rod, temp_np_C_wing):
+  def plot_RTD_data (self, temp_np_C_SG1, temp_np_C_wing):
     #TODO: Add downsampling!!
     ax2_temptwin = self.ax2.twinx()
     ax2_temptwin.spines["right"].set_position(("axes", 1.02))
-    ax2_temptwin.plot (self.xs, temp_np_C_rod, "r-", linewidth=0.8,  label="Rod Temp")
+    ax2_temptwin.plot (self.xs, temp_np_C_SG1, "k-", linewidth=0.8,  label="SG1 Temp")
     ax2_temptwin.plot (self.xs, temp_np_C_wing, "y-", linewidth=1.0,  label="Wing Temp")
     ax2_temptwin.set_ylabel("Temperature (C)", fontsize=11)
     ax2_temptwin.yaxis.label.set_color('r')
@@ -232,7 +230,7 @@ class PlotSensorData:
 
     ax3_temptwin = self.ax3.twinx()
     ax3_temptwin.spines["right"].set_position(("axes", 1.02))
-    ax3_temptwin.plot (self.xs, temp_np_C_rod, "r-", linewidth=0.8,  label="Rod Temp")
+    ax3_temptwin.plot (self.xs, temp_np_C_SG1, "k-", linewidth=0.8,  label="SG1 Temp")
     ax3_temptwin.plot (self.xs, temp_np_C_wing, "y-", linewidth=1.0,  label="Wing Temp")
     ax3_temptwin.set_ylabel("Temperature (C)", fontsize=11)
     ax3_temptwin.yaxis.label.set_color('r')

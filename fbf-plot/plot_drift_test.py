@@ -15,16 +15,16 @@ SGcoeffs["Vex"] = 12
 
 SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
 commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data by -1 in all experiments before Sept. 13.
-vel = '3'
-aoa = '3'
-test_len = '120' #minutes
-test_folder = 'drift17_Dec3'
-downsample_mult = 1700 #1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
+vel = '1'
+aoa = '1'
+test_len = '90' #minutes
+test_folder = 'drift23_Dec8'
+downsample_mult = 1700 #Only used if data is not already downsampled. 1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
 temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
 plot_temp_line = True
 plot_commSG_comp = True
-plot_SSNSG_comp = False
+plot_SSNSG_comp = True
 if temp_source == None:
   plot_temp_line, plot_commSG_comp, plot_SSNSG_comp = False, False, False
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # temp_np_C = (temp_np_F-32) * 5 / 9
     raise NotImplementedError("Anemometer compensation is deprecated")
   elif temp_source == 'RTD':
-    temp_np_C_rod = ys[18]
+    temp_np_C_SG1 = ys[18]
     temp_np_C_wing = ys[19]
 
   if plot_temp_line:
@@ -66,13 +66,13 @@ if __name__ == "__main__":
       # plot.plot_anemometer_data (vel_np, temp_np_C)
       pass
     else:
-      plot.plot_RTD_data (temp_np_C_rod, temp_np_C_wing)
+      plot.plot_RTD_data (temp_np_C_SG1, temp_np_C_wing)
 
   if plot_commSG_comp:
-    plot.plot_commSG_tempcomp_lines(temp_np_C_rod, temp_np_C_wing)
+    plot.plot_commSG_tempcomp_lines(temp_np_C_SG1, temp_np_C_wing)
 
   if plot_SSNSG_comp:
-    plot.plot_SSNSG_tempcomp_lines(temp_np_C_wing)
+    plot.plot_SSNSG_tempcomp_lines(temp_np_C_SG1, temp_np_C_wing)
 
   plot.term_common_params(mfcplot_exists=False)
   plt.show()
