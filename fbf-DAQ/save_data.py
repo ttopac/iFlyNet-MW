@@ -7,8 +7,11 @@ sys.path.append(os.path.abspath('./helpers'))
 from daq_captureSGoffsets_helper import send_SG_offsets
 from daq_capturedata_helper import send_data
 
-continuous_collect = True
-test_len = 90 #minutes. >1 is assumed to be drift test data, else training data.
+continuous_collect = False
+test_type = 'drift' #drift or training
+test_folder = 'Drift_Tests/drift24_Dec9'
+test_len = 1 #minutes. >1 is assumed to be drift test data, else training data.
+
 params = dict()
 params["sample_rate"] = 1724 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 downsample_mult = 233 #Use 1 for training, use 233 for drifttest.
@@ -24,6 +27,7 @@ if __name__ == "__main__":
   p1.join()
   
   aoa, vel = 0, 0
+  ref_test = True
   while True:
     if continuous_collect:
       aoa_in = aoa+1
@@ -36,6 +40,14 @@ if __name__ == "__main__":
     if vel_in != "":
       vel = vel_in
 
+    filename = '{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len)
+    if test_type == 'drift':
+      filename = 'drift_' + filename
+    elif test_type == 'train':
+      filename = 'train_' + filename
+    if ref_test == True:
+      filename = 'REF_' + filename
+
     parent_conn,child_conn = Pipe()
     saveflag_conn = Queue()
     p = Process(target = send_data, args=(SGoffsets, params["sample_rate"], params["samples_read_main"], "fixedlen", child_conn, saveflag_conn, 0, None))
@@ -47,8 +59,6 @@ if __name__ == "__main__":
     fewerPZTdata = signal.resample(read_data[0:6,:], num_samples, axis=1) #Downsample the PZT data
     fewerotherdata = np.mean (read_data[6:,useful_data_start:useful_data_end].reshape(read_data.shape[0]-6,-1,downsample_mult), axis=2) #Downsample the SSNSG data
     downsampled_data = np.concatenate((fewerPZTdata, fewerotherdata), axis=0)
+    ref_test = False
 
-    if test_len > 1: #DriftTest
-      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Drift_Tests/drift23_Dec8/drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len),downsampled_data)
-    else: #TrainingTest
-      np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/.../train_{}ms_{}deg.npy'.format(vel,aoa),downsampled_data)
+    np.save('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/{}/{}'.format(test_folder,filename),downsampled_data)
