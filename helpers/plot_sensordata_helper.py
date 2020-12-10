@@ -8,7 +8,9 @@ sys.path.append(os.path.abspath('./helpers'))
 import proc_tempcomp_helper
 
 commSG_CTEvar_wing = 51 #Obtained experimentally
-SSNSG_CTEvar_wing = 109
+SSNSG_CTEvar_wing = dict()
+SSNSG_CTEvar_wing = {1:109, 5:88, 6:53, 7:54, 9:55}
+SSNSG_surfaces = {1:'SG1', 5:'wing', 6:'wing', 7:'wing', 9:'wing'}
 
 class PlotSensorData:
   def __init__(self, downsample_mult, singleplot, ongui, offline, reftemp=None):
@@ -98,11 +100,11 @@ class PlotSensorData:
 
     for i in range(6): #PZTs
       self.PZTlines.append(self.ax1.plot(self.xs, self.ys[i], linewidth=0.3, label="PZT {}".format(i+1), animated=animated, aa=False)[0])
-    for i in range(1): #SSNSGs
-      if i == 7:
-        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2), animated=animated, aa=False)[0])
-      else:
+    for i in [0, 4, 5, 6, 7]: #SSNSGs (2, 3, 4, 8) are not plotted !!either not working or not needed!!
+      if i != 7:
         self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+1), animated=animated, aa=False)[0])
+      else:
+        self.SGlines.append(self.ax2.plot(self.xs, self.ys[6+i], linewidth=0.5, label="SG {}".format(i+2), animated=animated, aa=False)[0])
     self.liftline, = self.ax3.plot(self.xs, self.ys[14], linewidth=0.5, label="Lift", animated=animated, aa=False) #Comm. LiftSG
     self.dragline, = self.ax3.plot(self.xs, self.ys[15], linewidth=0.5, label="Drag", animated=animated, aa=False) #Comm. DragSG
     self.commSG1line = self.ax3.plot(self.xs, self.ys[16], linewidth=0.5, label="CommSG1", animated=animated, aa=False) #CommSG1
@@ -129,12 +131,7 @@ class PlotSensorData:
     fewerSSNSGdata = np.mean (read_data[6:14,useful_data_start:useful_data_end].reshape(8,-1,self.downsample_mult), axis=2) #Downsample the SSNSG data
     fewerCommSGdata = np.mean (read_data[14:18,useful_data_start:useful_data_end].reshape(4,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
 
-    #DEPRECATED
-    # fewerPZTdata = signal.resample(read_data[0:6,:], self.num_samples, axis=1) #Downsample the PZT data
-    # fewerSSNSGdata = np.mean (read_data[6:14,:].reshape(8,-1,self.downsample_mult), axis=2) #Downsample the SSNSG data
-    # fewerCommSGdata = np.mean (read_data[14:16,:].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
-    temp_np_C = np.mean(read_data[16])
-    
+      
     slice_start = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples
     slice_end = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples + self.num_samples
     
@@ -176,14 +173,18 @@ class PlotSensorData:
     ref_temp_SG1 = self.reftemp[0]
     ref_temp_wing = self.reftemp[1]
     SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
-    comp_downsampled_SSNSG1 = SSNSG_temp_comp.compensate(self.ys[6], temp_np_C_SG1, 'SG1', SSNSG_CTEvar_wing)
+
     self.compSGlines = list()
-    self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG1, ':', color=self.SGlines[0].get_color(), linewidth=0.5, label="SG1 (comp)")[0])
-    # for i in range(8):
-    #   if i == 7:
-    #     self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+2))[0])
-    #   else:
-    #     self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG[i], ':', color=self.SGlines[i].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+1))[0])
+    for count,i in enumerate([0, 4, 5, 6, 7]):
+      if i != 7:
+        temp = self.ys[18] if SSNSG_surfaces[i+1] == 'SG1' else self.ys[19]
+        comp_downsampled_SSNSG = SSNSG_temp_comp.compensate(self.ys[6+i], temp, SSNSG_surfaces[i+1], SSNSG_CTEvar_wing[i+1])
+        self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG, ':', color=self.SGlines[count].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+1))[0])
+      else:
+        temp = self.ys[18] if SSNSG_surfaces[i+2] == 'SG1' else self.ys[19]
+        comp_downsampled_SSNSG = SSNSG_temp_comp.compensate(self.ys[6+i], temp, SSNSG_surfaces[i+2], SSNSG_CTEvar_wing[i+2])
+        self.compSGlines.append(self.ax2.plot(self.xs, comp_downsampled_SSNSG, ':', color=self.SGlines[count].get_color(), linewidth=0.5, label="SG {} (comp)".format(i+2))[0])
+
 
   def plot_anemometer_data (self, vel_np, temp_np_C):  
     #TODO: Add downsampling!!
