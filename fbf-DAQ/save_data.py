@@ -9,7 +9,7 @@ from daq_capturedata_helper import send_data
 
 continuous_collect = True
 test_type = 'drift' #drift or training
-test_folder = 'Drift_Tests/drift24_Dec9'
+test_folder = 'Drift_Tests/drift26_Dec10'
 test_len = 120 #minutes. >1 is assumed to be drift test data, else training data.
 
 params = dict()

@@ -15,15 +15,15 @@ SGcoeffs["Vex"] = 12
 
 SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
 commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data by -1 in all experiments before Sept. 13.
-vel = '99'
-aoa = '99'
-test_len = '720' #minutes
-test_folder = 'drift23_Dec8'
-test_file = 'REF_drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len)
+vel = '2'
+aoa = '2'
+test_len = '120' #minutes
+test_folder = 'drift26_Dec10'
+test_file = 'drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len)
 ref_temp_file = test_file
 downsample_mult = 1700 #Only used if data is not already downsampled. 1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 
-temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'
+temp_source = 'RTD' #Options are None, 'anemometer', or 'RTD'. Anemometer is deprecated!!!
 plot_temp_line = True
 plot_commSG_comp = True
 plot_SSNSG_comp = True
@@ -39,19 +39,13 @@ if __name__ == "__main__":
   driftData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,test_file))
   if ref_temp_file != test_file:
     ref_temp_data = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Drift_Tests/{}/{}'.format(test_folder,ref_temp_file))
-    ref_temp = ref_temp_data[18:20,0]
+    ref_temp = ref_temp_data[16:18,0]
   else:
-    ref_temp = driftData[18:20,0]
+    ref_temp = driftData[16:18,0]
 
   
   if driftData.shape[1] > 500000: #Not downsampled at capture time
-    downsampled_SSNSGs = np.mean (driftData[6:14,:].reshape(8,-1,downsample_mult), axis=2) #Downsample the sensor network SG data
-    if SSNSG_voltage: downsampled_SSNSGs = 1e6*(4*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]) / (2*downsampled_SSNSGs/SGcoeffs["amplifier_coeff"]*SGcoeffs["GF"] + SGcoeffs["Vex"]*SGcoeffs["GF"])
-    downsampled_commSGs = np.mean (driftData[14:18,:].reshape(4,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
-    if commSGdata_reverted: downsampled_commSGs *= -1
-    downsampled_PZTs = signal.resample(driftData[0:6,:], downsampled_commSGs.shape[1], axis=1)
-    downsampled_RTDs = np.mean (driftData[18:20,:].reshape(2,-1,downsample_mult), axis=2) #Downsample the Commercial SG data
-    ys = np.concatenate ((downsampled_PZTs, downsampled_SSNSGs, downsampled_commSGs, downsampled_RTDs), axis=0)
+    raise NotImplementedError #Deprecated after Sept 2020 tests. See previous commits if needed.
   else: #Data downsampled at capture time
     ys = driftData
   xs = np.linspace(0,int(test_len),ys.shape[1]) 
@@ -60,15 +54,11 @@ if __name__ == "__main__":
   plot.plot_raw_lines(xs, ys=ys, vel=vel, aoa=aoa)
 
   if temp_source == 'RTD':
-    temp_np_C_SG1 = ys[18]
-    temp_np_C_wing = ys[19]
+    temp_np_C_SG1 = ys[16]
+    temp_np_C_wing = ys[17]
 
   if plot_temp_line:
-    if temp_source == 'anemometer':
-      # plot.plot_anemometer_data (vel_np, temp_np_C)
-      pass
-    else:
-      plot.plot_RTD_data (temp_np_C_SG1, temp_np_C_wing)
+    plot.plot_RTD_data (temp_np_C_SG1, temp_np_C_wing)
 
   if plot_commSG_comp:
     plot.plot_commSG_tempcomp_lines(temp_np_C_SG1, temp_np_C_wing)
