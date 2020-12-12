@@ -1,7 +1,3 @@
-import keras
-import tensorflow
-from keras.models import load_model
-from keras.layers import LeakyReLU
 import numpy as np
 
 class iFlyNetEstimates:

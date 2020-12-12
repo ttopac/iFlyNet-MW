@@ -23,7 +23,7 @@ models['means'] = [-2.0175109479796352e-05, 0.00010905074475577042, 0.0003945431
 models['stddevs'] = [0.0012517186084292822, 0.0018231860855292457, 0.0010487415470856675, 0.0027847121382814344, 0.0013364316889671896, 0.00208186772161978, 108.47167144875641, 19.360939493624215]
 
 params = dict()
-params["sample_rate"] = 7000 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+params["sample_rate"] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 
 if __name__ == "__main__":
   #Define parameters  

@@ -13,7 +13,7 @@ main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
 # main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 
 params = dict()
-params["sample_rate"] = 7000 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+params["sample_rate"] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 
 if __name__ == "__main__":
   #Define parameters  

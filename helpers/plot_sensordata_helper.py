@@ -116,7 +116,7 @@ class PlotSensorData:
 
 
   #Function to generate real-time plots.
-  def plot_live(self, i, ys, queue, plot_compensated_strains=False, ref_temp=None, start_time=None):
+  def plot_live(self, i, ys, queue, plot_compensated_strains=False, start_time=None):
     if not self.offline:
       read_data = queue.get()
       queue.put_nowait(read_data)

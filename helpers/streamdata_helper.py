@@ -55,12 +55,11 @@ class StreamRealTime (StreamData):
 
 
 class StreamOffline (StreamData):
-  def __init__ (self, GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, ref_temp):
+  def __init__ (self, GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate):
     super(StreamOffline, self).__init__(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
     self.streamhold_queue = streamhold_queue
     self.filespath = filespath
     self.use_compensated_strains = use_compensated_strains
-    self.ref_temp = ref_temp
 
   def initialize_video(self, video_labels, camnums):
     video1, video2 = self.GUIapp.draw_videos(video_labels, camnums, realtime=False, videopath=self.filespath)
@@ -94,7 +93,7 @@ class StreamOffline (StreamData):
       if not self.streamhold_queue.empty():
         print ("Started streaming sensor signals")
         time.sleep(0.2)
-        _ = FuncAnimation(signalplot.fig, signalplot.plot_live, fargs=(ys, data_list, self.use_compensated_strains, self.ref_temp, time.time()), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
+        _ = FuncAnimation(signalplot.fig, signalplot.plot_live, fargs=(ys, data_list, self.use_compensated_strains, time.time()), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
         self.GUIapp.update()
         break
       else:

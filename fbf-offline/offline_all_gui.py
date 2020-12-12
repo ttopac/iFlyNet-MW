@@ -4,7 +4,7 @@ from tkinter import N, S, W, E
 import numpy as np
 import time
 import sys, os
-import keras
+import tensorflow.keras
 import keras_resnet
 from multiprocessing import Queue, Process
 from threading import Thread
@@ -14,12 +14,13 @@ import gui_windows_helper
 import procoffline_helper
 import streamdata_helper
 
-main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
+# main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
 # main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
-# main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
-test_folder, ref_temp = 'offline5_Nov19', 20.6590 #Reftemp is unique for test_folder and captured at the beginning of experiments. Set to None if prefer using first datapoint.
+main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
+test_folder = 'offline5_Nov19'
+
 models = dict()
 models['types'] = ['stall', 'liftdrag']
 models['filenames'] = ['stall_train993_val_988', 'lift_PZTonly_train_loss0461']
@@ -29,9 +30,9 @@ models['means'] = [-2.0175109479796352e-05, 0.00010905074475577042, 0.0003945431
 models['stddevs'] = [0.0012517186084292822, 0.0018231860855292457, 0.0010487415470856675, 0.0027847121382814344, 0.0013364316889671896, 0.00208186772161978, 108.47167144875641, 19.360939493624215]
 
 params = dict()
-params ['sample_rate'] = 7142 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+params ['sample_rate'] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 params ['SG_offsets'] = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) #Change this based on initial zero velocity conditions
-
+params ['ref_temps'] = np.asarray([20, 20]) #Change this based on initial zero velocity conditions for RTDSG1 and RTDWing, respectively.
 
 def start_offline_button(GUIapp, streamhold_queue):
   startoffline_button = Button(GUIapp.parent, text='Click to start the stream...', command=lambda : streamhold_queue.put(False))
@@ -47,16 +48,16 @@ if __name__ == '__main__':
   use_compensated_strains = False #NOT IMPLEMENTED YET FOR TRUE
 
   #Load the data and models
-  leakyrelu = keras.layers.LeakyReLU(alpha=0.05)
+  leakyrelu = tensorflow.keras.layers.LeakyReLU(alpha=0.05)
   resnet_bn_layer = keras_resnet.layers.BatchNormalization(freeze=True)
   test_data = np.load(main_folder+'Offline_Tests/{}/test.npy'.format(test_folder))
   stepcount = int (test_data.shape[1] / params ['sample_rate'] / plot_refresh_rate) + 1
   models['filepaths'] = list(map(lambda x: main_folder+'Kerasfiles/'+'{}'.format(x), models['filenames']))
   for filepath in models['filepaths']:
     if os.path.isfile(filepath+'.hdf5'): #Old format saved with weights (likely our shallow CNN model)
-      models['modelfiles'].append(keras.models.load_model(filepath+'.hdf5', custom_objects={'LeakyReLU': leakyrelu}))
+      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.hdf5', custom_objects={'LeakyReLU': leakyrelu}))
     elif os.path.isfile(filepath+'.tf'): #New format saved without weights (likely ResNet model)
-      models['modelfiles'].append(keras.models.load_model(filepath+'.tf', custom_objects={'BatchNormalization':resnet_bn_layer}))
+      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.tf', custom_objects={'BatchNormalization':resnet_bn_layer}))
       models['modelfiles'][-1].load_weights(filepath+'.ckpt')
     else:
       raise Exception ('Problem with loading Keras models') 
@@ -75,6 +76,7 @@ if __name__ == '__main__':
   
   GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True)
   GUIapp.SGoffsets = params ['SG_offsets']
+  GUIapp.reftemps = params ['ref_temps']
   GUIapp.init_UI(title_labels)
   GUIapp.draw_stall_lbl()
   GUIapp.draw_liftdrag_lbl()  
@@ -88,7 +90,7 @@ if __name__ == '__main__':
     GUIapp.shape_list.append(estimates.mfc_estimates[i])
 
   streamhold_queue = Queue()
-  stream = streamdata_helper.StreamOffline(GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, ref_temp)
+  stream = streamdata_helper.StreamOffline(GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
   stream.initialize_video(video_labels, camnums)
   stream.initialize_measurements()
   stream.initialize_estimates(True, True, True)

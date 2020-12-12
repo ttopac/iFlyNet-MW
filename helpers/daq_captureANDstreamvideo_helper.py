@@ -1,7 +1,11 @@
 from collections import deque
-import cv2
 import collections
+import platform
+import subprocess
+if platform.machine() != 'arm64':
+  import cv2
 
+import numpy as np
 import tkinter as tk
 from tkinter import Tk, Frame, Canvas, Label
 from tkinter import N, S, W, E
@@ -161,15 +165,26 @@ class DrawTKOfflineVideo(Frame):
   def draw_and_process_image(self):
     step = 0
     self.frame_photos = list()
-    self.cap = cv2.VideoCapture(self.videopath+'video'+str(self.camnum)+'.mp4')
-    if (self.cap.isOpened() == False):  
-      print("Error opening the video file") 
+    path = self.videopath+'video'+str(self.camnum)+'.mp4'
+    
+    #Do with openCV
+    # self.cap = cv2.VideoCapture(path)
+    # if (self.cap.isOpened() == False):  
+    #   print("Error opening the video file") 
+    #Do with ffmpeg
+    args = ["ffmpeg", "-i", path, "-f", "image2pipe", "-pix_fmt", "rgb24", "-vcodec", "rawvideo", "-"]
+    pipe = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, bufsize=640 * 360 * 3)
 
     while True:
       try:
-        _, frame = self.cap.read()
-        recolored_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame_photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(recolored_frame))
+        #Do with openCV
+        # _, frame = self.cap.read()
+        # recolored_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #Do with ffmpeg
+        frame = pipe.stdout.read(640 * 360 * 3)
+        array = np.frombuffer(frame, dtype="uint8").reshape((360, 640, 3))
+
+        frame_photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(array))
         if step == 0:
           self.vidframe = self.videocvs.create_image(0,0,image = frame_photo, anchor = tk.NW)
         self.frame_photos.append (frame_photo)

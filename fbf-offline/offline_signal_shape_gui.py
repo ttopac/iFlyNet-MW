@@ -4,8 +4,6 @@ from tkinter import N, S, W, E
 import numpy as np
 import time
 import sys, os
-import keras
-import keras_resnet
 from multiprocessing import Queue, Process
 from threading import Thread
 
@@ -15,16 +13,16 @@ import procoffline_helper
 import streamdata_helper
 
 # main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
-main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
+# main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
-# main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
-test_folder, ref_temp = 'offline2_Nov13', 20.6590 #Reftemp is unique for test_folder and captured at the beginning of experiments. Set to None if prefer using first datapoint.
+main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
+test_folder = 'offline5_Nov19'
 
 params = dict()
-params ['sample_rate'] = 7142 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+params ['sample_rate'] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 params ['SG_offsets'] = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) #Change this based on initial zero velocity conditions
-
+params ['ref_temps'] = np.asarray([20, 20]) #Change this based on initial zero velocity conditions for RTDSG1 and RTDWing, respectively.
 
 def start_offline_button(GUIapp, streamhold_queue):
   startoffline_button = Button(GUIapp.parent, text='Click to start the stream...', command=lambda : streamhold_queue.put(False))
@@ -55,6 +53,7 @@ if __name__ == '__main__':
   
   GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True)
   GUIapp.SGoffsets = params ['SG_offsets']
+  GUIapp.reftemps = params ['ref_temps']
   GUIapp.initialize_queues_or_lists()
 
   data_cut = int (params['sample_rate'] * plot_refresh_rate)
@@ -63,7 +62,7 @@ if __name__ == '__main__':
     GUIapp.shape_list.append(estimates.mfc_estimates[i])
 
   streamhold_queue = Queue()
-  stream = streamdata_helper.StreamOffline(GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, ref_temp)
+  stream = streamdata_helper.StreamOffline(GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
   stream.initialize_video(video_labels, camnums)
   stream.initialize_sensordata(True)
   stream.initialize_estimates(False, False, True)

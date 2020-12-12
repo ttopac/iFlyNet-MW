@@ -13,7 +13,7 @@ test_folder = 'Drift_Tests/drift26_Dec10'
 test_len = 120 #minutes. >1 is assumed to be drift test data, else training data.
 
 params = dict()
-params["sample_rate"] = 1724 #Use 7000 for training, 1700 for drift. 1700 becomes 1724.1379310344828. 7000 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+params["sample_rate"] = 1724 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
 downsample_mult = 233 #Use 1 for training, use 233 for drifttest.
 params["samples_read_offset"] = int(params["sample_rate"]) #Corresponds to ~1 sec of data.
 params["samples_read_main"] = int (params["sample_rate"]*60*test_len) 

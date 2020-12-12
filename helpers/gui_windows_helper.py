@@ -11,8 +11,6 @@ from multiprocessing import Process, Queue
 
 sys.path.append(os.path.abspath('./fbf-DAQ'))
 sys.path.append(os.path.abspath('./helpers'))
-# import daq_captureSGoffsets_helper
-# import daq_capturedata_helper
 import daq_captureANDstreamvideo_helper
 import plot_sensordata_helper
 import plot_commSGs_westimates_helper
@@ -160,7 +158,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
 
   def draw_sensordata_plot(self, xs, ys, visible_duration, params, plot_compensated_strains, mfcplot_exists):
-    plot = plot_sensordata_helper.PlotSensorData(self.downsample_mult, singleplot=True, ongui=True, offline=self.offline)
+    plot = plot_sensordata_helper.PlotSensorData(self.downsample_mult, singleplot=True, ongui=True, offline=self.offline, reftemp=self.reftemps)
     self.sensordata_plot = plot
     plot.init_realtime_params(visible_duration, params, self.plot_refresh_rate)
     plot.plot_raw_lines(xs, ys)
