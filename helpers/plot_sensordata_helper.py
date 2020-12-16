@@ -9,7 +9,7 @@ import proc_tempcomp_helper
 
 #Temp. compensation coefficients for SSNSG otained experimentally (Dec 2020 experiments).
 SSNSG_CTEvar_wing = dict()
-SSNSG_CTEvar_wing = {1:119, 5:88, 6:53, 7:54, 9:55}
+SSNSG_CTEvar_wing = {1:129, 5:88, 6:43, 7:54, 9:55}
 SSNSG_surfaces = {1:'SG1', 5:'wing', 6:'wing', 7:'wing', 9:'wing'}
 active_SSNSG_list = [0, 4, 5, 6, 7]
 

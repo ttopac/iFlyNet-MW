@@ -15,11 +15,11 @@ SGcoeffs["Vex"] = 12
 
 SSNSG_voltage = False #(True if data is before Sept. 13) We collected SSNSG data as voltage in all experiments before Sept. 13. They need conversion to microstrain
 commSGdata_reverted = False #(True if data is before Sept. 13) We multiplied CommSG data by -1 in all experiments before Sept. 13.
-vel = '2'
-aoa = '2'
-test_len = '120' #minutes
-test_folder = 'drift26_Dec10'
-test_file = 'drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len)
+vel = '6'
+aoa = '6'
+test_len = '45' #minutes
+test_folder = 'drift29_Dec14'
+test_file = 'REF_drift_{}ms_{}deg_{}min.npy'.format(vel,aoa,test_len)
 ref_temp_file = test_file
 downsample_mult = 1700 #Only used if data is not already downsampled. 1700 is close to 1 datapoint per second since sampling rate is 1724.1379310344828 for drift test
 

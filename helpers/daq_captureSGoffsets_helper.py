@@ -34,7 +34,7 @@ def calibrate_SGs(sample_rate, samples_to_read):
     sgmean[8:10] *= 3.3 #Multiply the ai values with excitation voltage to obtain initial voltage values.
     print ("SG initial voltages are (V): ", end="")
     print (sgmean)
-    print ("Initial temperature at rod is: {}".format(sgmean[10]))
+    print ("Initial temperature at SG1 is: {}".format(sgmean[10]))
     print ("Initial temperature at wing is: {}".format(sgmean[11]))
     print ("SG calibration sampling rate was: {}".format(task.timing.samp_clk_rate))
     return sgmean[0:12]

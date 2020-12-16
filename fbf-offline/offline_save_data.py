@@ -91,16 +91,16 @@ if __name__ == "__main__":
   params["sample_rate"] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
   visible_duration = 30 #seconds
   plot_refresh_rate = 0.2 #seconds
-  downsample_mult = 1
-  ys = np.zeros((17,int(visible_duration*params["sample_rate"]/downsample_mult)))
+  downsample_mult = 1 #Use 1 for training, use 233 for drifttest.
+  ys = np.zeros((18,int(visible_duration*params["sample_rate"]/downsample_mult)))
   video_names = ("AoA view", "Outer MFC view")
   camnums = (0,1)
-  use_compensated_strains = False
+  use_compensated_strains_forstream = False
 
   #Define save parameters
-  save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline5_Nov19/'
-  save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline5_Nov19/'
-  save_duration = 60 #seconds
+  # save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline5_Nov19/'
+  save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline6_Dec15/'
+  save_duration = 120 #seconds
   saver = daq_savedata_helper.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
   preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!
@@ -122,7 +122,7 @@ if __name__ == "__main__":
   else:
     preview.captureData(params, saveflag_queue=saveflag_queue, save_duration=save_duration, saver=saver)
   
-  stream = streamdata_helper.StreamRealTime(preview, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
+  stream = streamdata_helper.StreamRealTime(preview, params, use_compensated_strains_forstream, downsample_mult, visible_duration, plot_refresh_rate)
   stream.init_and_stream_sensordata(True)
   stream.init_and_stream_estimates()
   queue_refresh_thread = Thread(target=stream.refresh_queues)

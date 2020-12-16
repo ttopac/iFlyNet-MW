@@ -7,14 +7,14 @@ sys.path.append(os.path.abspath('./helpers'))
 from daq_captureSGoffsets_helper import send_SG_offsets
 from daq_capturedata_helper import send_data
 
-continuous_collect = True
-test_type = 'drift' #drift or training
-test_folder = 'Drift_Tests/drift26_Dec10'
-test_len = 120 #minutes. >1 is assumed to be drift test data, else training data.
+continuous_collect = False
+test_type = 'train' #drift or train
+test_folder = 'Test_Tests/test4_Dec14'
+test_len = 0.25 #minutes. >1 is assumed to be drift test data, else training data.
 
 params = dict()
-params["sample_rate"] = 1724 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
-downsample_mult = 233 #Use 1 for training, use 233 for drifttest.
+params["sample_rate"] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
+downsample_mult = 1 #Use 1 for training, use 233 for drifttest.
 params["samples_read_offset"] = int(params["sample_rate"]) #Corresponds to ~1 sec of data.
 params["samples_read_main"] = int (params["sample_rate"]*60*test_len) 
 num_samples = int(params["samples_read_main"]/downsample_mult)
