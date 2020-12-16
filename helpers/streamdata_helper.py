@@ -22,7 +22,7 @@ class StreamRealTime (StreamData):
 
   def init_and_stream_sensordata(self, mfcplot_exists):
     xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
-    ys = np.zeros((16,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag
+    ys = np.zeros((18,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag
     self.GUIapp.draw_sensordata_plot(xs, ys, self.visible_duration, self.params, self.use_compensated_strains, mfcplot_exists)
 
   def init_and_stream_measurements(self):

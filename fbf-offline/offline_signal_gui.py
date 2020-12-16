@@ -16,12 +16,13 @@ import streamdata_helper
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
-test_folder = 'offline5_Nov19'
+test_folder = 'offline10_Dec16'
 
 params = dict()
 params ['sample_rate'] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
-params ['SG_offsets'] = np.asarray([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) #Change this based on initial zero velocity conditions
-params ['ref_temps'] = np.asarray([20, 20]) #Change this based on initial zero velocity conditions for RTDSG1 and RTDWing, respectively.
+params ['SG_offsets'] = np.asarray([-0.0908705 ,  0.08371693,  0.41958874,  0.04248477, -1.96164941,
+       -2.31456779, -2.53176141, -4.71176802, -0.50164716, -0.6511089 ,
+       14.06348179, 14.06914849]) #Change this based on initial zero velocity conditions from testlog
 
 def start_offline_button(GUIapp, streamhold_queue):
   startoffline_button = Button(GUIapp.parent, text='Click to start the stream...', command=lambda : streamhold_queue.put(False))
@@ -44,11 +45,11 @@ if __name__ == '__main__':
   root.title ("Offline Video and Signals")
   video_labels = ("AoA view", "Outer MFC view")
   filespath = main_folder+'Offline_Tests/{}/'.format(test_folder)
-  camnums = (1,0)
+  camnums = (2,1)
   
   GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True)
   GUIapp.SGoffsets = params ['SG_offsets']
-  GUIapp.reftemps = params ['ref_temps']
+  GUIapp.reftemps = params ['SG_offsets'][-2:]
   GUIapp.initialize_queues_or_lists()
 
   data_cut = int (params['sample_rate'] * plot_refresh_rate)

@@ -94,13 +94,13 @@ if __name__ == "__main__":
   downsample_mult = 1 #Use 1 for training, use 233 for drifttest.
   ys = np.zeros((18,int(visible_duration*params["sample_rate"]/downsample_mult)))
   video_names = ("AoA view", "Outer MFC view")
-  camnums = (0,1)
+  camnums = (2,1)
   use_compensated_strains_forstream = False
 
   #Define save parameters
   # save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline5_Nov19/'
-  save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline6_Dec15/'
-  save_duration = 120 #seconds
+  save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline15_Dec16/'
+  save_duration = 300 #seconds
   saver = daq_savedata_helper.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
   preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!

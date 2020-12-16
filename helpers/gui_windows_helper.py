@@ -158,7 +158,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
 
   def draw_sensordata_plot(self, xs, ys, visible_duration, params, plot_compensated_strains, mfcplot_exists):
-    plot = plot_sensordata_helper.PlotSensorData(self.downsample_mult, singleplot=True, ongui=True, offline=self.offline, reftemp=self.reftemps)
+    plot = plot_sensordata_helper.PlotSensorData(self.downsample_mult, singleplot=True, ongui=True, offline=self.offline, reftemp=None)
     self.sensordata_plot = plot
     plot.init_realtime_params(visible_duration, params, self.plot_refresh_rate)
     plot.plot_raw_lines(xs, ys)
@@ -167,7 +167,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.sensordata_plot_cvs = FigureCanvasTkAgg(plot.fig, master=self.parent)
     
     if not self.offline:
-      _ = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys, self.data_queue, plot_compensated_strains, None, None), interval=self.plot_refresh_rate*1000, blit=True)
+      _ = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys, self.data_queue, plot_compensated_strains, None), interval=self.plot_refresh_rate*1000, blit=True)
+      print ("Started sensordata plot.")
       self.update()
     else:
       return plot

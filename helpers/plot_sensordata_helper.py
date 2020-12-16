@@ -89,9 +89,10 @@ class PlotSensorData:
   def plot_raw_lines (self, xs, ys, vel=None, aoa=None):
     self.xs = xs
     self.ys = ys
-    self.ax1.set_ylim(-0.05, 0.05)
+    self.ax1.set_ylim(-0.01, 0.01)
     if self.ongui:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
+      self.ax1.set_ylim(-0.01, 0.01)
       self.ax2.set_ylim(-150, 150)
       self.ax3.set_ylim(-150, 150)
       self.ax1.set_xticklabels([])
@@ -125,8 +126,9 @@ class PlotSensorData:
       cur_frame = int((t0-start_time)/self.plot_refresh_rate)
       read_data = queue[cur_frame]
     
-    ref_temp_SG1 = self.reftemp[0]
-    ref_temp_wing = self.reftemp[1]
+    if plot_compensated_strains:
+      ref_temp_SG1 = self.reftemp[0]
+      ref_temp_wing = self.reftemp[1]
 
     if (i%int(self.visible_duration/self.plot_refresh_rate) == 0): #Reset data once the period is filled.
       ys [:,:] = 0
