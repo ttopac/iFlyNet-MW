@@ -100,7 +100,7 @@ if __name__ == "__main__":
   #Define save parameters
   # save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline5_Nov19/'
   save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline15_Dec16/'
-  save_duration = 300 #seconds
+  save_duration = 20 #seconds
   saver = daq_savedata_helper.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
   preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!
@@ -112,9 +112,14 @@ if __name__ == "__main__":
   preview = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=False)
   main = SaveVideoAndSignals(root, preview, params, save_duration, saveflag_queue, saver, preview_while_saving)
 
-  #Display the videos and wing shape for preview
+  #Get and save SG and RTD offsets
   preview.getSGoffsets(params)
+  np.save(save_path+'SG_offsets.npy', preview.SGoffsets)
+  
+  #Display the videos and wing shape for preview
   preview.draw_videos(video_names, camnums)
+
+  #Initialize data structure
   preview.initialize_queues_or_lists()
 
   if preview_while_saving:

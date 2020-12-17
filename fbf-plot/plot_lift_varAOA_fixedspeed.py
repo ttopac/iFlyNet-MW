@@ -14,28 +14,34 @@ ave_lift_comp = list()
 
 vel = 10
 aoa = [0,2,4,6,8,10,12,14,16,17,18,19,20,'0_2']
-test_len = 1
-temp_reset_vels = (4, 14)
-temp_reset_aoas = (0, 0)
-ref_temps = [(14.480, 14.437),(16.437, 16.326)] #(RTDSG1, RTDwing)
+test_len = 1 #minutes
+# test_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
+# test_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
+# test_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
+test_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Training_Tests/train4_Dec14/'
 
+#Get reference temperature points
+reftemp_vels = list()
+ref_temps = list()
+for file in os.listdir(test_folder):
+  if file.startswith("reftemps"):
+    vel_str = file.split('_')[2][:-2]
+    reftemp_vels.append(int(vel_str))
+    ref_temps.append(np.load(test_folder+file).tolist())
 
 for i in range(len(aoa)):
-  # trainData = np.load('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/')
-  # trainData = np.load('g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/')
-  # trainData = np.load('/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Training_Tests/train3_Sept17/train_{}ms_{}deg.npy'.format(vel,a))
-  trainData = np.load('/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Training_Tests/train4_Dec14/train_{}ms_{}deg_{}min.npy'.format(vel, aoa[i], test_len))
+  trainData = np.load(test_folder+'train_{}ms_{}deg_{}min.npy'.format(vel, aoa[i], test_len))
 
   sum_PZT1.append(np.mean(np.sum(trainData[1]**2)))
   ave_SG1.append(np.mean(-trainData[6])) #6 is SG1 at root.
   ave_lift.append(np.mean(-trainData[14])) #14 is Lift CommSG
 
   #Handle temperature compensation
-  if vel in temp_reset_vels:
-    index = temp_reset_vels.index(vel)
+  if vel in reftemp_vels:
+    index = reftemp_vels.index(vel)
   else:
-    closest_val = np.asarray(temp_reset_vels)[np.asarray(temp_reset_vels) < vel].max() #Gets the maximum temp_reset_vel smaller than vel
-    index = temp_reset_vels.index(closest_val)
+    closest_val = np.asarray(reftemp_vels)[np.asarray(reftemp_vels) < vel].max() #Gets the maximum temp_reset_vel smaller than vel
+    index = reftemp_vels.index(closest_val)
   ref_temp_SG1 = ref_temps[index][0]
   ref_temp_wing = ref_temps[index][1]
 

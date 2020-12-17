@@ -20,9 +20,6 @@ test_folder = 'offline10_Dec16'
 
 params = dict()
 params ['sample_rate'] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
-params ['SG_offsets'] = np.asarray([-0.0908705 ,  0.08371693,  0.41958874,  0.04248477, -1.96164941,
-       -2.31456779, -2.53176141, -4.71176802, -0.50164716, -0.6511089 ,
-       14.06348179, 14.06914849]) #Change this based on initial zero velocity conditions from testlog
 
 def start_offline_button(GUIapp, streamhold_queue):
   startoffline_button = Button(GUIapp.parent, text='Click to start the stream...', command=lambda : streamhold_queue.put(False))
@@ -38,6 +35,7 @@ if __name__ == '__main__':
 
   #Load data
   test_data = np.load(main_folder+'Offline_Tests/{}/test.npy'.format(test_folder))
+  params ['SG_offsets'] = np.load(main_folder+'Offline_Tests/{}/SG_offsets.npy'.format(test_folder))
   stepcount = int (test_data.shape[1] / params ['sample_rate'] / plot_refresh_rate) + 1
   
   #Initiate the streams of camera + signaldata and place them on the GUI

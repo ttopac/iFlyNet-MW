@@ -46,7 +46,7 @@ if __name__ == "__main__":
     elif test_type == 'train':
       filename = 'train_' + filename
     if ref_test == True:
-      filename = 'REF_' + filename
+      np.save('c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/{}/reftemps_{}'.format(test_folder,filename), SGoffsets[-2:])
 
     parent_conn,child_conn = Pipe()
     saveflag_conn = Queue()
