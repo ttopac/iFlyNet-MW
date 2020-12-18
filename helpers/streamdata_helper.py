@@ -84,7 +84,7 @@ class StreamOffline (StreamData):
   
   def initialize_sensordata(self, mfcplot_exists):
     xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
-    ys = np.zeros((16,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag
+    ys = np.zeros((16,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult)))
     signalplot = self.GUIapp.draw_sensordata_plot(xs, ys, self.visible_duration, self.params, self.use_compensated_strains, mfcplot_exists)
     signalstream_thr = Thread(target=self.stream_sensordata, args=(signalplot, self.GUIapp.data_list, ys))
     signalstream_thr.start()

@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import signal
 import matplotlib.pyplot as plt
 import sys, os
 sys.path.append(os.path.abspath('./helpers'))
@@ -48,7 +47,7 @@ for vel in vels:
 
     #SG1 temp. comp.
     SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
-    comp_SSNSG = SSNSG_temp_comp.compensate(trainData[6], trainData[16], 'SG1', 119)
+    comp_SSNSG = SSNSG_temp_comp.compensate(trainData[6], trainData[16], 'SG1', 129)
     ave_SG1_comp.append (np.mean(-comp_SSNSG))
 
     #CommSG temp. comp.
@@ -60,7 +59,7 @@ for vel in vels:
   ax1 = fig.add_subplot(3,1,1)
   ax2 = fig.add_subplot(3,1,2)
   ax3 = fig.add_subplot(3,1,3)
-  ax1.set_title("Sum of PZT1 signals".format(vel), fontsize=12)
+  ax1.set_title("Sum of PZT1 signals", fontsize=12)
   ax1.set_xlabel("Angle (deg)", fontsize=11)
   ax1.set_ylabel("Voltage (V)", fontsize=11)
   ax2.set_title("-SG1 readings for V = {}m/s".format(vel), fontsize=12)
