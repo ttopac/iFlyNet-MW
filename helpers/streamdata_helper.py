@@ -51,6 +51,8 @@ class StreamRealTime (StreamData):
             except:
               pass
       time.sleep(self.plot_refresh_rate/3)
+      if self.visible_duration == 0:
+        break
       
 
 
@@ -59,7 +61,6 @@ class StreamOffline (StreamData):
     super(StreamOffline, self).__init__(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
     self.streamhold_queue = streamhold_queue
     self.filespath = filespath
-    self.use_compensated_strains = use_compensated_strains
 
   def initialize_video(self, video_labels, camnums):
     video1, video2 = self.GUIapp.draw_videos(video_labels, camnums, realtime=False, videopath=self.filespath)
@@ -74,7 +75,8 @@ class StreamOffline (StreamData):
     while True: #Wait
       if not self.streamhold_queue.empty():
         print ("Started streaming video {}".format(videoid))
-        self.videos[videoid].stream_images(time.time(), 1/30)
+        self.start_time = time.time()
+        self.videos[videoid].stream_images(self.start_time, 1/30)
         break
       else:
         pass
@@ -91,9 +93,9 @@ class StreamOffline (StreamData):
   def stream_sensordata(self, signalplot, data_list, ys):
     while True: #Wait
       if not self.streamhold_queue.empty():
+        time.sleep(0.02)
         print ("Started streaming sensor signals")
-        time.sleep(0.2)
-        _ = FuncAnimation(signalplot.fig, signalplot.plot_live, fargs=(ys, data_list, self.use_compensated_strains, time.time()), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
+        _ = FuncAnimation(signalplot.fig, signalplot.plot_live, fargs=(ys, data_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
         self.GUIapp.update()
         break
       else:
@@ -112,9 +114,9 @@ class StreamOffline (StreamData):
     while True: #Wait
       if not self.streamhold_queue.empty():
         print ("Started streaming measurements")
-        self.GUIapp.update_liftdrag_lbls(predictions=False, start_time=time.time())
+        self.GUIapp.update_liftdrag_lbls(predictions=False, start_time=self.start_time)
         time.sleep(0.15)
-        _ = FuncAnimation(measplot.fig, measplot.plot_live, fargs=(ys_truth, data_list, self.use_compensated_strains, False, time.time()), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
+        _ = FuncAnimation(measplot.fig, measplot.plot_live, fargs=(ys_truth, data_list, self.use_compensated_strains, False, self.start_time), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
         self.GUIapp.update()
         break
       else:
@@ -139,13 +141,13 @@ class StreamOffline (StreamData):
       if not self.streamhold_queue.empty():
         print ("Started streaming estimates")
         if stallest:
-          self.GUIapp.update_stallest_lbls(start_time=time.time())
+          self.GUIapp.update_stallest_lbls(start_time=self.start_time)
         if liftdragest:
-          self.GUIapp.update_liftdrag_lbls(predictions=True, start_time=time.time()) 
-          _ = FuncAnimation(self.liftdrag_predsplot.fig, self.liftdrag_predsplot.plot_live, fargs=(ys_preds, liftdragest_list, self.use_compensated_strains, True, time.time()), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM liftdragest_queue
+          self.GUIapp.update_liftdrag_lbls(predictions=True, start_time=self.start_time) 
+          _ = FuncAnimation(self.liftdrag_predsplot.fig, self.liftdrag_predsplot.plot_live, fargs=(ys_preds, liftdragest_list, self.use_compensated_strains, True, self.start_time), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM liftdragest_queue
           time.sleep(0.3)
         if mfcest:
-          _ = FuncAnimation(self.MFCplot.fig, self.MFCplot.plot_live, fargs=(shape_list, plot_type, blit, time.time()), interval=self.plot_refresh_rate*1000, blit=blit) #Removes from mfcestimates_queue 
+          _ = FuncAnimation(self.MFCplot.fig, self.MFCplot.plot_live, fargs=(shape_list, plot_type, blit, self.start_time), interval=self.plot_refresh_rate*1000, blit=blit) #Removes from mfcestimates_queue 
           time.sleep(0.25)
         self.GUIapp.update()
         break

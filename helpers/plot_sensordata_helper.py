@@ -154,7 +154,7 @@ class PlotSensorData:
           ys[6+i,slice_start:slice_end] = SSNSG_temp_comp.compensate(fewerSSNSGdata[i], temp, SSNSG_surfaces[i+1], SSNSG_CTEvar_wing[i+1])   
         elif i == 7:
           temp = fewerTempdata[0] if SSNSG_surfaces[i+2] == 'SG1' else fewerTempdata[1]
-          ys[6+i,slice_start:slice_end] = SSNSG_temp_comp.compensate(fewerSSNSGdata[i+1], temp, SSNSG_surfaces[i+2], SSNSG_CTEvar_wing[i+2])   
+          ys[6+i,slice_start:slice_end] = SSNSG_temp_comp.compensate(fewerSSNSGdata[i], temp, SSNSG_surfaces[i+2], SSNSG_CTEvar_wing[i+2])   
       
       commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
       for count, commSGname in enumerate(active_commSG_list):

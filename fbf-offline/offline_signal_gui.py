@@ -29,9 +29,9 @@ def start_offline_button(GUIapp, streamhold_queue):
 if __name__ == '__main__':
   #Define parameters
   visible_duration = 30 #seconds
-  plot_refresh_rate = 0.1 #seconds
+  plot_refresh_rate = 0.2 #seconds
   downsample_mult = 233
-  use_compensated_strains = False #NOT IMPLEMENTED YET FOR TRUE
+  use_compensated_strains = True 
 
   #Load data
   test_data = np.load(main_folder+'Offline_Tests/{}/test.npy'.format(test_folder))
@@ -43,7 +43,7 @@ if __name__ == '__main__':
   root.title ("Offline Video and Signals")
   video_labels = ("AoA view", "Outer MFC view")
   filespath = main_folder+'Offline_Tests/{}/'.format(test_folder)
-  camnums = (2,1)
+  camnums = ('2_deframed','1_deframed')
   
   GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True)
   GUIapp.SGoffsets = params ['SG_offsets']

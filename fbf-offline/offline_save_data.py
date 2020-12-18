@@ -4,11 +4,13 @@ from tkinter import Tk, Frame, Button
 
 sys.path.append(os.path.abspath('./helpers'))
 sys.path.append(os.path.abspath('./fbf-realtime'))
+sys.path.append(os.path.abspath('./utils'))
+import daq_capturedata_helper
 import daq_savedata_helper
 import gui_windows_helper
 import streamdata_helper
 import daq_captureANDstreamvideo_helper
-import daq_capturedata_helper
+import remove_extra_frames
 
 import numpy as np
 from tkinter import Tk
@@ -69,6 +71,8 @@ class SaveVideoAndSignals():
       time.sleep(2) #Wait a little for video to finish.
       self.preview.video1.endo_video.stopflag=True
       self.preview.video2.endo_video.stopflag=True
+      self.vid_thr1.join()
+      self.vid_thr2.join()
       self.preview.destroy()
       self.root.destroy()
 
@@ -137,5 +141,14 @@ if __name__ == "__main__":
   preview.place_on_grid(True, False, True)
   main.skip_preview_button()
   root.mainloop()
+
+  #Stop queue_refresh_thread
+  stream.visible_duration = 0 #We send this to stop the thread.
+  queue_refresh_thread.join()
   
+  #Finally deframe the videos
+  fps = 30
+  video_size = (640, 360)
+  remove_extra_frames.deframe_video(save_path, save_duration, fps, video_size)
+
   print ("End!")
