@@ -9,7 +9,7 @@ import proc_tempcomp_helper
 
 #Temp. compensation coefficients for SSNSG otained experimentally (Dec 2020 experiments).
 SSNSG_CTEvar_wing = dict()
-SSNSG_CTEvar_wing = {1:129, 5:88, 6:43, 7:54, 9:55}
+SSNSG_CTEvar_wing = {1:59, 5:88, 6:43, 7:54, 9:55}
 SSNSG_surfaces = {1:'SG1', 5:'wing', 6:'wing', 7:'wing', 9:'wing'}
 active_SSNSG_list = [0, 4, 5, 6, 7]
 
@@ -151,11 +151,11 @@ class PlotSensorData:
       for count, i in enumerate(active_SSNSG_list):
         if i != 7:
           temp = fewerTempdata[0] if SSNSG_surfaces[i+1] == 'SG1' else fewerTempdata[1]
-          ys[6+i,slice_start:slice_end] = SSNSG_temp_comp.compensate(fewerSSNSGdata[i], temp, SSNSG_surfaces[i+1], SSNSG_CTEvar_wing[i+1])   
+          ys[6+i,slice_start:slice_end] = SSNSG_temp_comp.compensate(fewerSSNSGdata[i], temp, SSNSG_surfaces[i+1], SSNSG_CTEvar_wing[i+1])
         elif i == 7:
           temp = fewerTempdata[0] if SSNSG_surfaces[i+2] == 'SG1' else fewerTempdata[1]
           ys[6+i,slice_start:slice_end] = SSNSG_temp_comp.compensate(fewerSSNSGdata[i], temp, SSNSG_surfaces[i+2], SSNSG_CTEvar_wing[i+2])   
-      
+
       commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
       for count, commSGname in enumerate(active_commSG_list):
         temp = fewerTempdata[0] if commSG_surfaces[commSGname] == 'SG1' else fewerTempdata[1]

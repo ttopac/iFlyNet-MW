@@ -19,17 +19,17 @@ class CalcMFCShape():
     DOWNSCALE_FACTOR = 4
     self.XVAL = np.arange(0,101,DOWNSCALE_FACTOR)  # (chord) continuous x from 0 to 100 mm
     self.YVAL = np.arange(0,305,DOWNSCALE_FACTOR)  # (span) continuous y from 0 to 304 mm
-    self.X1LOC = np.asarray([15, 75]) #Middle 45 is missing because SG5 is not working.
+    self.X1LOC = np.asarray([45, 75]) #Front 15 is missing because SG4 is not working.
     self.X2LOC = np.asarray([15, 75]) #Middle 45 is missing because SG8 is not working.
     self.YLOC = np.asarray([0, 126.6, 258.6])
   
   def estimate_shape_analytic(self, sensordata, queue):  # data.shape(6, num_datapoints), sgmean.shape(num_sensors), shape_hist=list
     # SGdata = sensordata #FOR FAKEDATA
-    SGdata = np.mean(sensordata[9:14]/1E6, axis=1)
+    SGdata = np.mean(sensordata[9:14]/1E6, axis=1) #Take in SG4, SG5, SG6, SG7, SG9
     
     # 1. Using polynomial fit, obtain strain distribution for each chord along strain1_fit=y=126.6 and strain2_fit=y=278.6 (x-axis)
-    strain1_fit = np.polyfit(self.X1LOC, SGdata[0:3:2], 1)  # polynomial fit of order 2
-    strain2_fit = np.polyfit(self.X2LOC, SGdata[3:5], 1)
+    strain1_fit = np.polyfit(self.X1LOC, SGdata[1:3], 1) #Use only SG5 and SG6
+    strain2_fit = np.polyfit(self.X2LOC, SGdata[3:5], 1) #Use only SG7 and SG9
     
     # 2. Obtain displacement for each chord along span of wing by integrating strain along chord (x-axis)
     x1 = sym.Symbol('x1')

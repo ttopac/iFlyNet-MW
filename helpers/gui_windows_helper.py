@@ -25,6 +25,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     Frame.__init__(self,parent)
     self.parent = parent
     self.stall_cond = "No"
+    self.est_airspeed = 0
+    self.est_aoa = 0
     self.truth_lift_val = 0
     self.truth_drag_val = 0
     self.est_lift_val = 0
@@ -61,41 +63,47 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     if not self.offline:
       self.data_queue = Queue()
       self.stallest_queue = Queue()
+      self.stateest_queue = Queue()
       self.liftdragest_queue = Queue()
       self.shape_queue = Queue()
     else:
       self.data_list = list()
       self.stallest_list = list()
+      self.stateest_list = list()
       self.liftdragest_list = list()
       self.shape_list = list()
 
   def initialize_estimates (self, pred_freq, models):
     self.estimates = proc_keras_estimates_helper.iFlyNetEstimates(pred_freq, models)
-    t_estimations = Thread(target = self.update_estimations)
-    t_estimations.start()
+    # t_estimations = Thread(target = self.update_estimations)
+    # t_estimations.start()
 
   def draw_stall_lbl (self):
     self.stall_lbl = Label(self.parent, text='Stall?', font=("Helvetica", 18), justify='center')
     self.stall_cond_lbl = Label(self.parent, text=self.stall_cond, font=("Arial", 26), justify='center')
+
+  def draw_state_lbl (self):
+    self.state_lbl = Label(self.parent, text='Flight state', font=("Helvetica", 18), justify='center')
+    self.state_est_lbl = Label(self.parent, text="Airspeed = {} m/s \n AoA = {} deg".format(self.est_airspeed, self.est_aoa), font=("Arial", 26), justify='center')
 
   def draw_liftdrag_lbl (self):
     self.liftdrag_truth_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.truth_lift_val, self.truth_drag_val), font=("Helvetica", 16), width=20)
     self.liftdrag_est_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.est_lift_val, self.est_drag_val), font=("Helvetica", 16), width=20)
 
 
-  def update_estimations(self):
-    while True:
-      try:
-        read_data = self.data_queue.get_nowait()
-        self.data_queue.put_nowait(read_data)
-        useful_data_start, useful_data_end = 0, int(read_data.shape[1]/self.downsample_mult)*self.downsample_mult
-        stall_predictors = np.concatenate ((read_data[0:6], read_data[14:16]), axis=0) #Use PZTs+CommSGs for stall predictions
-        self.stallest_queue.put_nowait (np.any(self.estimates.estimate_stall(stall_predictors[:,useful_data_start:useful_data_end])))
-        liftdrag_predictors = read_data[0:6] #Use onlyPZTs for liftdrag predictions
-        self.liftdragest_queue.put_nowait (self.estimates.estimate_liftdrag(liftdrag_predictors[:,useful_data_start:useful_data_end]))
-      except:
-        pass
-      time.sleep(self.plot_refresh_rate)
+  # def update_estimations(self):
+  #   while True:
+  #     try:
+  #       read_data = self.data_queue.get_nowait()
+  #       self.data_queue.put_nowait(read_data)
+  #       useful_data_start, useful_data_end = 0, int(read_data.shape[1]/self.downsample_mult)*self.downsample_mult
+  #       stall_predictors = np.concatenate ((read_data[0:6], read_data[14:16]), axis=0) #Use PZTs+CommSGs for stall predictions
+  #       self.stallest_queue.put_nowait (np.any(self.estimates.estimate_stall(stall_predictors[:,useful_data_start:useful_data_end])))
+  #       liftdrag_predictors = read_data[0:6] #Use onlyPZTs for liftdrag predictions
+  #       self.liftdragest_queue.put_nowait (self.estimates.estimate_liftdrag(liftdrag_predictors[:,useful_data_start:useful_data_end]))
+  #     except:
+  #       pass
+  #     time.sleep(self.plot_refresh_rate)
 
   def update_stallest_lbls (self, start_time=None):
     try:
@@ -111,6 +119,19 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       pass
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_stallest_lbls, start_time)
 
+  def update_stateest_lbls (self, start_time=None):
+    try:
+      if not self.offline:
+        state_est = self.stateest_queue.get_nowait()
+      else:
+        t0 = time.time()
+        cur_frame = int((t0-start_time)/self.plot_refresh_rate)
+        state_est = self.stateest_list[cur_frame]
+      self.state_est_lbl.config(text="Airspeed = {} m/s \n AoA = {} deg".format(int(state_est[0]), int(state_est[1]))) #Predictions are shape:(pred_count, output_count)
+    except:
+      pass
+    self.parent.after(int(self.plot_refresh_rate*1000), self.update_stateest_lbls, start_time)
+
   def update_liftdrag_lbls (self, predictions, start_time=None):
     if predictions: #PREDICTED LIFT DRAG
       try:
@@ -121,7 +142,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
           t0 = time.time()
           cur_frame = int((t0-start_time)/self.plot_refresh_rate)
           est_liftdrag = self.liftdragest_list[cur_frame]
-        self.liftdrag_est_lbl.config(text='Lift SG = {:6.1f} ue \n Drag SG = {:6.1f} ue'.format(-est_liftdrag[-1,0], -est_liftdrag[-1,1])) #Predictions are shape:(pred_count, sensor_count)
+        self.liftdrag_est_lbl.config(text='Lift SG = {:6.1f} ue \n Drag SG = {:6.1f} ue'.format(-est_liftdrag[-1,0], -est_liftdrag[-1,1])) #Predictions are shape:(pred_count, output_count)
       except:
         pass
 
@@ -210,7 +231,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
     plot = plot_MFC_helper.PlotMFCShape(self.plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL, offline=self.offline)
     plot.plot_2D_contour()
-    self.mfc_lbl = Label(self.parent, text="Morphing\nsection shape", font=("Helvetica", 18), justify='center')
+    self.mfc_lbl = Label(self.parent, text="Predicted\nmorphing\nsection shape", font=("Helvetica", 18), justify='center')
     self.mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     
     if not self.offline:
@@ -220,8 +241,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.update()
 
 
-  def place_on_grid(self, raw_signal, keras_preds, MFC_preds):
-    if raw_signal==True and keras_preds==False and MFC_preds==False: #offline_signal_gui and realtime_signal_gui
+  def place_on_grid(self, raw_signal, keras_preds, MFC_preds, keras_state_preds=False):
+    if raw_signal==True and keras_preds==False and MFC_preds==False and keras_state_preds==False: #offline_signal_gui and realtime_signal_gui
       self.video1.videolbl.grid(row=0, column=1, rowspan=1, columnspan=1, sticky=S)
       self.video1.videocvs.grid(row=1, column=0, rowspan=2, columnspan=3, sticky=N)
       self.video2.videolbl.grid(row=3, column=1, rowspan=1, columnspan=1, sticky=S)
@@ -229,7 +250,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       
       self.sensordata_plot_cvs.get_tk_widget().grid(row=2, column=3, rowspan=3, columnspan=3)
 
-    if raw_signal==True and keras_preds==False and MFC_preds==True: #offline_signal_shape_gui and realtime_signal_shape_gui    
+    if raw_signal==True and keras_preds==False and MFC_preds==True and keras_state_preds==False: #offline_signal_shape_gui and realtime_signal_shape_gui    
       self.video1.videolbl.grid(row=5, column=0, rowspan=1, columnspan=3, sticky=S)
       self.video1.videocvs.grid(row=6, column=0, rowspan=1, columnspan=3, sticky=N)
       self.video2.videolbl.grid(row=12, column=0, rowspan=1, columnspan=3, pady=5, sticky=S)
@@ -240,7 +261,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.mfc_canvas.get_tk_widget().grid(row=13, column=3, rowspan=1, columnspan=3, sticky=N)
 
 
-    if raw_signal==False and keras_preds==True and MFC_preds==True: #offline_all_gui and realtime_all_gui
+    if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==False: #offline_all_gui and realtime_all_gui
       self.lbl1.grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
       self.lbl2.grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
 
@@ -255,11 +276,36 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.liftdrag_est_lbl.grid(row=2, column=4, rowspan=1, columnspan=1, sticky=W)  
       self.truth_liftdrag_plot_lbl.grid(row=2, column=2, rowspan=1, columnspan=1)
       self.truth_liftdrag_plot_cvs.get_tk_widget().grid(row=2, column=0, rowspan=1, columnspan=1)
-      self.est_liftdrag_plot_lbl.grid(row=2, column=2, rowspan=1, columnspan=1)
+      self.est_liftdrag_plot_lbl.grid(row=2, column=3, rowspan=1, columnspan=1)
       self.est_liftdrag_plot_cvs.get_tk_widget().grid(row=2, column=5, rowspan=1, columnspan=1)
       
       self.mfc_lbl.grid(row=3, column=3, rowspan=1, columnspan=1, padx=65)
       self.mfc_canvas.get_tk_widget().grid(row=3, column=4, rowspan=1, columnspan=2, sticky=W)
+
+    
+    if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==True: #offline_all_gui_wstate
+      self.lbl1.grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
+      self.lbl2.grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
+
+      self.video1.videolbl.grid(row=1, column=2, rowspan=2, columnspan=1)
+      self.video1.videocvs.grid(row=1, column=0, rowspan=2, columnspan=2)
+      self.video2.videolbl.grid(row=4, column=2, rowspan=1, columnspan=1)
+      self.video2.videocvs.grid(row=4, column=0, rowspan=1, columnspan=2)
+
+      self.stall_lbl.grid(row=1, column=3, rowspan=1, columnspan=1)
+      self.stall_cond_lbl.grid(row=1, column=4, rowspan=1, columnspan=1, sticky=W)
+      self.state_lbl.grid(row=2, column=3, rowspan=1, columnspan=1)
+      self.state_est_lbl.grid(row=2, column=4, rowspan=1, columnspan=2, sticky=W)
+
+      self.liftdrag_truth_lbl.grid(row=3, column=1, rowspan=1, columnspan=1, sticky=W)
+      self.liftdrag_est_lbl.grid(row=3, column=4, rowspan=1, columnspan=1, sticky=W)  
+      self.truth_liftdrag_plot_lbl.grid(row=3, column=2, rowspan=1, columnspan=1)
+      self.truth_liftdrag_plot_cvs.get_tk_widget().grid(row=3, column=0, rowspan=1, columnspan=1)
+      self.est_liftdrag_plot_lbl.grid(row=3, column=3, rowspan=1, columnspan=1)
+      self.est_liftdrag_plot_cvs.get_tk_widget().grid(row=3, column=5, rowspan=1, columnspan=1)
+      
+      self.mfc_lbl.grid(row=4, column=3, rowspan=1, columnspan=1, padx=65)
+      self.mfc_canvas.get_tk_widget().grid(row=4, column=4, rowspan=1, columnspan=2, sticky=W)
     
     self.update()
 
@@ -269,5 +315,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       print ("Data queue: {}".format(self.data_queue.qsize()))
       print ("Lift/drag queue: {}".format(self.liftdragest_queue.qsize()))
       print ("Stall queue: {}".format(self.stallest_queue.qsize()))
+      print ("State queue: {}".format(self.stateest_queue.qsize()))
       print ("Shape queue: {}".format(self.shape_queue.qsize()))
       time.sleep (1)

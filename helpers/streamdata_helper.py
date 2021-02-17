@@ -112,10 +112,10 @@ class StreamOffline (StreamData):
         
   def stream_measurements(self, measplot, data_list, ys_truth): 
     while True: #Wait
+      time.sleep(0.1)
       if not self.streamhold_queue.empty():
         print ("Started streaming measurements")
         self.GUIapp.update_liftdrag_lbls(predictions=False, start_time=self.start_time)
-        time.sleep(0.15)
         _ = FuncAnimation(measplot.fig, measplot.plot_live, fargs=(ys_truth, data_list, self.use_compensated_strains, False, self.start_time), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
         self.GUIapp.update()
         break
@@ -123,25 +123,29 @@ class StreamOffline (StreamData):
         pass
 
 
-  def initialize_estimates(self, stallest, liftdragest, mfcest):
+  def initialize_estimates(self, stallest, liftdragest, mfcest, stateest=False):
     xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
     ys_preds = np.zeros((2,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag 
     if liftdragest:
       self.liftdrag_predsplot = self.GUIapp.draw_liftdrag_plots(xs, ys_preds, self.visible_duration, self.params, self.downsample_mult, self.use_compensated_strains, True)
     if mfcest:
       self.MFCplot = self.GUIapp.draw_MFCshapes()    
-    eststream_thr = Thread(target=self.stream_estimates, args=(self.GUIapp.liftdragest_list, self.GUIapp.shape_list, ys_preds, stallest, liftdragest, mfcest))
+    eststream_thr = Thread(target=self.stream_estimates, args=(self.GUIapp.liftdragest_list, self.GUIapp.shape_list, ys_preds, stallest, liftdragest, mfcest, stateest))
     eststream_thr.start()
     print ("Initialized estimates")
 
-  def stream_estimates(self, liftdragest_list, shape_list, ys_preds, stallest, liftdragest, mfcest):
+  def stream_estimates(self, liftdragest_list, shape_list, ys_preds, stallest, liftdragest, mfcest, stateest):
     plot_type = 'contour'
     blit = True
     while True: #Wait
       if not self.streamhold_queue.empty():
         print ("Started streaming estimates")
         if stallest:
+          time.sleep(0.05)
           self.GUIapp.update_stallest_lbls(start_time=self.start_time)
+        if stateest:
+          time.sleep(0.05)
+          self.GUIapp.update_stateest_lbls(start_time=self.start_time)
         if liftdragest:
           self.GUIapp.update_liftdrag_lbls(predictions=True, start_time=self.start_time) 
           _ = FuncAnimation(self.liftdrag_predsplot.fig, self.liftdrag_predsplot.plot_live, fargs=(ys_preds, liftdragest_list, self.use_compensated_strains, True, self.start_time), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM liftdragest_queue

@@ -115,12 +115,14 @@ class PlotData:
       read_data = queue[cur_frame]
 
     if i == 0 and not estimate_data: #Set initial temperature at the beginning
-      ref_temp = np.mean(read_data[16])
+      print ("Setting init. temp. for measured lift/drag plot.")
+      self.ref_temp_SG1 = np.mean(read_data[16])
+      self.ref_temp_wing = np.mean(read_data[17])
     if (i%int(self.visible_duration/self.plot_refresh_rate) == 0): #Reset data once the period is filled.
       ys [:,:] = 0
     
     if not estimate_data:
-      temp_np_C = np.mean(read_data[sensor_start_index+2])
+      temp_np_wing = np.mean(read_data[17])
       useful_data_start, useful_data_end = 0, int(read_data.shape[1]/self.downsample_mult)*self.downsample_mult
       fewerCommSGdata = np.mean (read_data[sensor_start_index:sensor_start_index+2,useful_data_start:useful_data_end].reshape(2,-1,self.downsample_mult), axis=2) #Downsample the CommSG data
     else:
@@ -129,8 +131,8 @@ class PlotData:
     slice_start = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples
     slice_end = i%(int(self.visible_duration/self.plot_refresh_rate))*self.num_samples + self.num_samples
     if plot_compensated_strains:
-      commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp)
-      fewerCommSGdata, compCommSGdata_var = commSG_temp_comp.compensate(fewerCommSGdata, temp_np_C)
+      commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(self.ref_temp_SG1, self.ref_temp_wing)
+      fewerCommSGdata, _ = commSG_temp_comp.compensate(fewerCommSGdata, temp_np_wing, 'rod', 0)
     if slice_end > ys.shape[1]:
       ys[:,slice_start:slice_end] = fewerCommSGdata[:,0] #(sensor(lift/drag), time)
     else:
