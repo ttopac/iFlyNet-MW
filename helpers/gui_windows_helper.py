@@ -91,20 +91,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.liftdrag_est_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.est_lift_val, self.est_drag_val), font=("Helvetica", 16), width=20)
 
 
-  # def update_estimations(self):
-  #   while True:
-  #     try:
-  #       read_data = self.data_queue.get_nowait()
-  #       self.data_queue.put_nowait(read_data)
-  #       useful_data_start, useful_data_end = 0, int(read_data.shape[1]/self.downsample_mult)*self.downsample_mult
-  #       stall_predictors = np.concatenate ((read_data[0:6], read_data[14:16]), axis=0) #Use PZTs+CommSGs for stall predictions
-  #       self.stallest_queue.put_nowait (np.any(self.estimates.estimate_stall(stall_predictors[:,useful_data_start:useful_data_end])))
-  #       liftdrag_predictors = read_data[0:6] #Use onlyPZTs for liftdrag predictions
-  #       self.liftdragest_queue.put_nowait (self.estimates.estimate_liftdrag(liftdrag_predictors[:,useful_data_start:useful_data_end]))
-  #     except:
-  #       pass
-  #     time.sleep(self.plot_refresh_rate)
-
   def update_stallest_lbls (self, start_time=None):
     try:
       if not self.offline:
@@ -163,7 +149,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_liftdrag_lbls, predictions, start_time)
 
 
-
   def draw_videos(self, video_names, camnums, realtime=True, videopath=None):
       if not realtime:
         self.video1 = daq_captureANDstreamvideo_helper.DrawTKOfflineVideo(self.parent, video_names[0], camnums[0], videopath)
@@ -198,8 +183,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     else:
       return plot
     
-
-
   def draw_liftdrag_plots(self, xs, ys, visible_duration, params, pred_sample_size, plot_compensated_strains, estimate):
     label = "(Predicted)" if estimate else "(Measured)"
     if not self.offline:
@@ -222,7 +205,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       return plot
     self.update()
 
-
   def draw_MFCshapes(self, plot_type='contour', blit=True):    
     mfc_shape = proc_MFCshape_helper.CalcMFCShape(self.plot_refresh_rate)
     if not self.offline:
@@ -231,7 +213,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
     plot = plot_MFC_helper.PlotMFCShape(self.plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL, offline=self.offline)
     plot.plot_2D_contour()
-    self.mfc_lbl = Label(self.parent, text="Predicted\nmorphing\nsection shape", font=("Helvetica", 18), justify='center')
+    self.mfc_lbl = Label(self.parent, text="Morphing\nsection shape", font=("Helvetica", 18), justify='center')
     self.mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     
     if not self.offline:

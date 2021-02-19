@@ -20,7 +20,7 @@ import streamdata_helper
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
-test_folder = 'Offline_Tests/offline10_Dec16/'
+test_folder = 'Offline_Tests/offline12_Dec16/'
 models_folder = 'Kerasfiles_Dec2020/'
 
 models = dict()

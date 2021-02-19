@@ -26,7 +26,8 @@ def deframe_video(folder, req_len, fps, video_size):
 
 if __name__ == '__main__':
   main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/'
-  test_folder = 'offline14_Dec16/'
+  main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/'
+  test_folder = 'offline10_Dec16/'
   req_len = 300 #seconds
   fps = 30
   video_size = (640, 360)

@@ -47,15 +47,14 @@ if __name__ == '__main__':
 
   #Load the data and models
   leakyrelu = tensorflow.keras.layers.LeakyReLU(alpha=0.02)
-  resnet_bn_layer = keras_resnet.layers.BatchNormalization(freeze=True)
   test_data = np.load(main_folder+test_folder+'/test.npy') #(18, ~2000000) channels: PZT1, PZT2, PZT3, PZT4, PZT5, PZT6, SG1, SG2, SG3, SG4, SG5, SG6, SG7, SG9, Lift, Drag, SG1RTD, WingRTD
   stepcount = int (test_data.shape[1] / params ['sample_rate'] / plot_refresh_rate) + 1
   models['filepaths'] = list(map(lambda x: main_folder+models_folder+'{}'.format(x), models['filenames']))
   for filepath in models['filepaths']:
     if os.path.isfile(filepath+'.hdf5'): #Old format saved with weights
-      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.hdf5', custom_objects={'LeakyReLU': leakyrelu, 'ResNet1D18':resnet_bn_layer}))
+      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.hdf5', custom_objects={'LeakyReLU': leakyrelu}))
     elif os.path.isfile(filepath+'.tf'): #New format saved without weights
-      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.tf', custom_objects={'LeakyReLU': leakyrelu, 'ResNet1D18':resnet_bn_layer}))
+      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.tf', custom_objects={'LeakyReLU': leakyrelu}))
       models['modelfiles'][-1].load_weights(filepath+'.ckpt')
     else:
       raise Exception ('Problem with loading Keras models') 
