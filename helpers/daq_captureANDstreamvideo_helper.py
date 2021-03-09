@@ -159,7 +159,7 @@ class DrawTKOfflineVideo(Frame):
     self.camnum = camnum
     self.videopath = videopath
     self.videocvs = Canvas(parent, width=640, height=360)
-    self.videolbl = Label(parent, text=window_title, font=("Helvetica", 18))
+    self.videolbl = Label(parent, text=window_title, font=("Helvetica", 21, 'bold', 'underline'))
     self.draw_and_process_image()
 
   def draw_and_process_image(self):

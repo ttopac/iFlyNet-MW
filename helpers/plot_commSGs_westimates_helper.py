@@ -36,35 +36,35 @@ class PlotData:
       self.ax2 = self.fig.add_subplot(2,1,2) #Drag
       self.ax1.set_title("Lift", fontsize=11)
       self.ax1.set_xlabel("Time (sec)", labelpad=2, fontsize=11)
-      self.ax1.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
-      self.ax1.tick_params(labelsize="small")
+      self.ax1.set_ylabel("Force", labelpad=2, fontsize=11) #Commented out for simplification. We are showing trends, not absolute values.
+      # self.ax1.tick_params(labelsize="small") #Commented out for simplification. We are showing trends, not absolute values.
       self.ax1.grid(False)
       self.ax2.set_title("Drag", fontsize=11)
       self.ax2.set_xlabel("Time (sec)", labelpad=2, fontsize=11)
-      self.ax2.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
-      self.ax2.tick_params(labelsize="small")
+      self.ax2.set_ylabel("Force", labelpad=2, fontsize=11) #Commented out for simplification. We are showing trends, not absolute values.
+      # self.ax2.tick_params(labelsize="small") #Commented out for simplification. We are showing trends, not absolute values.
       self.ax2.grid(False)
     else:
       self.ax1 = self.fig.add_subplot(1,1,1) #Both lift and drag
       self.ax1.set_xlabel("Time", labelpad=2, fontsize=11)
-      self.ax1.set_ylabel("Microstrain (ue)", labelpad=2, fontsize=11)
-      self.ax1.tick_params(labelsize="small")
+      self.ax1.set_ylabel("Force", labelpad=2, fontsize=11) #Commented out for simplification. We are showing trends, not absolute values.
+      # self.ax1.tick_params(labelsize="small") #Commented out for simplification. We are showing trends, not absolute values.
       self.ax1.grid(False)
 
   def term_common_params(self, stall_overlay=False):
     if stall_overlay: # Legend for lift is a little more complicated if there's stall too
       lns = self.ln1+self.ln2+self.ln3
       labs = [l.get_label() for l in lns]
-      self.leg1 = self.ax1.legend(lns, labs, fontsize=7, loc="upper right", ncol=1, columnspacing=1)
+      self.leg1 = self.ax1.legend(lns, labs, fontsize=9, loc="upper right", ncol=1, columnspacing=1)
     else:
-      self.leg1 = self.ax1.legend(fontsize=7, loc="upper right", ncol=1, columnspacing=1)
+      self.leg1 = self.ax1.legend(fontsize=9, loc="upper right", ncol=1, columnspacing=1)
     
     for line in self.leg1.get_lines():
       line.set_linewidth(1.5)
       line.set_markersize(1.5)
 
     if not self.singleplot: #There's also drag plot in seperate axis
-      self.leg2 = self.ax2.legend(fontsize=7, loc="upper right", ncol=1, columnspacing=1)
+      self.leg2 = self.ax2.legend(fontsize=9, loc="upper right", ncol=1, columnspacing=1)
       for line in self.leg2.get_lines():
         line.set_linewidth(1.5)
     
@@ -86,6 +86,7 @@ class PlotData:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
       self.ax1.set_ylim(-25, 275)
       self.ax1.set_xticklabels([])
+      self.ax1.set_yticklabels([])
       self.liftline, = self.ax1.plot(self.xs, -self.ys[0], linewidth=0.5, label="Lift") #Comm. LiftSG
       self.dragline, = self.ax1.plot(self.xs, -self.ys[1], linewidth=0.5, label="Drag") #Comm. DragSG
 

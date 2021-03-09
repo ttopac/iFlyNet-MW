@@ -17,6 +17,7 @@ import plot_commSGs_westimates_helper
 import proc_keras_estimates_helper
 import proc_MFCshape_helper
 import plot_MFC_helper
+import plot_metrics_wcomparison
 
 
 #Plotting in TK class
@@ -56,8 +57,10 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
   
   def init_UI (self, labels):
-    self.lbl1 = Label(self.parent, text=labels[0], font=("Helvetica", 21, 'bold', 'underline'), justify='center')
-    self.lbl2 = Label(self.parent, text=labels[1], font=("Helvetica", 21, 'bold', 'underline'), justify='center')
+    self.lbls = list()
+    for i in range(len(labels)):
+      self.lbls.append(Label(self.parent, text=labels[i], font=("Helvetica", 21, 'bold', 'underline'), justify='center'))
+    
 
   def initialize_queues_or_lists (self):
     if not self.offline:
@@ -66,12 +69,16 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.stateest_queue = Queue()
       self.liftdragest_queue = Queue()
       self.shape_queue = Queue()
+      self.meas_airspeed_queue = Queue()
+      self.meas_aoa_queue = Queue()
     else:
       self.data_list = list()
       self.stallest_list = list()
       self.stateest_list = list()
       self.liftdragest_list = list()
       self.shape_list = list()
+      self.meas_airspeed_list = list()
+      self.meas_aoa_list = list()
 
   def initialize_estimates (self, pred_freq, models):
     self.estimates = proc_keras_estimates_helper.iFlyNetEstimates(pred_freq, models)
@@ -89,6 +96,12 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
   def draw_liftdrag_lbl (self):
     self.liftdrag_truth_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.truth_lift_val, self.truth_drag_val), font=("Helvetica", 16), width=20)
     self.liftdrag_est_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.est_lift_val, self.est_drag_val), font=("Helvetica", 16), width=20)
+
+  def draw_airspeed_lbl (self):
+    self.airspeedlbl = Label(self.parent, text='Airspeed\n(WT data)', font=("Helvetica", 18), justify='center')
+
+  def draw_cartoon_lbl (self):
+    self.cartoon_lbl = Label(self.parent, text='Wing state (i-FlyNet)', font=("Helvetica", 21, 'bold', 'underline'), justify='center')
 
 
   def update_stallest_lbls (self, start_time=None):
@@ -150,18 +163,24 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
 
   def draw_videos(self, video_names, camnums, realtime=True, videopath=None):
-      if not realtime:
-        self.video1 = daq_captureANDstreamvideo_helper.DrawTKOfflineVideo(self.parent, video_names[0], camnums[0], videopath)
-        self.video2 = daq_captureANDstreamvideo_helper.DrawTKOfflineVideo(self.parent, video_names[1], camnums[1], videopath)
-        return (self.video1, self.video2)
-      else:  
-        self.video1 = daq_captureANDstreamvideo_helper.DrawTKVideoCapture(self.parent, video_names[0], camnums[0])
-        self.video2 = daq_captureANDstreamvideo_helper.DrawTKVideoCapture(self.parent, video_names[1], camnums[1])
-        self.video1.multithreaded_capture(init_call=True) #Use for multi-threaded executions
-        self.video2.multithreaded_capture(init_call=True) #Use for multi-threaded executions
-        # video1.update() #Use for single threaded executions
-        # video2.update() #Use for single threaded executions
-
+    self.videos = list()
+    if not realtime:
+      for i in range(len(camnums)):
+        self.videos.append (daq_captureANDstreamvideo_helper.DrawTKOfflineVideo(self.parent, video_names[i], camnums[i], videopath))
+      return (self.videos)
+    else:
+      for i in range(len(camnums)):
+        self.videos.append (daq_captureANDstreamvideo_helper.DrawTKVideoCapture(self.parent, video_names[i], camnums[i]))
+      for i in range(len(camnums)):
+        self.videos[i].multithreaded_capture(init_call=True) #Use for multi-threaded executions
+        self.videos[i].update() #Use for single threaded executions
+  
+  def draw_airspeed(self, video_names, camnums, realtime, videopath):
+    if not realtime:
+      self.airspeed_video = daq_captureANDstreamvideo_helper.DrawTKOfflineVideo(self.parent, video_names[2], camnums[2], videopath)
+      return self.airspeed_video
+    else: 
+      raise NotImplementedError
 
   def draw_sensordata_plot(self, xs, ys, visible_duration, params, plot_compensated_strains, mfcplot_exists):
     if plot_compensated_strains:
@@ -184,7 +203,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       return plot
     
   def draw_liftdrag_plots(self, xs, ys, visible_duration, params, pred_sample_size, plot_compensated_strains, estimate):
-    label = "(Predicted)" if estimate else "(Measured)"
     if not self.offline:
       queue = self.liftdragest_queue if estimate else self.data_queue
 
@@ -193,10 +211,10 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     plot.plot_liftdrag(xs, ys)
     plot.term_common_params()
     if not estimate:
-      self.truth_liftdrag_plot_lbl = Label(self.parent, text='Lift/Drag\n {}'.format(label), font=("Helvetica", 18), justify='center')
+      self.truth_liftdrag_plot_lbl = Label(self.parent, text='Lift/Drag', font=("Helvetica", 18), justify='center')
       self.truth_liftdrag_plot_cvs = FigureCanvasTkAgg(plot.fig, master=self.parent)
     else:
-      self.est_liftdrag_plot_lbl = Label(self.parent, text='Lift/Drag\n {}'.format(label), font=("Helvetica", 18), justify='center')
+      self.est_liftdrag_plot_lbl = Label(self.parent, text='Lift/Drag', font=("Helvetica", 18), justify='center')
       self.est_liftdrag_plot_cvs = FigureCanvasTkAgg(plot.fig, master=self.parent)
     
     if not self.offline:
@@ -223,20 +241,106 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.update()
 
 
-  def place_on_grid(self, raw_signal, keras_preds, MFC_preds, keras_state_preds=False):
+
+
+  def draw_cartoon_cvs (self):
+    self.cartoon_cvs = Canvas(self.parent, width=640, height=360)
+    self.cartoon_cvs.create_rectangle(3,3,640,360, width=2)
+
+
+
+
+  def draw_airspeed_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+    if not self.offline:
+      raise NotImplementedError
+
+    airspeed_plot = plot_metrics_wcomparison.AirspeedPlot(pred_sample_size, ongui=True, offline=self.offline)
+    airspeed_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
+    airspeed_plot.init_common_params("V (m/s)")
+    airspeed_plot.plot_airspeed_wcomparison(xs, ys)
+    airspeed_plot.term_common_params()
+
+    self.airspeed_plot_wcomparison_lbl = Label(self.parent, text='Airspeed', font=("Helvetica", 18), justify='center')
+    self.airspeed_plot_wcomparison_cvs = FigureCanvasTkAgg(airspeed_plot.fig, master=self.parent)
+    return airspeed_plot
+
+  def draw_aoa_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+    if not self.offline:
+      raise NotImplementedError
+
+    aoa_plot = plot_metrics_wcomparison.AoaPlot(pred_sample_size, ongui=True, offline=self.offline)
+    aoa_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
+    aoa_plot.init_common_params("AoA (deg)")
+    aoa_plot.plot_aoa_wcomparison(xs, ys)
+    aoa_plot.term_common_params()
+
+    self.aoa_plot_wcomparison_lbl = Label(self.parent, text='Angle of Attack', font=("Helvetica", 18), justify='center')
+    self.aoa_plot_wcomparison_cvs = FigureCanvasTkAgg(aoa_plot.fig, master=self.parent)
+    return aoa_plot
+
+  def draw_lift_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+    if not self.offline:
+      raise NotImplementedError
+
+    lift_plot = plot_metrics_wcomparison.LiftPlot(pred_sample_size, ongui=True, offline=self.offline)
+    lift_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
+    lift_plot.init_common_params("Lift")
+    lift_plot.plot_lift_wcomparison(xs, ys)
+    lift_plot.term_common_params()
+
+    self.lift_plot_wcomparison_lbl = Label(self.parent, text='Lift Force', font=("Helvetica", 18), justify='center')
+    self.lift_plot_wcomparison_cvs = FigureCanvasTkAgg(lift_plot.fig, master=self.parent)
+    return lift_plot
+
+  def draw_drag_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+    if not self.offline:
+      raise NotImplementedError
+
+    drag_plot = plot_metrics_wcomparison.DragPlot(pred_sample_size, ongui=True, offline=self.offline)
+    drag_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
+    drag_plot.init_common_params("Drag")
+    drag_plot.plot_drag_wcomparison(xs, ys)
+    drag_plot.term_common_params()
+
+    self.drag_plot_wcomparison_lbl = Label(self.parent, text='Drag Force', font=("Helvetica", 18), justify='center')
+    self.drag_plot_wcomparison_cvs = FigureCanvasTkAgg(drag_plot.fig, master=self.parent)
+    return drag_plot
+
+
+
+  def place_on_grid(self, raw_signal, keras_preds, MFC_preds, keras_state_preds=False, cartoon_gui=False):
+    
+    if cartoon_gui == True: #offline_all_gui_cartoon
+      #Top row
+      self.videos[0].videocvs.grid(row=2, column=0, rowspan=1, columnspan=4)
+      self.videos[0].videolbl.grid(row=1, column=0, rowspan=1, columnspan=4)
+      self.cartoon_lbl.grid(row=1, column=4, rowspan=1, columnspan=4)
+      self.cartoon_cvs.grid(row=2, column=4, rowspan=1, columnspan=4)
+
+      #Mid. row
+      self.lbls[0].grid(row=3, column=3, rowspan=1, columnspan=2, pady=(10,0))
+      
+      #Bottom row
+      self.airspeed_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=0, rowspan=1, columnspan=2, padx=(10,5))
+      self.aoa_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=2, rowspan=1, columnspan=2, padx=(5,5))
+      self.lift_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=4, rowspan=1, columnspan=2, padx=(5,5))
+      self.drag_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=6, rowspan=1, columnspan=2, padx=(5,10))      
+    
+
     if raw_signal==True and keras_preds==False and MFC_preds==False and keras_state_preds==False: #offline_signal_gui and realtime_signal_gui
-      self.video1.videolbl.grid(row=0, column=1, rowspan=1, columnspan=1, sticky=S)
-      self.video1.videocvs.grid(row=1, column=0, rowspan=2, columnspan=3, sticky=N)
-      self.video2.videolbl.grid(row=3, column=1, rowspan=1, columnspan=1, sticky=S)
-      self.video2.videocvs.grid(row=4, column=0, rowspan=2, columnspan=3, sticky=N)
+      self.videos[0].videolbl.grid(row=0, column=1, rowspan=1, columnspan=1, sticky=S)
+      self.videos[0].videocvs.grid(row=1, column=0, rowspan=2, columnspan=3, sticky=N)
+      self.videos[1].videolbl.grid(row=3, column=1, rowspan=1, columnspan=1, sticky=S)
+      self.videos[1].videocvs.grid(row=4, column=0, rowspan=2, columnspan=3, sticky=N)
       
       self.sensordata_plot_cvs.get_tk_widget().grid(row=2, column=3, rowspan=3, columnspan=3)
 
+
     if raw_signal==True and keras_preds==False and MFC_preds==True and keras_state_preds==False: #offline_signal_shape_gui and realtime_signal_shape_gui    
-      self.video1.videolbl.grid(row=5, column=0, rowspan=1, columnspan=3, sticky=S)
-      self.video1.videocvs.grid(row=6, column=0, rowspan=1, columnspan=3, sticky=N)
-      self.video2.videolbl.grid(row=12, column=0, rowspan=1, columnspan=3, pady=5, sticky=S)
-      self.video2.videocvs.grid(row=13, column=0, rowspan=1, columnspan=3, sticky=N)
+      self.videos[0].videolbl.grid(row=5, column=0, rowspan=1, columnspan=3, sticky=S)
+      self.videos[0].videocvs.grid(row=6, column=0, rowspan=1, columnspan=3, sticky=N)
+      self.videos[1].videolbl.grid(row=12, column=0, rowspan=1, columnspan=3, pady=5, sticky=S)
+      self.videos[1].videocvs.grid(row=13, column=0, rowspan=1, columnspan=3, sticky=N)
       
       self.sensordata_plot_cvs.get_tk_widget().grid(row=1, column=3, rowspan=11, columnspan=3)
       self.mfc_lbl.grid(row=12, column=4, rowspan=1, columnspan=1, sticky=S)
@@ -244,13 +348,13 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
 
     if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==False: #offline_all_gui and realtime_all_gui
-      self.lbl1.grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
-      self.lbl2.grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
+      self.lbls[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
+      self.lbls[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
 
-      self.video1.videolbl.grid(row=1, column=2, rowspan=1, columnspan=1)
-      self.video1.videocvs.grid(row=1, column=0, rowspan=1, columnspan=2)
-      self.video2.videolbl.grid(row=3, column=2, rowspan=1, columnspan=1)
-      self.video2.videocvs.grid(row=3, column=0, rowspan=1, columnspan=2)
+      self.videos[0].videolbl.grid(row=1, column=2, rowspan=1, columnspan=1)
+      self.videos[0].videocvs.grid(row=1, column=0, rowspan=1, columnspan=2)
+      self.videos[1].videolbl.grid(row=3, column=2, rowspan=1, columnspan=1)
+      self.videos[1].videocvs.grid(row=3, column=0, rowspan=1, columnspan=2)
 
       self.stall_lbl.grid(row=1, column=3, rowspan=1, columnspan=1)
       self.stall_cond_lbl.grid(row=1, column=4, rowspan=1, columnspan=1, sticky=W)
@@ -266,13 +370,13 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
     
     if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==True: #offline_all_gui_wstate
-      self.lbl1.grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
-      self.lbl2.grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
+      self.lbls[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
+      self.lbls[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
 
-      self.video1.videolbl.grid(row=1, column=2, rowspan=2, columnspan=1)
-      self.video1.videocvs.grid(row=1, column=0, rowspan=2, columnspan=2)
-      self.video2.videolbl.grid(row=4, column=2, rowspan=1, columnspan=1)
-      self.video2.videocvs.grid(row=4, column=0, rowspan=1, columnspan=2)
+      self.videos[0].videolbl.grid(row=1, column=2, rowspan=2, columnspan=1)
+      self.videos[0].videocvs.grid(row=1, column=0, rowspan=2, columnspan=2)
+      self.videos[1].videolbl.grid(row=4, column=2, rowspan=1, columnspan=1)
+      self.videos[1].videocvs.grid(row=4, column=0, rowspan=1, columnspan=2)
 
       self.stall_lbl.grid(row=1, column=3, rowspan=1, columnspan=1)
       self.stall_cond_lbl.grid(row=1, column=4, rowspan=1, columnspan=1, sticky=W)

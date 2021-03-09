@@ -43,8 +43,8 @@ class SaveVideoAndSignals():
       #Stop camera plotting and DAQ altogether.
       self.preview.get_data_proc.terminate()
       self.preview.draw_MFC_proc.terminate()
-      self.preview.video1.capture_stopflag = True
-      self.preview.video2.capture_stopflag = True
+      for video in self.preview.videos:
+        video.capture_stopflag = True
       
       #Restart stuff. First initialize videos.
       self.init_videos()
@@ -69,8 +69,8 @@ class SaveVideoAndSignals():
       self.saver.save_to_np(read_data)
       
       time.sleep(2) #Wait a little for video to finish.
-      self.preview.video1.endo_video.stopflag=True
-      self.preview.video2.endo_video.stopflag=True
+      for video in self.preview.videos:
+        video.endo_video.stopflag=True
       self.vid_thr1.join()
       self.vid_thr2.join()
       self.preview.destroy()
@@ -79,8 +79,8 @@ class SaveVideoAndSignals():
 
   def init_videos (self):
     print ("Starting to save videos.")
-    save1 = daq_captureANDstreamvideo_helper.SaveVideoCapture(self.preview.video1.endo_video, camnums[0], save_path, save_duration, 30)
-    save2 = daq_captureANDstreamvideo_helper.SaveVideoCapture(self.preview.video2.endo_video, camnums[1], save_path, save_duration, 30)
+    save1 = daq_captureANDstreamvideo_helper.SaveVideoCapture(self.preview.videos[0].endo_video, camnums[0], save_path, save_duration, 30)
+    save2 = daq_captureANDstreamvideo_helper.SaveVideoCapture(self.preview.videos[1].endo_video, camnums[1], save_path, save_duration, 30)
     self.vid_thr1 = Thread(target=save1.multithreaded_save, args=(time.time_ns(),))    
     self.vid_thr2 = Thread(target=save2.multithreaded_save, args=(time.time_ns(),))
   
@@ -97,14 +97,14 @@ if __name__ == "__main__":
   plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1 #Use 1 for training, use 233 for drifttest.
   ys = np.zeros((18,int(visible_duration*params["sample_rate"]/downsample_mult)))
-  video_names = ("AoA view", "Outer MFC view")
-  camnums = (2,1)
+  video_names = ("Dummy0", "Dummy1")
+  camnums = (0,1)
   use_compensated_strains_forstream = False
 
   #Define save parameters
   # save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline5_Nov19/'
-  save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline15_Dec16/'
-  save_duration = 20 #seconds
+  save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline_SG2lb_Mar6/'
+  save_duration = 60 #seconds
   saver = daq_savedata_helper.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
   preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!
