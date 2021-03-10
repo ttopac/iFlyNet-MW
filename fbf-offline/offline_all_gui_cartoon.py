@@ -111,8 +111,8 @@ if __name__ == '__main__':
   ###
   root = Tk()
   root.title ("Offline i-FlyNet")
-  video_labels = ("Experiment camera", "dummy")
-  title_labels = ("Metrics",)
+  video_labels = ("Experiment Cam", "dummy")
+  title_labels = ("Flight Characteristics",)
   filespath = main_folder+test_folder
   camnums = ('1_deframed', '1_deframed')
   

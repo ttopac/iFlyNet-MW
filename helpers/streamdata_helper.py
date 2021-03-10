@@ -80,8 +80,9 @@ class StreamOffline (StreamData):
     while True: #Wait
       if not self.streamhold_queue.empty():
         print ("Started streaming video {}".format(videoid))
-        self.start_time = time.time()
-        self.videos[videoid].stream_images(self.start_time, 1/30)
+        time_delay = 0.45 #This time delay is here because it takes a bit that video actually starts after stream_images command.
+        self.start_time = time.time() + time_delay
+        self.videos[videoid].stream_images(self.start_time - time_delay, 1/30)
         break
       else:
         pass
@@ -165,27 +166,19 @@ class StreamOffline (StreamData):
     
 
   def initialize_plots_wcomparison(self, plot_airspeed, plot_aoa, plot_lift, plot_drag):
-    airspeed_xs = np.linspace (0, self.visible_duration, int(self.visible_duration/self.plot_refresh_rate))
-    airspeed_ys = np.zeros((2,int(self.visible_duration/self.plot_refresh_rate)))
-    aoa_xs = np.linspace (0, self.visible_duration, int(self.visible_duration/self.plot_refresh_rate))
-    aoa_ys = np.zeros((2,int(self.visible_duration/self.plot_refresh_rate)))
-    lift_xs = np.linspace (0, self.visible_duration, int(self.visible_duration/self.plot_refresh_rate))
-    lift_ys = np.zeros((2,int(self.visible_duration/self.plot_refresh_rate)))
-    drag_xs = np.linspace (0, self.visible_duration, int(self.visible_duration/self.plot_refresh_rate))
-    drag_ys = np.zeros((2,int(self.visible_duration/self.plot_refresh_rate)))
     self.airspeed_plot = None
     self.aoa_plot = None
     self.lift_plot = None
     self.drag_plot = None
 
     if plot_airspeed:
-      self.airspeed_plot = self.GUIapp.draw_airspeed_plot_wcomparison(airspeed_xs, airspeed_ys, self.visible_duration, self.params, self.downsample_mult)
+      self.airspeed_plot = self.GUIapp.draw_airspeed_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
     if plot_aoa:
-      self.aoa_plot = self.GUIapp.draw_aoa_plot_wcomparison(aoa_xs, aoa_ys, self.visible_duration, self.params, self.downsample_mult)
+      self.aoa_plot = self.GUIapp.draw_aoa_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
     if plot_lift:
-      self.lift_plot = self.GUIapp.draw_lift_plot_wcomparison(lift_xs, lift_ys, self.visible_duration, self.params, self.downsample_mult)
+      self.lift_plot = self.GUIapp.draw_lift_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
     if plot_drag:
-      self.drag_plot = self.GUIapp.draw_drag_plot_wcomparison(drag_xs, drag_ys, self.visible_duration, self.params, self.downsample_mult)
+      self.drag_plot = self.GUIapp.draw_drag_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
     
     plots_wcomparison_thr = Thread(target=self.stream_plots_wcomparison)
     plots_wcomparison_thr.start()
@@ -194,15 +187,18 @@ class StreamOffline (StreamData):
   def stream_plots_wcomparison(self):
     while True: #Wait
       if not self.streamhold_queue.empty():
-        time.sleep(0.05)
         print ("Started streaming plotting w_comparisons")
         if self.airspeed_plot is not None:
+          time.sleep(0.05)
           _ = FuncAnimation(self.airspeed_plot.fig, self.airspeed_plot.plot_airspeed_live, fargs=(self.GUIapp.meas_airspeed_list, self.GUIapp.stateest_list, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
         if self.aoa_plot is not None:
+          time.sleep(0.05)
           _ = FuncAnimation(self.aoa_plot.fig, self.aoa_plot.plot_aoa_live, fargs=(self.GUIapp.meas_aoa_list, self.GUIapp.stateest_list, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
         if self.lift_plot is not None:
+          time.sleep(0.05)
           _ = FuncAnimation(self.lift_plot.fig, self.lift_plot.plot_lift_live, fargs=(self.GUIapp.data_list, self.GUIapp.liftdragest_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
         if self.drag_plot is not None:
+          time.sleep(0.05)
           _ = FuncAnimation(self.drag_plot.fig, self.drag_plot.plot_drag_live, fargs=(self.GUIapp.data_list, self.GUIapp.liftdragest_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
         self.GUIapp.update()
         break

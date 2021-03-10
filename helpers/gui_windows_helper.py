@@ -101,7 +101,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.airspeedlbl = Label(self.parent, text='Airspeed\n(WT data)', font=("Helvetica", 18), justify='center')
 
   def draw_cartoon_lbl (self):
-    self.cartoon_lbl = Label(self.parent, text='Wing state (i-FlyNet)', font=("Helvetica", 21, 'bold', 'underline'), justify='center')
+    self.cartoon_lbl = Label(self.parent, text='Wing State (i-FlyNet)', font=("Helvetica", 21, 'bold', 'underline'), justify='center')
 
 
   def update_stallest_lbls (self, start_time=None):
@@ -250,59 +250,55 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
 
 
-  def draw_airspeed_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+  def draw_airspeed_plot_wcomparison(self, visible_duration, params, pred_sample_size):
     if not self.offline:
       raise NotImplementedError
 
     airspeed_plot = plot_metrics_wcomparison.AirspeedPlot(pred_sample_size, ongui=True, offline=self.offline)
     airspeed_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     airspeed_plot.init_common_params("V (m/s)")
-    airspeed_plot.plot_airspeed_wcomparison(xs, ys)
+    airspeed_plot.plot_airspeed_wcomparison()
     airspeed_plot.term_common_params()
 
-    self.airspeed_plot_wcomparison_lbl = Label(self.parent, text='Airspeed', font=("Helvetica", 18), justify='center')
     self.airspeed_plot_wcomparison_cvs = FigureCanvasTkAgg(airspeed_plot.fig, master=self.parent)
     return airspeed_plot
 
-  def draw_aoa_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+  def draw_aoa_plot_wcomparison(self, visible_duration, params, pred_sample_size):
     if not self.offline:
       raise NotImplementedError
 
     aoa_plot = plot_metrics_wcomparison.AoaPlot(pred_sample_size, ongui=True, offline=self.offline)
     aoa_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     aoa_plot.init_common_params("AoA (deg)")
-    aoa_plot.plot_aoa_wcomparison(xs, ys)
+    aoa_plot.plot_aoa_wcomparison()
     aoa_plot.term_common_params()
 
-    self.aoa_plot_wcomparison_lbl = Label(self.parent, text='Angle of Attack', font=("Helvetica", 18), justify='center')
     self.aoa_plot_wcomparison_cvs = FigureCanvasTkAgg(aoa_plot.fig, master=self.parent)
     return aoa_plot
 
-  def draw_lift_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+  def draw_lift_plot_wcomparison(self, visible_duration, params, pred_sample_size):
     if not self.offline:
       raise NotImplementedError
 
     lift_plot = plot_metrics_wcomparison.LiftPlot(pred_sample_size, ongui=True, offline=self.offline)
     lift_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     lift_plot.init_common_params("Lift")
-    lift_plot.plot_lift_wcomparison(xs, ys)
+    lift_plot.plot_lift_wcomparison()
     lift_plot.term_common_params()
 
-    self.lift_plot_wcomparison_lbl = Label(self.parent, text='Lift Force', font=("Helvetica", 18), justify='center')
     self.lift_plot_wcomparison_cvs = FigureCanvasTkAgg(lift_plot.fig, master=self.parent)
     return lift_plot
 
-  def draw_drag_plot_wcomparison(self, xs, ys, visible_duration, params, pred_sample_size):
+  def draw_drag_plot_wcomparison(self, visible_duration, params, pred_sample_size):
     if not self.offline:
       raise NotImplementedError
 
     drag_plot = plot_metrics_wcomparison.DragPlot(pred_sample_size, ongui=True, offline=self.offline)
     drag_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     drag_plot.init_common_params("Drag")
-    drag_plot.plot_drag_wcomparison(xs, ys)
+    drag_plot.plot_drag_wcomparison()
     drag_plot.term_common_params()
 
-    self.drag_plot_wcomparison_lbl = Label(self.parent, text='Drag Force', font=("Helvetica", 18), justify='center')
     self.drag_plot_wcomparison_cvs = FigureCanvasTkAgg(drag_plot.fig, master=self.parent)
     return drag_plot
 
