@@ -68,7 +68,7 @@ class ProcEstimatesOffline:
   ###
   #General function for making the Estimations
   ###
-  def make_estimates(self, keras_est, mfc_est, liftdrag_est, mfc_est_meth='simple'):
+  def make_estimates(self, keras_est, mfc_est, liftdrag_est, mfc_est_meth='simple', liftdrag_est_meth='vlm'):
     #Stall and state estimates from Keras
     if keras_est:
       keras_estimator = proc_keras_estimates_helper.iFlyNetEstimates(self.keras_samplesize, self.models) #Initialize Keras estimates if this is not running in realtime
@@ -109,7 +109,7 @@ class ProcEstimatesOffline:
 
     #Lift and drag estimations based on AoA, airspeed, MFC estimates via VLM
     if liftdrag_est:
-      if mfc_est_meth == 'simple':
+      if liftdrag_est_meth == 'vlm':
         self.liftdrag_estimates = np.zeros((self.num_estimates,2))
         liftdrag_dict = dict()
 
@@ -121,3 +121,6 @@ class ProcEstimatesOffline:
             est_lift, est_drag = proc_liftdrag_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
             self.liftdrag_estimates[i,0] = est_lift
             self.liftdrag_estimates[i,1] = est_drag
+      
+      elif liftdrag_est_meth == '1dcnn':
+        self.liftdrag_estimates = keras_estimator.estimate_liftdrag(self.sensor_data_keras[1])

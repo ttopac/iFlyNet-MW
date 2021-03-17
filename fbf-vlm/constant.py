@@ -15,7 +15,7 @@ MFC_MIN = -6
 # Overall wing definition data (partitions below follow and are repeated per partition). All distances in meters.
 CHORD = .305
 SPAN = .38
-N_CHORD_PANELS = 16
+N_CHORD_PANELS = 50
 AIRFOIL_BASE = "NACA 0012"
 MASS = 5
 

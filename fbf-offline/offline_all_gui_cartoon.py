@@ -11,6 +11,8 @@ import keras_resnet.models
 from multiprocessing import Queue, Process
 from threading import Thread
 import cv2
+import pathlib
+
 
 sys.path.append(os.path.abspath('./helpers'))
 import gui_windows_helper
@@ -18,6 +20,8 @@ import procoffline_helper
 import streamdata_helper
 import digitize_airspeed_helper
 import digitize_aoa_helper
+
+file_path = pathlib.Path(__file__).parent.absolute()
 
 # main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
 # main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
@@ -39,7 +43,7 @@ params ['sample_rate'] = 7142 #Use 7142 for training, 1724 for drift. 1724 becom
 
 def start_offline_button(GUIapp, streamhold_queue):
   startoffline_button = Button(GUIapp.parent, text='Click to start the stream...', command=lambda : streamhold_queue.put(False))
-  startoffline_button.grid(row=0, column=3, rowspan=1, columnspan=2, sticky=S)
+  startoffline_button.grid(row=0, column=0, rowspan=1, columnspan=8, sticky=S)
 
 
 if __name__ == '__main__':
@@ -49,6 +53,8 @@ if __name__ == '__main__':
   keras_samplesize=233 #This is also used for pred_freq. Bad naming here.
   downsample_mult = keras_samplesize #For this app these two are  equal to have equal number of lift/drag values. 
   use_compensated_strains = True
+  mfc_estimate_meth = 'simple' #simple or full
+  liftdrag_estimate_meth = 'vlm' #vlm or 1dcnn
 
   ###
   #Load the data and models
@@ -75,7 +81,7 @@ if __name__ == '__main__':
   estimates = procoffline_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains, models, keras_samplesize)
   if len(os.listdir(main_folder+test_folder+"saved_estimates")) < 4: #All estimations are not there.
     #Make estimations
-    estimates.make_estimates(True, True, True, 'simple')
+    estimates.make_estimates(True, True, True, mfc_estimate_meth, liftdrag_estimate_meth)
     #Save estimate files for easy reuse.
     np.save(main_folder+test_folder+"saved_estimates/"+'stall_estimates.npy', estimates.stall_estimates)
     np.save(main_folder+test_folder+"saved_estimates/"+'state_estimates.npy', estimates.state_estimates)
@@ -112,12 +118,12 @@ if __name__ == '__main__':
   root = Tk()
   root.title ("Offline i-FlyNet")
   video_labels = ("Experiment Cam", "dummy")
-  title_labels = ("Flight Characteristics",)
+  title_label = "Flight Characteristics"
   filespath = main_folder+test_folder
   camnums = ('1_deframed', '1_deframed')
   
-  GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True)
-  GUIapp.init_UI(title_labels)
+  GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True, liftdrag_estimate_meth=liftdrag_estimate_meth)
+  GUIapp.draw_midrow(title_label, os.path.join(file_path.parent, 'assets', 'legend.png'))
   GUIapp.draw_cartoon_lbl()
   GUIapp.draw_cartoon_cvs()
   GUIapp.initialize_queues_or_lists()

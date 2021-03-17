@@ -4,6 +4,7 @@ import os
 import numpy as np
 from tkinter import *
 from tkinter import Tk, Frame, Button, Label, Canvas
+from PIL import ImageTk, Image  
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 from threading import Thread
@@ -22,7 +23,7 @@ import plot_metrics_wcomparison
 
 #Plotting in TK class
 class GroundTruthAndiFlyNetEstimatesWindow(Frame):
-  def __init__(self, parent, plot_refresh_rate, downsample_mult, offline=False):
+  def __init__(self, parent, plot_refresh_rate, downsample_mult, offline=False, liftdrag_estimate_meth='1dcnn'):
     Frame.__init__(self,parent)
     self.parent = parent
     self.stall_cond = "No"
@@ -35,6 +36,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.plot_refresh_rate = plot_refresh_rate
     self.downsample_mult = downsample_mult
     self.offline = offline
+    self.liftdrag_estimate_meth = liftdrag_estimate_meth
 
 
   def getSGoffsets (self, params):
@@ -56,10 +58,26 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.get_data_proc.start()
 
   
-  def init_UI (self, labels):
-    self.lbls = list()
+  def draw_title_labels (self, labels):
+    self.title_labels = list()
     for i in range(len(labels)):
-      self.lbls.append(Label(self.parent, text=labels[i], font=("Helvetica", 21, 'bold', 'underline'), justify='center'))
+      self.title_labels.append(Label(self.parent, text=labels[i], font=("Helvetica", 21, 'bold', 'underline'), anchor='e', justify=RIGHT))
+  
+
+  def draw_midrow (self, title_label, legend_label_img):
+    img = Image.open(legend_label_img)
+    width, height = img.size
+    res_width, res_height = int(width/1.6), int(height/1.6)
+    img = img.resize((res_width, res_height)) # (height, width)
+    imgtk = ImageTk.PhotoImage(img)
+
+    self.midrow_frame_top = Frame(self.parent)
+    self.midrow_frame_bottom = Frame(self.parent)
+    midrow_label = Label(self.midrow_frame_top, text=title_label, font=("Helvetica", 21, 'bold', 'underline'))
+    midrow_label.pack(side=LEFT)
+    midrow_legend = Label(self.midrow_frame_top, image=imgtk)
+    midrow_legend.image = imgtk
+    midrow_legend.pack(side=LEFT)
     
 
   def initialize_queues_or_lists (self):
@@ -240,15 +258,15 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       return plot
     self.update()
 
-
-
-
+  ###
+  #TODO: Complete cartoon GUI
+  ###
   def draw_cartoon_cvs (self):
     self.cartoon_cvs = Canvas(self.parent, width=640, height=360)
     self.cartoon_cvs.create_rectangle(3,3,640,360, width=2)
-
-
-
+  ###
+  #TODO: Complete cartoon GUI
+  ###
 
   def draw_airspeed_plot_wcomparison(self, visible_duration, params, pred_sample_size):
     if not self.offline:
@@ -258,7 +276,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     airspeed_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     airspeed_plot.init_common_params("V (m/s)")
     airspeed_plot.plot_airspeed_wcomparison()
-    airspeed_plot.term_common_params()
+    airspeed_plot.term_common_params(False)
 
     self.airspeed_plot_wcomparison_cvs = FigureCanvasTkAgg(airspeed_plot.fig, master=self.parent)
     return airspeed_plot
@@ -271,7 +289,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     aoa_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     aoa_plot.init_common_params("AoA (deg)")
     aoa_plot.plot_aoa_wcomparison()
-    aoa_plot.term_common_params()
+    aoa_plot.term_common_params(False)
 
     self.aoa_plot_wcomparison_cvs = FigureCanvasTkAgg(aoa_plot.fig, master=self.parent)
     return aoa_plot
@@ -283,8 +301,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     lift_plot = plot_metrics_wcomparison.LiftPlot(pred_sample_size, ongui=True, offline=self.offline)
     lift_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     lift_plot.init_common_params("Lift")
-    lift_plot.plot_lift_wcomparison()
-    lift_plot.term_common_params()
+    lift_plot.plot_lift_wcomparison(self.liftdrag_estimate_meth)
+    lift_plot.term_common_params(False)
 
     self.lift_plot_wcomparison_cvs = FigureCanvasTkAgg(lift_plot.fig, master=self.parent)
     return lift_plot
@@ -296,8 +314,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     drag_plot = plot_metrics_wcomparison.DragPlot(pred_sample_size, ongui=True, offline=self.offline)
     drag_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     drag_plot.init_common_params("Drag")
-    drag_plot.plot_drag_wcomparison()
-    drag_plot.term_common_params()
+    drag_plot.plot_drag_wcomparison(self.liftdrag_estimate_meth)
+    drag_plot.term_common_params(False)
 
     self.drag_plot_wcomparison_cvs = FigureCanvasTkAgg(drag_plot.fig, master=self.parent)
     return drag_plot
@@ -308,20 +326,20 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     
     if cartoon_gui == True: #offline_all_gui_cartoon
       #Top row
-      self.videos[0].videocvs.grid(row=2, column=0, rowspan=1, columnspan=4)
       self.videos[0].videolbl.grid(row=1, column=0, rowspan=1, columnspan=4)
+      self.videos[0].videocvs.grid(row=2, column=0, rowspan=1, columnspan=4)
       self.cartoon_lbl.grid(row=1, column=4, rowspan=1, columnspan=4)
       self.cartoon_cvs.grid(row=2, column=4, rowspan=1, columnspan=4)
 
       #Mid. row
-      self.lbls[0].grid(row=3, column=3, rowspan=1, columnspan=2, pady=(10,0))
-      
+      self.midrow_frame_top.grid(row=3, column=0, rowspan=1, columnspan=8, pady=(6,2))
+      self.midrow_frame_bottom.grid(row=4, column=0, rowspan=1, columnspan=8, pady=(2,6))
+
       #Bottom row
-      self.airspeed_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=0, rowspan=1, columnspan=2, padx=(10,5))
-      self.aoa_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=2, rowspan=1, columnspan=2, padx=(5,5))
-      self.lift_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=4, rowspan=1, columnspan=2, padx=(5,5))
-      self.drag_plot_wcomparison_cvs.get_tk_widget().grid(row=4, column=6, rowspan=1, columnspan=2, padx=(5,10))      
-    
+      self.airspeed_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=0, rowspan=1, columnspan=2, padx=(10,5))
+      self.aoa_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=2, rowspan=1, columnspan=2, padx=(5,5))
+      self.lift_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=4, rowspan=1, columnspan=2, padx=(5,5))
+      self.drag_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=6, rowspan=1, columnspan=2, padx=(5,10))      
 
     if raw_signal==True and keras_preds==False and MFC_preds==False and keras_state_preds==False: #offline_signal_gui and realtime_signal_gui
       self.videos[0].videolbl.grid(row=0, column=1, rowspan=1, columnspan=1, sticky=S)
@@ -344,8 +362,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
 
     if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==False: #offline_all_gui and realtime_all_gui
-      self.lbls[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
-      self.lbls[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
+      self.title_labels[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
+      self.title_labels[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
 
       self.videos[0].videolbl.grid(row=1, column=2, rowspan=1, columnspan=1)
       self.videos[0].videocvs.grid(row=1, column=0, rowspan=1, columnspan=2)
@@ -366,8 +384,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
     
     if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==True: #offline_all_gui_wstate
-      self.lbls[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
-      self.lbls[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
+      self.title_labels[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
+      self.title_labels[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
 
       self.videos[0].videolbl.grid(row=1, column=2, rowspan=2, columnspan=1)
       self.videos[0].videocvs.grid(row=1, column=0, rowspan=2, columnspan=2)

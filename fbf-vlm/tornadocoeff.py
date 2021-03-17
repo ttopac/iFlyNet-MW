@@ -8,12 +8,15 @@
 
 
 from pyvlm import latticesystem_from_json
+from pyvlm.outputs.msh import latticeresult_to_msh
 from IPython.display import display_markdown
 from time import time
 import json
 import constant as const
-import sys
+import sys, os
 from jsondict import enterdata
+import pathlib
+file_path = pathlib.Path(__file__).parent.absolute()
 
 
 # NAME FILE:
@@ -70,8 +73,8 @@ if __name__ == "__main__":
 
     airspeed = 10
     alpha = 5
-    mfc1 = 2
-    mfc2 = -4
+    mfc1 = -3
+    mfc2 = -3
 
     # Get results
     lsys = return_results(airspeed, alpha, mfc1, mfc2)
@@ -84,3 +87,5 @@ if __name__ == "__main__":
         lres = lsys.results[case]
         display_markdown(lres)
 
+    lres = lsys.results['Test']
+    latticeresult_to_msh(lres, os.path.join(file_path, 'results', 'MW.msh'))

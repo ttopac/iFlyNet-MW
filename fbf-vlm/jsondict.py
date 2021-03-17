@@ -31,7 +31,7 @@ json_dict = {
                     "zle": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "numb": 25,  # Number of span-wise panels for this partition; increase for higher fidelity model
+                    "numb": 20,  # Number of span-wise panels for this partition; increase for higher fidelity model
                     "bspace": "semi-cosine",
                     "airfoil": const.AIRFOIL_BASE,
                 },
@@ -41,7 +41,7 @@ json_dict = {
                     "zle": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "numb": 25,
+                    "numb": 20,
                     "bspace": "semi-cosine",
                     "airfoil": const.AIRFOIL_BASE
                 },
@@ -51,7 +51,7 @@ json_dict = {
                     "zle": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "numb": 25,
+                    "numb": 20,
                     "bspace": "semi-cosine",
                     "airfoil": const.AIRFOIL_BASE  # MFC 1 (inner)
                 },
@@ -61,7 +61,7 @@ json_dict = {
                     "zle": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "numb": 25,
+                    "numb": 20,
                     "bspace": "semi-cosine",
                     "airfoil": const.AIRFOIL_BASE,
                 },
