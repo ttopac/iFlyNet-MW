@@ -18,8 +18,10 @@ class PlotsWComparison:
     self.downsample_mult = downsample_mult
     self.params = params
     self.plot_refresh_rate = plot_refresh_rate
-    self.xs = np.linspace (0, self.visible_duration, int(self.visible_duration/self.plot_refresh_rate))
-    self.ys = np.zeros((2,int(self.visible_duration/self.plot_refresh_rate)))
+    # self.xs = np.linspace (0, self.visible_duration, int(self.visible_duration/self.plot_refresh_rate))
+    # self.ys = np.zeros((2,int(self.visible_duration/self.plot_refresh_rate)))
+    self.xs = np.zeros(1)
+    self.ys = np.zeros((2,1))
 
   def init_common_params (self, y_label):
     mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=['#1f77b4', '#ff7f0e', '#2ca02c', '#bcbd22', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#17becf', '#d62728']) 
@@ -64,17 +66,22 @@ class PlotsWComparison:
         meas_data, _ = meas_temp_comp.compensate(meas_data, temp_data[1], 'rod', 0)
     
     if (i%int(self.visible_duration/self.plot_refresh_rate) == 0): #Reset data once the period is filled.
-      self.ys[:,:] = 0
+      self.xs = np.zeros(1)
+      self.ys = np.array([[meas_data], [est_data]])
 
-    slice_start = i%(int(self.visible_duration/self.plot_refresh_rate))
-    slice_end = i%(int(self.visible_duration/self.plot_refresh_rate)) + 1
+    # slice_start = i%(int(self.visible_duration/self.plot_refresh_rate))
+    # slice_end = i%(int(self.visible_duration/self.plot_refresh_rate)) + 1
     
     # if plot_name == "drag":
     #   if meas_data > 0.75: #If we are getting thrust somehow!
     #     meas_data = -2.5 * np.random.uniform() #Cheat and assign something -5 and 0.
-
-    self.ys[0,slice_start:slice_end] = meas_data
-    self.ys[1,slice_start:slice_end] = est_data
+    self.xs = np.append(self.xs, i%int(self.visible_duration/self.plot_refresh_rate) * self.plot_refresh_rate)
+    self.ys = np.append(self.ys, np.zeros((2,1)), axis=1)
+    self.ys[0,-1] = meas_data
+    self.ys[1,-1] = est_data
+    
+    meas_line.set_xdata(self.xs)
+    est_line.set_xdata(self.xs)
     if plot_name == 'lift' or plot_name=='drag':
       meas_line.set_ydata(-self.ys[0])
     else:
@@ -97,6 +104,7 @@ class AirspeedPlot (PlotsWComparison):
   def plot_airspeed_wcomparison(self):
     if self.ongui:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
+      self.ax1.set_xlim(-2, self.visible_duration+2)
       self.ax1.set_ylim(-2, 22) #This scale is m/s
       self.ax1.set_xticklabels([])
       self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1.5, animated=True, label="Measured") 
@@ -122,6 +130,7 @@ class AoaPlot (PlotsWComparison):
   def plot_aoa_wcomparison(self):
     if self.ongui:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
+      self.ax1.set_xlim(-2, self.visible_duration+2)
       self.ax1.set_ylim(-2, 22) #This scale is degrees
       self.ax1.set_xticklabels([])
       self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1.5, animated=True, label="Measured") 
@@ -147,6 +156,7 @@ class LiftPlot (PlotsWComparison):
   def plot_lift_wcomparison(self, liftdrag_estimate_meth):
     if self.ongui:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
+      self.ax1.set_xlim(-2, self.visible_duration+2)
       self.ax1.set_ylim(-25, 250) #This scale is microstrains
       self.ax1.set_xticklabels([])
       self.ax1.set_yticklabels([])
@@ -155,6 +165,7 @@ class LiftPlot (PlotsWComparison):
       self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1.5, animated=True, label="Measured") 
       self.est_line, = self.twin_ax.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted", color='#ff7f0e')
 
+      self.twin_ax.set_xlim (-2, self.visible_duration+2) 
       if liftdrag_estimate_meth == '1dcnn':
         self.twin_ax.set_ylim (-30, 300) #This scale is microstrains
       elif liftdrag_estimate_meth == 'vlm':
@@ -184,14 +195,16 @@ class DragPlot (PlotsWComparison):
   def plot_drag_wcomparison(self, liftdrag_estimate_meth):
     if self.ongui:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
+      self.ax1.set_xlim(-2, self.visible_duration+2)
       self.ax1.set_ylim(-10, 100) #This scale is microstrains
       self.ax1.set_xticklabels([])
       self.ax1.set_yticklabels([])
 
       self.twin_ax = self.ax1.twinx()
-      self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1.5, animated=True, label="Measured") 
-      self.est_line, = self.twin_ax.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted", color='#ff7f0e')
-
+      self.meas_line, = self.ax1.plot(self.xs, self.ys[0], animated=True, label="Measured") 
+      self.est_line, = self.twin_ax.plot(self.xs, self.ys[1], animated=True, label="Predicted", color='#ff7f0e')
+      
+      self.twin_ax.set_xlim (-2, self.visible_duration+2) 
       if liftdrag_estimate_meth == '1dcnn':
         self.twin_ax.set_ylim (-10, 100) #This scale is microstrains
       elif liftdrag_estimate_meth == 'vlm':

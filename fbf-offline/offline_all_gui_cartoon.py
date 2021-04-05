@@ -54,7 +54,7 @@ if __name__ == '__main__':
   downsample_mult = keras_samplesize #For this app these two are  equal to have equal number of lift/drag values. 
   use_compensated_strains = True
   mfc_estimate_meth = 'simple' #simple or full
-  liftdrag_estimate_meth = 'sg1+vlm' #vlm or 1dcnn or sg1+vlm
+  liftdrag_estimate_meth = 'vlm' #vlm or 1dcnn or sg1+vlm
 
   ###
   #Load the data and models
