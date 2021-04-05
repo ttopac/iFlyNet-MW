@@ -19,6 +19,9 @@ def get_liftANDdrag(liftdrag_dict, airspeed, alpha, mfc1, mfc2):
     cl = liftdrag_dict[identifier][0]
     cd = liftdrag_dict[identifier][1]
 
+  if airspeed == 0:
+    cl = 0
+    cd = 0
 
   lift = 1/2 * const.RHO * airspeed**2 * cl * const.CHORD * const.SPAN #Newtons
   drag = 1/2 * const.RHO * airspeed**2 * cd * const.CHORD * const.SPAN #Newtons

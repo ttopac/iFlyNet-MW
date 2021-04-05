@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath('./helpers'))
 import proc_keras_estimates_helper
 import proc_MFCshape_helper
 import proc_tempcomp_helper
-import proc_liftdrag_estimates_helper
+import proc_vlm_estimates_helper
 
 
 SSNSG_CTEvar_wing = dict()
@@ -114,13 +114,20 @@ class ProcEstimatesOffline:
         liftdrag_dict = dict()
 
         for i in range(self.num_estimates):
-          if int(self.state_estimates[i,0]) == 0: #If speed=0
-            self.liftdrag_estimates[i,0] = 0
-            self.liftdrag_estimates[i,1] = 0
-          else:
-            est_lift, est_drag = proc_liftdrag_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
-            self.liftdrag_estimates[i,0] = est_lift
-            self.liftdrag_estimates[i,1] = est_drag
+          est_lift, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
+          self.liftdrag_estimates[i,0] = est_lift
+          self.liftdrag_estimates[i,1] = est_drag
       
       elif liftdrag_est_meth == '1dcnn':
         self.liftdrag_estimates = keras_estimator.estimate_liftdrag(self.sensor_data_keras[1])
+
+      elif liftdrag_est_meth == 'sg1+vlm':
+        self.liftdrag_estimates = np.zeros((self.num_estimates,2))
+        liftdrag_dict = dict()
+
+        for i in range(self.num_estimates):
+          step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
+          est_lift = -1*self.reduced_sensor_data[6, i*step_size]
+          _, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
+          self.liftdrag_estimates[i,0] = est_lift
+          self.liftdrag_estimates[i,1] = est_drag

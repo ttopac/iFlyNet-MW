@@ -17,6 +17,7 @@ import sys, os
 from jsondict import enterdata
 import pathlib
 file_path = pathlib.Path(__file__).parent.absolute()
+import matplotlib.pyplot as plt
 
 
 # NAME FILE:
@@ -61,31 +62,19 @@ def return_results(airspeed, alpha, mfc1, mfc2):
 
 
 if __name__ == "__main__":
-    # try:
-    #     airspeed = sys.argv[1]
-    #     alpha = sys.argv[2]
-    #     mfc1 = sys.argv[3]
-    #     mfc2 = sys.argv[4]
-    # except IndexError:
-    #     print("Error: please provide inputs as <airspeed (m/s)> <alpha (deg)> <mfc1 (integer in range -6,6)> <mfc2 (integer "
-    #           "in range -6,6)>")
-    #     exit()
-
     airspeed = 12
-    alpha = 2
     mfc1 = 0
     mfc2 = 0
+    alphas = [0, 2, 4, 6, 8, 10, 12, 14, 16, 17, 18, 19, 20]
+    # alphas = [0, 2]
+    CL = list()
 
-    # Get results
-    lsys = return_results(airspeed, alpha, mfc1, mfc2)
+    for alpha in alphas:
+        # Get results
+        print ("Processing {} deg".format(alpha))
+        lsys = return_results(airspeed, alpha, mfc1, mfc2)
+        lres = lsys.results['Test']
+        CL.append(lres.nfres.CL)
 
-    # Display System
-    display_markdown(lsys)
-
-    # Display Results
-    for case in lsys.results:
-        lres = lsys.results[case]
-        display_markdown(lres)
-
-    lres = lsys.results['Test']
-    latticeresult_to_msh(lres, os.path.join(file_path, 'results', 'MW.msh'))
+    plt.plot(alphas, CL)
+    plt.show()
