@@ -27,8 +27,8 @@ class iFlyNetEstimates:
       statetruth = pickle.load(file_pi)
 
     #Pre-process and do the prediction.
-    sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq) #WORKED shape= (8, -1, 233) for Sept. 2020
-    sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0)) #WORKED shape= (-1, 233, 8) for Sept. 2020.
+    sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq) #shape= (8, -1, 233) for Sept. 2020
+    sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0)) #shape= (-1, 233, 8) for Sept. 2020.
     sensordata_rshp_t_std = (sensordata_rshp_t-self.means[np.array(self.models['activesensors'][2])]) / self.stddevs[np.array(self.models['activesensors'][2])]
     preds = self.models['modelfiles'][2].predict(sensordata_rshp_t_std)
     argmax_preds = np.argmax (preds, axis=1)

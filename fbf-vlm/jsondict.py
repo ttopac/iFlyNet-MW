@@ -10,6 +10,7 @@ import constant as const
 
 json_dict = {
     "name": "Morphing Wing",
+    "mach": 0,
     "sref": const.CHORD * const.SPAN,
     "cref": const.CHORD,
     "bref": const.SPAN,
@@ -21,77 +22,134 @@ json_dict = {
             "name": "Wing",
             "angle": const.DIHEDRAL,
             "mirror": False,
-            "numc": const.N_CHORD_PANELS,
-            "cspace": "cosine",
+            "cnum": const.N_CHORD_PANELS,
+            "cspc": "cosine",
+            "xpos": 0.0,
+            "ypos": 0.005,
+            "zpos": 0.0,
+            "kirch_stall": True,
+            "a1": 19,
+            "s1": 1.0,
+            "s2": 2.7, #Decreasing makes stall deeper.
             "sections": [
                 {
                     #  x/y/z-le describe where the leading edge of each partition is relative to the (0,0,0) ref point
-                    "xle": 0.0,
-                    "yle": 0 * const.PARTITION_SPAN,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 0 * const.PARTITION_SPAN,
+                    "zpos": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "numb": 20,  # Number of span-wise panels for this partition; increase for higher fidelity model
-                    "bspace": "semi-cosine",
+                    "bnum": const.N_SPAN_PANELS,
+                    "bspc": "equal",
                     "airfoil": const.AIRFOIL_BASE,
                 },
                 {
-                    "xle": 0.0,
-                    "yle": 1 * const.PARTITION_SPAN,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 1 * const.PARTITION_SPAN,
+                    "zpos": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "numb": 20,
-                    "bspace": "semi-cosine",
-                    "airfoil": const.AIRFOIL_BASE
-                },
-                {
-                    "xle": 0.0,
-                    "yle": 2 * const.PARTITION_SPAN,
-                    "zle": 0.0,
-                    "chord": const.CHORD,
-                    "angle": const.DIHEDRAL,
-                    "numb": 20,
-                    "bspace": "semi-cosine",
-                    "airfoil": const.AIRFOIL_BASE  # MFC 1 (inner)
-                },
-                {
-                    "xle": 0.0,
-                    "yle": 3 * const.PARTITION_SPAN,
-                    "zle": 0.0,
-                    "chord": const.CHORD,
-                    "angle": const.DIHEDRAL,
-                    "numb": 20,
-                    "bspace": "semi-cosine",
+                    "bnum": const.N_SPAN_PANELS,
+                    "bspc": "equal",
                     "airfoil": const.AIRFOIL_BASE,
                 },
                 {
-                    "xle": 0.0,
-                    "yle": 4 * const.PARTITION_SPAN,
-                    "zle": 0.0,
+                    "xpos": 0.0,
+                    "ypos": 2 * const.PARTITION_SPAN,
+                    "zpos": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "numb": 25,
-                    "bspace": "semi-cosine",
-                    "airfoil": const.AIRFOIL_BASE, # MFC 2 (outer)
+                    "bnum": const.N_SPAN_PANELS,
+                    "bspc": "equal",
+                    "airfoil": const.AIRFOIL_BASE,  # MFC 1 (innerMFC, inner)
+                },
+                {
+                    "xpos": 0.0,
+                    "ypos": 3 * const.PARTITION_SPAN,
+                    "zpos": 0.0,
+                    "chord": const.CHORD,
+                    "angle": const.DIHEDRAL,
+                    "bnum": const.N_SPAN_PANELS,
+                    "bspc": "equal",
+                    "airfoil": const.AIRFOIL_BASE, # MFC 1 (innerMFC, outer)
+                },
+                {
+                    "xpos": 0.0,
+                    "ypos": 4 * const.PARTITION_SPAN,
+                    "zpos": 0.0,
+                    "chord": const.CHORD,
+                    "angle": const.DIHEDRAL,
+                    "bnum": const.N_SPAN_PANELS,
+                    "bspc": "equal",
+                    "airfoil": const.AIRFOIL_BASE, # MFC 2 (outerMFC, inner)
+                },
+                {
+                    "xpos": 0.0,
+                    "ypos": 5 * const.PARTITION_SPAN,
+                    "zpos": 0.0,
+                    "chord": const.CHORD,
+                    "angle": const.DIHEDRAL,
+                    "bnum": const.N_SPAN_PANELS,
+                    "bspc": "equal",
+                    "airfoil": const.AIRFOIL_BASE, # MFC 2 (outerMFC, outer)
                 }
             ],
-        }
+        },
+        {
+            "name": "Wall",
+            "angle": 0.0,
+            "mirror": False,
+            "cnum": 45,
+            "cspc": "equal",
+            "xpos": 0.0,
+            "ypos": 0.0,
+            "zpos": 0.0,
+            "sections": [
+                {
+                    "xpos": -0.305,
+                    "ypos": 0.0,
+                    "zpos": -0.2,
+                    "chord": 0.915,
+                    "angle": 0.0,
+                    "bnum": 20,
+                    "bspc": "equal",
+                    "noload":True
+                },
+                {
+                    "xpos": -0.305,
+                    "ypos": 0.0,
+                    "zpos": 0.2,
+                    "chord": 0.915,
+                    "angle": 0.0,
+                    "noload":True
+                }
+            ]
+      }
     ],
     "cases": [
         {
             "name": "Test",
             "alpha": const.DEFAULT_ALPHA,
             "speed": const.DEFAULT_AIRSPEED,
-            "density": const.RHO
+            "density": const.RHO,
         }
     ]
 }
 
 
 def enterdata(airspeed, alpha, mfc1, mfc2):
-    json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.JSON_PATH + str(mfc1).replace("-", "n") + ".DAT"  # MFC 1
-    json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.JSON_PATH + str(mfc2).replace("-", "n") + ".DAT"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][0]["airfoil"] = const.JSON_PATH + "0.DAT"  # Base
+    # json_dict["surfaces"][0]["sections"][1]["airfoil"] = const.JSON_PATH + "0.DAT"  # Base
+    # json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.JSON_PATH + str(mfc1).replace("-", "n") + ".DAT"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.JSON_PATH + str(mfc1).replace("-", "n") + ".DAT"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.JSON_PATH + str(mfc2).replace("-", "n") + ".DAT"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.JSON_PATH + str(mfc2).replace("-", "n") + ".DAT"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][0]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # Base
+    # json_dict["surfaces"][0]["sections"][1]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # Base
+    # json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 2
     json_dict["cases"][0]["speed"] = float(airspeed)
     json_dict["cases"][0]["alpha"] = float(alpha)
     return json_dict

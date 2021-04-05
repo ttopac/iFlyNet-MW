@@ -156,9 +156,11 @@ class LiftPlot (PlotsWComparison):
       self.est_line, = self.twin_ax.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted", color='#ff7f0e')
 
       if liftdrag_estimate_meth == '1dcnn':
-        self.twin_ax.set_ylim (-25, 250) #This scale is Newton
+        self.twin_ax.set_ylim (-30, 300) #This scale is microstrains
       elif liftdrag_estimate_meth == 'vlm':
-        self.twin_ax.set_ylim (-0.45, 4.5) #This scale is Newton
+        self.twin_ax.set_ylim (-0.75, 7.5) #This scale is Newton
+      elif liftdrag_estimate_meth == 'sg1+vlm':
+        self.twin_ax.set_ylim (-20, 200) #This scale is microstrains
       self.twin_ax.set_yticklabels([])
   
   def plot_lift_live(self, i, data_queue, liftdrag_est_queue, use_compensated_strains, start_time):
@@ -191,8 +193,10 @@ class DragPlot (PlotsWComparison):
       self.est_line, = self.twin_ax.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted", color='#ff7f0e')
 
       if liftdrag_estimate_meth == '1dcnn':
-        self.twin_ax.set_ylim (-10, 100) #This scale is Newton
+        self.twin_ax.set_ylim (-10, 100) #This scale is microstrains
       elif liftdrag_estimate_meth == 'vlm':
+        self.twin_ax.set_ylim (-0.175, 1.75) #This scale is Newton
+      elif liftdrag_estimate_meth == 'sg1+vlm':
         self.twin_ax.set_ylim (-0.175, 1.75) #This scale is Newton
       self.twin_ax.set_yticklabels([])
 
