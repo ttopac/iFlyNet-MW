@@ -157,7 +157,7 @@ class LiftPlot (PlotsWComparison):
     if self.ongui:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
       self.ax1.set_xlim(-2, self.visible_duration+2)
-      self.ax1.set_ylim(-25, 250) #This scale is microstrains
+      self.ax1.set_ylim(-30, 300) #This scale is microstrains
       self.ax1.set_xticklabels([])
       self.ax1.set_yticklabels([])
   
@@ -169,9 +169,9 @@ class LiftPlot (PlotsWComparison):
       if liftdrag_estimate_meth == '1dcnn':
         self.twin_ax.set_ylim (-30, 300) #This scale is microstrains
       elif liftdrag_estimate_meth == 'vlm':
-        self.twin_ax.set_ylim (-0.75, 7.5) #This scale is Newton
+        self.twin_ax.set_ylim (-0.9, 9) #This scale is Newton
       elif liftdrag_estimate_meth == 'sg1+vlm':
-        self.twin_ax.set_ylim (-20, 200) #This scale is microstrains
+        self.twin_ax.set_ylim (-24, 240) #This scale is microstrains
       self.twin_ax.set_yticklabels([])
   
   def plot_lift_live(self, i, data_queue, liftdrag_est_queue, use_compensated_strains, start_time):

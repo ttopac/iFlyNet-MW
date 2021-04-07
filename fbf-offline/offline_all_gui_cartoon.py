@@ -1,6 +1,6 @@
 from operator import contains
 from tkinter import Tk, Frame, Button, Label, Canvas
-from tkinter import N, S, W, E
+from tkinter import N, S, W, E, NW
 import numpy as np
 import time
 import sys, os
@@ -124,8 +124,7 @@ if __name__ == '__main__':
   
   GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True, liftdrag_estimate_meth=liftdrag_estimate_meth)
   GUIapp.draw_midrow(title_label, os.path.join(file_path.parent, 'assets', 'legend.png'))
-  GUIapp.draw_cartoon_lbl()
-  GUIapp.draw_cartoon_cvs()
+  GUIapp.draw_cartoon_cvs(os.path.join(file_path.parent, 'assets'))
   GUIapp.initialize_queues_or_lists()
 
   ###
@@ -155,6 +154,7 @@ if __name__ == '__main__':
   streamhold_queue = Queue()
   stream = streamdata_helper.StreamOffline(GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
   stream.initialize_video(video_labels, camnums)
+  stream.initialize_estimates(True, False, True, True, False, True)
   stream.initialize_plots_wcomparison(True, True, True, True)
   GUIapp.place_on_grid(False, False, False, True, True)
 

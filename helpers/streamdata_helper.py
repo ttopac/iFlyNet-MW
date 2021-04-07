@@ -80,7 +80,7 @@ class StreamOffline (StreamData):
     while True: #Wait
       if not self.streamhold_queue.empty():
         print ("Started streaming video {}".format(videoid))
-        time_delay = 0.45 #This time delay is here because it takes a bit that video actually starts after stream_images command.
+        time_delay = 0.6 #This time delay is here because it takes a bit that video actually starts after stream_images command. Increasing this makes video go earlier than plots.
         self.start_time = time.time() + time_delay
         self.videos[videoid].stream_images(self.start_time - time_delay, 1/30)
         break
@@ -129,18 +129,19 @@ class StreamOffline (StreamData):
         pass
 
 
-  def initialize_estimates(self, stallest, liftdragest, mfcest, stateest=False):
+  def initialize_estimates(self, stallest, liftdragest, mfcest, stateest, plots, wing_cartoon):
     xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
     ys_preds = np.zeros((2,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag 
     if liftdragest:
-      self.liftdrag_predsplot = self.GUIapp.draw_liftdrag_plots(xs, ys_preds, self.visible_duration, self.params, self.downsample_mult, self.use_compensated_strains, True)
+      if plots:
+        self.liftdrag_predsplot = self.GUIapp.draw_liftdrag_plots(xs, ys_preds, self.visible_duration, self.params, self.downsample_mult, self.use_compensated_strains, True)
     if mfcest:
-      self.MFCplot = self.GUIapp.draw_MFCshapes()    
-    eststream_thr = Thread(target=self.stream_estimates, args=(self.GUIapp.liftdragest_list, self.GUIapp.shape_list, ys_preds, stallest, liftdragest, mfcest, stateest))
+      if plots:
+        self.MFCplot = self.GUIapp.draw_MFCshapes()    
+    eststream_thr = Thread(target=self.stream_estimates, args=(self.GUIapp.liftdragest_list, self.GUIapp.shape_list, ys_preds, stallest, liftdragest, mfcest, stateest, plots, wing_cartoon))
     eststream_thr.start()
-    print ("Initialized estimates")
 
-  def stream_estimates(self, liftdragest_list, shape_list, ys_preds, stallest, liftdragest, mfcest, stateest):
+  def stream_estimates(self, liftdragest_list, shape_list, ys_preds, stallest, liftdragest, mfcest, stateest, plots, wing_cartoon):
     plot_type = 'contour'
     blit = True
     while True: #Wait
@@ -153,17 +154,25 @@ class StreamOffline (StreamData):
           time.sleep(0.05)
           self.GUIapp.update_stateest_lbls(start_time=self.start_time)
         if liftdragest:
-          self.GUIapp.update_liftdrag_lbls(predictions=True, start_time=self.start_time) 
-          _ = FuncAnimation(self.liftdrag_predsplot.fig, self.liftdrag_predsplot.plot_live, fargs=(ys_preds, liftdragest_list, self.use_compensated_strains, True, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
-          time.sleep(0.3)
+          self.GUIapp.update_liftdrag_lbls(predictions=True, start_time=self.start_time)
+          if plots:
+            _ = FuncAnimation(self.liftdrag_predsplot.fig, self.liftdrag_predsplot.plot_live, fargs=(ys_preds, liftdragest_list, self.use_compensated_strains, True, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
+            time.sleep(0.3)
         if mfcest:
-          _ = FuncAnimation(self.MFCplot.fig, self.MFCplot.plot_live, fargs=(shape_list, plot_type, blit, self.start_time), interval=self.plot_refresh_rate*1000, blit=blit)
-          time.sleep(0.25)
+          self.GUIapp.update_mfc_lbls(start_time=self.start_time)
+          time.sleep(0.05)
+          if plots:
+            _ = FuncAnimation(self.MFCplot.fig, self.MFCplot.plot_live, fargs=(shape_list, plot_type, blit, self.start_time), interval=self.plot_refresh_rate*1000, blit=blit)
+            time.sleep(0.25)
+        if wing_cartoon:
+          if stateest:
+            self.GUIapp.update_wing_cartoon(old_aoa=0, start_time=self.start_time)
+            time.sleep(0.1)
         self.GUIapp.update()
         break
       else:
         pass
-    
+
 
   def initialize_plots_wcomparison(self, plot_airspeed, plot_aoa, plot_lift, plot_drag):
     self.airspeed_plot = None

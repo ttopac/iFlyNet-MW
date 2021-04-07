@@ -1,10 +1,10 @@
 import sys
 import os
 sys.path.append(os.path.abspath('./fbf-vlm'))
-import tornadocoeff
-import constant as const
 
 def get_liftANDdrag(liftdrag_dict, airspeed, alpha, mfc1, mfc2):
+  import tornadocoeff
+  import constant as const
   state_list = [airspeed, alpha, mfc1, mfc2]
   identifier = ""
   for item in state_list:

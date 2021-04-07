@@ -37,7 +37,21 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.downsample_mult = downsample_mult
     self.offline = offline
     self.liftdrag_estimate_meth = liftdrag_estimate_meth
-
+    self.init_angle = 0
+    self.mfc_pos = dict() #aoa degree : (mfc1(x,y), mfc2(x,y))
+    self.mfc_pos[0] = ((462, 148), (340, 181)) #(0,0) is top-left corner
+    self.mfc_pos[2] = ((467, 157), (345, 190))
+    self.mfc_pos[4] = ((471, 165), (347, 200))
+    self.mfc_pos[6] = ((458, 178), (340, 212))
+    self.mfc_pos[8] = ((476, 183), (335, 225))
+    self.mfc_pos[10] = ((468, 191), (335, 236))
+    self.mfc_pos[12] = ((462, 203), (331, 245))
+    self.mfc_pos[14] = ((455, 215), (327, 256))
+    self.mfc_pos[16] = ((451, 225), (325, 267))
+    self.mfc_pos[17] = ((450, 229), (324, 273))
+    self.mfc_pos[18] = ((451, 233), (323, 278))
+    self.mfc_pos[19] = ((450, 237), (322, 283))
+    self.mfc_pos[20] = ((450, 241), (321, 286))
 
   def getSGoffsets (self, params):
     #Capture SG offsets:
@@ -106,10 +120,13 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
   def draw_stall_lbl (self):
     self.stall_lbl = Label(self.parent, text='Stall?', font=("Helvetica", 18), justify='center')
     self.stall_cond_lbl = Label(self.parent, text=self.stall_cond, font=("Arial", 26), justify='center')
+    self.stall_cond_lbl_incartoon = Label(self.parent, text='Stall: {}'.format(self.stall_cond), fg='green', font=("Arial", 22), justify='center')
 
   def draw_state_lbl (self):
     self.state_lbl = Label(self.parent, text='Flight state', font=("Helvetica", 18), justify='center')
     self.state_est_lbl = Label(self.parent, text="Airspeed = {} m/s \n AoA = {} deg".format(self.est_airspeed, self.est_aoa), font=("Arial", 26), justify='center')
+    self.airspeed_lbl_incartoon = Label(self.parent, text='Airspeed = {} m/s'.format(self.est_airspeed), font=("Arial", 18), justify='center')
+    self.aoa_lbl_incartoon = Label(self.parent, text='AoA = {} deg'.format(self.est_aoa), font=("Arial", 18), justify='center')
 
   def draw_liftdrag_lbl (self):
     self.liftdrag_truth_lbl = Label(self.parent, text='Lift SG = {} ue \n Drag SG = {} ue'.format(self.truth_lift_val, self.truth_drag_val), font=("Helvetica", 16), width=20)
@@ -118,8 +135,13 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
   def draw_airspeed_lbl (self):
     self.airspeedlbl = Label(self.parent, text='Airspeed\n(WT data)', font=("Helvetica", 18), justify='center')
 
+  def draw_mfc_lbls (self):
+    self.mfc1lbl = Label(self.parent, text='0', font=("Helvetica", 22), justify='center') #inner
+    self.mfc2lbl = Label(self.parent, text='0', font=("Helvetica", 22), justify='center') #outer
+
   def draw_cartoon_lbl (self):
     self.cartoon_lbl = Label(self.parent, text='Wing State (i-FlyNet)', font=("Helvetica", 21, 'bold', 'underline'), justify='center')
+
 
 
   def update_stallest_lbls (self, start_time=None):
@@ -130,8 +152,12 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
         t0 = time.time()
         cur_frame = int((t0-start_time)/self.plot_refresh_rate)
         stall_cond = self.stallest_list[cur_frame]
-      stalltext = "Yes" if stall_cond else "No"
-      self.stall_cond_lbl.config(text=stalltext)
+      if stall_cond:
+        self.stall_cond_lbl.config(text="Yes", fg='red')
+        self.stall_cond_lbl_incartoon.config(text='Stall: Yes', fg='red')
+      else:
+        self.stall_cond_lbl.config(text="No", fg='green')
+        self.stall_cond_lbl_incartoon.config(text='Stall: No', fg='green')
     except:
       pass
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_stallest_lbls, start_time)
@@ -145,6 +171,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
         cur_frame = int((t0-start_time)/self.plot_refresh_rate)
         state_est = self.stateest_list[cur_frame]
       self.state_est_lbl.config(text="Airspeed = {} m/s \n AoA = {} deg".format(int(state_est[0]), int(state_est[1]))) #Predictions are shape:(pred_count, output_count)
+      self.airspeed_lbl_incartoon.config(text = "Airspeed = {} m/s".format(int(state_est[0])))
+      self.aoa_lbl_incartoon.config(text = "AoA = {} deg  ".format(int(state_est[1])))
     except:
       pass
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_stateest_lbls, start_time)
@@ -178,6 +206,20 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
         pass     
     
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_liftdrag_lbls, predictions, start_time)
+
+  def update_mfc_lbls (self, start_time=None):
+    try:
+      if not self.offline:
+        mfc_est = self.shape_queue.get_nowait()
+      else:
+        t0 = time.time()
+        cur_frame = int((t0-start_time)/self.plot_refresh_rate)
+        mfc_est = self.shape_list[cur_frame]
+      self.mfc1lbl.config(text=str(int(mfc_est[0])))
+      self.mfc2lbl.config(text=str(int(mfc_est[1])))
+    except:
+      pass
+    self.parent.after(int(self.plot_refresh_rate*1000), self.update_mfc_lbls, start_time)
 
 
   def draw_videos(self, video_names, camnums, realtime=True, videopath=None):
@@ -258,12 +300,84 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       return plot
     self.update()
 
+  def draw_wing_cartoon(self, imgpath):
+    self.wing_images_tk = dict()
+    aoas = [0, 2, 4, 6, 8, 10, 12, 14, 16, 17, 18, 19, 20]
+    for aoa in aoas:
+      img = Image.open(imgpath+"/{}.png".format(aoa))
+      width, height = img.size
+      res_width, res_height = int(width/17), int(height/17)
+      img = img.resize((res_width, res_height)) # (height, width)
+      imgtk = ImageTk.PhotoImage(img)
+      self.wing_images_tk[aoa] = imgtk
+    if self.offline:
+      self.wing_cartoon = Label(self.parent, image=self.wing_images_tk[0])
+      self.wing_cartoon.image = self.wing_images_tk[0]
+      self.wing_cartoon.config(image=self.wing_images_tk[self.init_angle])
+
+      img = Image.open(imgpath+"/airspeed.png")
+      width, height = img.size
+      res_width, res_height = int(width/24), int(height/24)
+      img = img.resize((res_width, res_height)) # (height, width)
+      imgtk = ImageTk.PhotoImage(img)
+      self.airspeed_icon = Label(self.parent, image=imgtk)
+      self.airspeed_icon.image = imgtk
+      
+      img = Image.open(imgpath+"/aoa.png")
+      width, height = img.size
+      res_width, res_height = int(width/24), int(height/24)
+      img = img.resize((res_width, res_height)) # (height, width)
+      imgtk = ImageTk.PhotoImage(img)
+      self.aoa_icon = Label(self.parent, image=imgtk)
+      self.aoa_icon.image = imgtk
+
+  def update_wing_cartoon(self, old_aoa, start_time=None):
+    try:
+      if not self.offline:
+        aoa_est = self.stateest_queue.get_nowait()[1]
+      else:
+        t0 = time.time()
+        cur_frame = int((t0-start_time)/self.plot_refresh_rate)
+        aoa_est = self.stateest_list[cur_frame][1]
+      old_aoa = old_aoa
+      new_aoa = aoa_est
+      mfc1_x_mov = self.mfc_pos[new_aoa][0][0] - self.mfc_pos[old_aoa][0][0]
+      mfc1_y_mov = self.mfc_pos[new_aoa][0][1] - self.mfc_pos[old_aoa][0][1]
+      mfc2_x_mov = self.mfc_pos[new_aoa][1][0] - self.mfc_pos[old_aoa][1][0]
+      mfc2_y_mov = self.mfc_pos[new_aoa][1][1] - self.mfc_pos[old_aoa][1][1]
+      self.cartoon_cvs.move(self.mfc1_wdw, mfc1_x_mov, mfc1_y_mov) #x, y
+      self.cartoon_cvs.move(self.mfc2_wdw, mfc2_x_mov, mfc2_y_mov) #x, y
+      self.cartoon_cvs.configure(borderwidth=0)
+      self.wing_cartoon.configure(image=self.wing_images_tk[aoa_est])
+      
+    except:
+      pass
+    self.parent.after(int(self.plot_refresh_rate*1000), self.update_wing_cartoon, new_aoa, start_time)
+
   ###
   #TODO: Complete cartoon GUI
   ###
-  def draw_cartoon_cvs (self):
-    self.cartoon_cvs = Canvas(self.parent, width=640, height=360)
+  def draw_cartoon_cvs (self, imgpath):
+    self.draw_cartoon_lbl()
+    
+    self.cartoon_cvs = Canvas(self.parent, width=640, height=360) #(0,0) is the top left corner
     self.cartoon_cvs.create_rectangle(3,3,640,360, width=2)
+
+    self.draw_stall_lbl()
+    self.cartoon_cvs.create_window (20, 310, window=self.stall_cond_lbl_incartoon, anchor=NW) #x,y
+    
+    self.draw_wing_cartoon(imgpath)
+    self.cartoon_cvs.create_window (80, 70, window=self.wing_cartoon, anchor=NW)
+
+    self.draw_state_lbl()
+    self.cartoon_cvs.create_window (20, 185, window = self.airspeed_icon, anchor=NW)
+    self.cartoon_cvs.create_window (20, 210, window = self.airspeed_lbl_incartoon, anchor=NW)
+    self.cartoon_cvs.create_window (20, 250, window = self.aoa_icon, anchor=NW)
+    self.cartoon_cvs.create_window (20, 280, window = self.aoa_lbl_incartoon, anchor=NW)
+
+    self.draw_mfc_lbls()
+    self.mfc1_wdw = self.cartoon_cvs.create_window (self.mfc_pos[self.init_angle][0][0], self.mfc_pos[self.init_angle][0][1], window = self.mfc1lbl, anchor=NW) #inner
+    self.mfc2_wdw = self.cartoon_cvs.create_window (self.mfc_pos[self.init_angle][1][0], self.mfc_pos[self.init_angle][1][1], window = self.mfc2lbl, anchor=NW) #outer
   ###
   #TODO: Complete cartoon GUI
   ###

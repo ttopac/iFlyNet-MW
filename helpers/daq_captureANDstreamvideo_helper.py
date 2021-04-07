@@ -182,6 +182,7 @@ class DrawTKOfflineVideo(Frame):
         # recolored_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         #Do with ffmpeg
         frame = pipe.stdout.read(640 * 360 * 3)
+        
         array = np.frombuffer(frame, dtype="uint8").reshape((360, 640, 3))
 
         frame_photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(array))
