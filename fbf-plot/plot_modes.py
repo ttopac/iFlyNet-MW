@@ -4,11 +4,18 @@ from scipy.fft import fft, fftfreq
 import pathlib
 import os
 
-filepath = pathlib.Path(__file__).parent.absolute()
-assetpath = os.path.abspath(os.path.join(filepath, os.pardir, 'assets'))
-sub_data = np.load(assetpath + "/sub_data.npy")
+# filepath = pathlib.Path(__file__).parent.absolute()
+# assetpath = os.path.abspath(os.path.join(filepath, os.pardir, 'assets'))
+main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
+data_folder = 'Training_Tests/train4_Dec14/'
+airspeed, aoa = 16, 20
+dataname = "train_{}ms_{}deg_1min.npy".format(airspeed, aoa)
+data = np.load (os.path.join(main_folder, data_folder, dataname))
 
 sample_rate = 7142
+sub_data = data[0,0:sample_rate*2]
+
+
 N = 2*sample_rate #2 seconds of data
 time = np.linspace(0,2,N)
 
