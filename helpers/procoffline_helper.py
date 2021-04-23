@@ -122,12 +122,34 @@ class ProcEstimatesOffline:
         self.liftdrag_estimates = keras_estimator.estimate_liftdrag(self.sensor_data_keras[1])
 
       elif liftdrag_est_meth == 'sg1+vlm':
+        step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
         self.liftdrag_estimates = np.zeros((self.num_estimates,2))
         liftdrag_dict = dict()
 
         for i in range(self.num_estimates):
-          step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
-          est_lift = -1*self.reduced_sensor_data[6, i*step_size]
+          est_lift = -1 * np.mean(self.reduced_sensor_data[6, int((i)*step_size-step_size/6) : int((i)*step_size+step_size/6)])
           _, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
+          self.liftdrag_estimates[i,0] = est_lift
+          self.liftdrag_estimates[i,1] = est_drag
+
+      elif liftdrag_est_meth == 'sg1+vlm_v2':
+        step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
+        self.liftdrag_estimates = np.zeros((self.num_estimates,2))
+        liftdrag_dict = dict()
+
+        if not hasattr(self, "stall_estimates"):
+          raise Exception("Stall estimates are required for this method.")
+        
+        for i in range(self.num_estimates):
+          if self.stall_estimates[i] == True:
+            SG1_prev_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i-1)*step_size-step_size/6) : int((i-1)*step_size+step_size/6)])
+            SG1_curr_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i)*step_size-step_size/6) : int((i)*step_size+step_size/6)])
+            lift_prev_stp = self.liftdrag_estimates[i-1,0]
+            SG1_pct_chg = (SG1_curr_stp - SG1_prev_stp)/SG1_prev_stp*100
+            est_lift = lift_prev_stp * (1+SG1_pct_chg/100)
+            _, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
+          else:
+            est_lift, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2  
+          
           self.liftdrag_estimates[i,0] = est_lift
           self.liftdrag_estimates[i,1] = est_drag

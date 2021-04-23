@@ -5,7 +5,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 JSON_PATH = os.path.join(dir_path,"files/")
 RESULTS_PATH = os.path.join(dir_path,"results/")
-
+AIRFOILS_PATH = os.path.join(dir_path,"airfoils_2/")
 
 # Currently, there exist 13 different morph airfoils available, -6 through +6
 MFC_MAX = 6
@@ -14,10 +14,10 @@ MFC_MIN = -6
 
 # Overall wing definition data (partitions below follow and are repeated per partition). All distances in meters.
 CHORD = .305
-SPAN = .38
+SPAN = .395
 N_CHORD_PANELS = 20
 N_SPAN_PANELS = 7
-AIRFOIL_BASE = "NACA 0012"
+AIRFOIL_BASE = "NACA 3412"
 MASS = 5
 
 

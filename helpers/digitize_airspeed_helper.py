@@ -19,6 +19,7 @@ def digitize_airspeed (airspeed_vid_path):
 
     # Extract the area that includes airspeed info
     cropped = frame[47:73, 3:85] #(y,x)
+    # cropped = frame[38:66, 3:85] #(y,x) If trimmed via Lumafusion to 1136x640 resolution
 
     #Apply OCR to target area
     custom_oem_psm_config = r'--oem 0 -c tessedit_char_whitelist=.0123456789' #Here oem 0 is critical so we don't use LSTM stuff.

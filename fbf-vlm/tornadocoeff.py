@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
     airspeed = 12
     alpha = 2
-    mfc1 = 0
+    mfc1 = -1
     mfc2 = 0
 
     # Get results
@@ -88,4 +88,4 @@ if __name__ == "__main__":
         display_markdown(lres)
 
     lres = lsys.results['Test']
-    latticeresult_to_msh(lres, os.path.join(file_path, 'results', 'MW.msh'))
+    # latticeresult_to_msh(lres, os.path.join(file_path, 'results', 'MW.msh'))

@@ -54,7 +54,7 @@ if __name__ == '__main__':
   downsample_mult = keras_samplesize #For this app these two are  equal to have equal number of lift/drag values. 
   use_compensated_strains = True
   mfc_estimate_meth = 'simple' #simple or full
-  liftdrag_estimate_meth = 'vlm' #vlm or 1dcnn or sg1+vlm
+  liftdrag_estimate_meth = 'sg1+vlm_v2' #vlm or 1dcnn or sg1+vlm or sg1+vlm_v2
 
   ###
   #Load the data and models
@@ -98,15 +98,15 @@ if __name__ == '__main__':
   ###
   #Process ground truth videos:
   ###
-  if len(os.listdir(main_folder+test_folder+"saved_digitizations")) < 2: #All estimations are not there.
+  if len(os.listdir(main_folder+test_folder+"saved_digitizations")) < 2: #All digitizations are not there.
     #Digitize the airspeed video
     airspeed_vid_path = main_folder+test_folder+"anemometer.mp4"
     ys_airspeed = digitize_airspeed_helper.digitize_airspeed(airspeed_vid_path)
-    np.save(main_folder+test_folder+"saved_digitizations/"+'airspeed_digitized.npy', ys_airspeed)
+    np.save(main_folder+test_folder+"saved_digitizations/"+'airspeed_digitized.npy', ys_airspeed, allow_pickle=True)
     #Store manually digitized aoa video as numpy array
     aoa_csv_path = main_folder+test_folder+"aoa_hist.csv"
     ys_aoa = digitize_aoa_helper.digitize_aoa(aoa_csv_path)
-    np.save(main_folder+test_folder+"saved_digitizations/"+'aoa_digitized.npy', ys_aoa)
+    np.save(main_folder+test_folder+"saved_digitizations/"+'aoa_digitized.npy', ys_aoa, allow_pickle=True)
   else: 
     ys_airspeed = np.load(main_folder+test_folder+"saved_digitizations/"+'airspeed_digitized.npy')
     ys_aoa = np.load(main_folder+test_folder+"saved_digitizations/"+'aoa_digitized.npy')

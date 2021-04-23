@@ -25,9 +25,9 @@ json_dict = {
             "cnum": const.N_CHORD_PANELS,
             "cspc": "cosine",
             "xpos": 0.0,
-            "ypos": 0.005,
+            "ypos": 0.029,
             "zpos": 0.0,
-            "kirch_stall": True,
+            "kirch_stall": False, #Below are stall parameters
             "a1": 19,
             "s1": 1.0,
             "s2": 2.7, #Decreasing makes stall deeper.
@@ -41,7 +41,7 @@ json_dict = {
                     "angle": const.DIHEDRAL,
                     "bnum": const.N_SPAN_PANELS,
                     "bspc": "equal",
-                    "airfoil": const.AIRFOIL_BASE,
+                    "airfoil": const.AIRFOIL_BASE, # NACA0012
                 },
                 {
                     "xpos": 0.0,
@@ -51,7 +51,7 @@ json_dict = {
                     "angle": const.DIHEDRAL,
                     "bnum": const.N_SPAN_PANELS,
                     "bspc": "equal",
-                    "airfoil": const.AIRFOIL_BASE,
+                    "airfoil": const.AIRFOIL_BASE, # NACA0012
                 },
                 {
                     "xpos": 0.0,
@@ -89,9 +89,19 @@ json_dict = {
                     "zpos": 0.0,
                     "chord": const.CHORD,
                     "angle": const.DIHEDRAL,
-                    "bnum": const.N_SPAN_PANELS,
+                    "bnum": 2,
                     "bspc": "equal",
                     "airfoil": const.AIRFOIL_BASE, # MFC 2 (outerMFC, outer)
+                },
+                {
+                    "xpos": 0.0,
+                    "ypos": (5 * const.PARTITION_SPAN)+0.015, #Extra rigid at the end section
+                    "zpos": 0.0,
+                    "chord": const.CHORD,
+                    "angle": const.DIHEDRAL,
+                    "bnum": 2,
+                    "bspc": "equal",
+                    "airfoil": const.AIRFOIL_BASE, # NACA0012
                 }
             ],
         },
@@ -138,20 +148,16 @@ json_dict = {
 
 
 def enterdata(airspeed, alpha, mfc1, mfc2):
-    # json_dict["surfaces"][0]["sections"][0]["airfoil"] = const.JSON_PATH + "0.DAT"  # Base
-    # json_dict["surfaces"][0]["sections"][1]["airfoil"] = const.JSON_PATH + "0.DAT"  # Base
-    # json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.JSON_PATH + str(mfc1).replace("-", "n") + ".DAT"  # MFC 1
-    # json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.JSON_PATH + str(mfc1).replace("-", "n") + ".DAT"  # MFC 1
-    # json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.JSON_PATH + str(mfc2).replace("-", "n") + ".DAT"  # MFC 2
-    # json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.JSON_PATH + str(mfc2).replace("-", "n") + ".DAT"  # MFC 2
-    # json_dict["surfaces"][0]["sections"][0]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # Base
-    # json_dict["surfaces"][0]["sections"][1]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # Base
-    # json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 1
-    # json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 1
-    # json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 2
-    # json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.JSON_PATH + "unmorphed_high_res.dat"  # MFC 2
+    json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.AIRFOILS_PATH + str(mfc1) + ".DAT"  # MFC 1
+    json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.AIRFOILS_PATH + str(mfc1) + ".DAT"  # MFC 1
+    json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.AIRFOILS_PATH + str(mfc2) + ".DAT"  # MFC 2
+    json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.AIRFOILS_PATH + str(mfc2) + ".DAT"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 2
     json_dict["cases"][0]["speed"] = float(airspeed)
-    json_dict["cases"][0]["alpha"] = float(alpha)
+    json_dict["cases"][0]["alpha"] = float(alpha)+1.5 #correction for incorrect measurement.
     return json_dict
 
 

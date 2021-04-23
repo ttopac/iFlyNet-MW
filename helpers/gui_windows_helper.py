@@ -414,7 +414,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
     lift_plot = plot_metrics_wcomparison.LiftPlot(pred_sample_size, ongui=True, offline=self.offline)
     lift_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
-    lift_plot.init_common_params("Lift")
+    lift_plot.init_common_params("Lift (N)")
     lift_plot.plot_lift_wcomparison(self.liftdrag_estimate_meth)
     lift_plot.term_common_params(False)
 
@@ -427,7 +427,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
     drag_plot = plot_metrics_wcomparison.DragPlot(pred_sample_size, ongui=True, offline=self.offline)
     drag_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
-    drag_plot.init_common_params("Drag")
+    drag_plot.init_common_params("Drag (N)")
     drag_plot.plot_drag_wcomparison(self.liftdrag_estimate_meth)
     drag_plot.term_common_params(False)
 
