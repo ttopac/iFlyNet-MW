@@ -32,22 +32,22 @@ class ProcEstimatesOffline:
       ref_temp_SG1 = sensor_data[16][0]
       ref_temp_wing = sensor_data[17][0]
 
-    #Temp comp of SSN SGs
-    compSSNSGs = dict()
-    SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
-    compSSNSGs[1] = SSNSG_temp_comp.compensate(sensor_data[6,:], sensor_data[16,:], 'SG1', SSNSG_CTEvar_wing[1]) #SG 1 is here.
-    for cnt, sg in enumerate([5, 6, 7 ,9]):
-      compSSNSGs[sg] = SSNSG_temp_comp.compensate(sensor_data[cnt+10,:], sensor_data[17,:], 'MFC', SSNSG_CTEvar_wing[sg]) #SG 5, 6, 7, 9 are here.
-    
-    #Temp comp of Commercial SGs
-    commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
-    comp_commSG, _ = commSG_temp_comp.compensate(sensor_data[14:16,:], sensor_data[17,:], 'rod', 0)
-    
-    #Replace the SG data with compensated data
-    sensor_data[6,:] = compSSNSGs[1]
-    for cnt, sg in enumerate([5, 6, 7 ,9]):
-      sensor_data[cnt+10,:] = compSSNSGs[sg]
-    sensor_data[14:16,:] = comp_commSG
+      #Temp comp of SSN SGs
+      compSSNSGs = dict()
+      SSNSG_temp_comp = proc_tempcomp_helper.SSNSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
+      compSSNSGs[1] = SSNSG_temp_comp.compensate(sensor_data[6,:], sensor_data[16,:], 'SG1', SSNSG_CTEvar_wing[1]) #SG 1 is here.
+      for cnt, sg in enumerate([5, 6, 7 ,9]):
+        compSSNSGs[sg] = SSNSG_temp_comp.compensate(sensor_data[cnt+10,:], sensor_data[17,:], 'MFC', SSNSG_CTEvar_wing[sg]) #SG 5, 6, 7, 9 are here.
+      
+      #Temp comp of Commercial SGs
+      commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
+      comp_commSG, _ = commSG_temp_comp.compensate(sensor_data[14:16,:], sensor_data[17,:], 'rod', 0)
+      
+      #Replace the SG data with compensated data
+      sensor_data[6,:] = compSSNSGs[1]
+      for cnt, sg in enumerate([5, 6, 7 ,9]):
+        sensor_data[cnt+10,:] = compSSNSGs[sg]
+      sensor_data[14:16,:] = comp_commSG
 
     ###
     #Slicing the data
@@ -142,10 +142,10 @@ class ProcEstimatesOffline:
         
         for i in range(self.num_estimates):
           if self.stall_estimates[i] == True:
-            SG1_prev_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i-1)*step_size-step_size/6) : int((i-1)*step_size+step_size/6)])
-            SG1_curr_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i)*step_size-step_size/6) : int((i)*step_size+step_size/6)])
+            SG1_lift_prev_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i-1)*step_size-step_size/6) : int((i-1)*step_size+step_size/6)]) * np.cos(np.radians(int(self.state_estimates[i-1,1])))
+            SG1_lift_curr_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i)*step_size-step_size/6) : int((i)*step_size+step_size/6)]) * np.cos(np.radians(int(self.state_estimates[i,1])))
             lift_prev_stp = self.liftdrag_estimates[i-1,0]
-            SG1_pct_chg = (SG1_curr_stp - SG1_prev_stp)/SG1_prev_stp*100
+            SG1_pct_chg = (SG1_lift_curr_stp - SG1_lift_prev_stp)/SG1_lift_prev_stp*100*3 #3 here is correction
             est_lift = lift_prev_stp * (1+SG1_pct_chg/100)
             _, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
           else:

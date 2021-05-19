@@ -69,12 +69,6 @@ class PlotsWComparison:
       self.xs = np.zeros(1)
       self.ys = np.array([[meas_data], [est_data]])
 
-    # slice_start = i%(int(self.visible_duration/self.plot_refresh_rate))
-    # slice_end = i%(int(self.visible_duration/self.plot_refresh_rate)) + 1
-    
-    # if plot_name == "drag":
-    #   if meas_data > 0.75: #If we are getting thrust somehow!
-    #     meas_data = -2.5 * np.random.uniform() #Cheat and assign something -5 and 0.
     self.xs = np.append(self.xs, i%int(self.visible_duration/self.plot_refresh_rate) * self.plot_refresh_rate)
     self.ys = np.append(self.ys, np.zeros((2,1)), axis=1)
     self.ys[0,-1] = meas_data
@@ -166,17 +160,19 @@ class LiftPlot (PlotsWComparison):
       if liftdrag_estimate_meth == '1dcnn':
         self.ax1.set_ylim (-30, 300) #This scale is microstrains
       elif liftdrag_estimate_meth == 'vlm' or liftdrag_estimate_meth == 'sg1+vlm_v2':
-        self.ax1.set_ylim (-1.05, 10.5) #This scale is Newton
+        self.ax1.set_ylim (-1.11, 11.1) #This scale is Newtons
       elif liftdrag_estimate_meth == 'sg1+vlm':
         self.ax1.set_ylim (-24, 240) #This scale is microstrains
       
-      self.ax1.yaxis.set_major_locator(plt.MaxNLocator(5))
+      self.ax1.yaxis.set_major_locator(plt.MaxNLocator(6))
       self.twin_ax.set_xlim (-2, self.visible_duration+2)
       self.twin_ax.set_ylim(-30, 300) #This scale is microstrains
       self.twin_ax.set_yticklabels([])
   
-  def plot_lift_live(self, i, data_queue, liftdrag_est_queue, use_compensated_strains, start_time):
-    lift_meas_queue = np.asarray(data_queue)[:,14]
+  def plot_lift_live(self, i, data_queue, aoa_meas_queue, liftdrag_est_queue, use_compensated_strains, start_time):
+    aoa_meas = np.asarray(aoa_meas_queue)+1.75
+    # lift_meas_queue = np.asarray(data_queue)[:,14] #Without correcting for SG rotation.
+    lift_meas_queue = np.asarray(data_queue)[:,14] * np.cos(np.radians(aoa_meas)) - np.asarray(data_queue)[:,15] * np.sin(np.radians(aoa_meas))
     lift_est_queue = np.asarray(liftdrag_est_queue)[:,0]
     temp_queue = np.asarray(data_queue)[:,16:18]
     self.meas_line, self.est_line = super().plot_live(i, self.meas_line, self.est_line, lift_meas_queue, lift_est_queue, start_time, 'lift', use_compensated_strains, temp_queue)
@@ -205,17 +201,22 @@ class DragPlot (PlotsWComparison):
       
       self.ax1.set_xlim (-2, self.visible_duration+2) 
       if liftdrag_estimate_meth == '1dcnn':
-        self.ax1.set_ylim (-10, 100) #This scale is microstrains
+        self.ax1.set_ylim (-30, 300) #This scale is microstrains
       elif liftdrag_estimate_meth == 'vlm' or liftdrag_estimate_meth == 'sg1+vlm' or liftdrag_estimate_meth == 'sg1+vlm_v2':
-        self.ax1.set_ylim (-0.175, 1.75) #This scale is Newton
+        self.ax1.set_ylim (-0.34, 3.4) #This scale is Newtons
       
-      self.ax1.yaxis.set_major_locator(plt.MaxNLocator(5))
+      self.ax1.yaxis.set_major_locator(plt.MaxNLocator(nbins=5))
       self.twin_ax.set_xlim (-2, self.visible_duration+2)
-      self.twin_ax.set_ylim(-10, 100) #This scale is microstrains
+      self.twin_ax.set_ylim(-30, 300) #This scale is microstrains
       self.twin_ax.set_yticklabels([])
 
-  def plot_drag_live(self, i, data_queue, liftdrag_est_queue, use_compensated_strains, start_time):
-    drag_meas_queue = np.asarray(data_queue)[:,15]
+  def plot_drag_live(self, i, data_queue, aoa_meas_queue, liftdrag_est_queue, use_compensated_strains, start_time):
+    aoa_meas = np.asarray(aoa_meas_queue)+1.75
+    # drag_meas_queue = np.asarray(data_queue)[:,15] #Without correcting for SG rotation.
+    princp1_arr = np.asarray(data_queue)[:,14]
+    meas_arr = np.asarray(data_queue)[:,15]
+    princp2_arr = (0.33*princp1_arr + meas_arr)/0.95
+    drag_meas_queue = princp1_arr * np.sin(np.radians(aoa_meas)) + princp2_arr * np.cos(np.radians(aoa_meas))
     drag_est_queue = np.asarray(liftdrag_est_queue)[:,1]
     temp_queue = np.asarray(data_queue)[:,16:18]
     self.meas_line, self.est_line = super().plot_live(i, self.meas_line, self.est_line, drag_meas_queue, drag_est_queue, start_time, 'drag', use_compensated_strains, temp_queue)

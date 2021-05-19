@@ -92,7 +92,7 @@ class PlotSensorData:
     self.ax1.set_ylim(-0.01, 0.01)
     if self.ongui:
       self.num_samples = int(self.params["sample_rate"]*self.plot_refresh_rate/self.downsample_mult) #number of samples coming at each call to plot_live function
-      self.ax1.set_ylim(-0.01, 0.01)
+      self.ax1.set_ylim(-0.002, 0.002)
       self.ax2.set_ylim(-150, 150)
       self.ax3.set_ylim(-150, 150)
       self.ax1.set_xticklabels([])

@@ -4,7 +4,7 @@ import sys, os
 sys.path.append(os.path.abspath('./helpers'))
 import proc_tempcomp_helper
 
-vels = [20]
+vels = [14]
 aoa = [0,2,4,6,8,10,12,14,16,17,18,19,20,'0_2']
 test_len = 1 #minutes
 # test_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
@@ -26,15 +26,15 @@ for vel in vels:
   sum_PZT1 = list()
   ave_SG1 = list()
   ave_SG1_comp = list()
-  ave_lift = list()
-  ave_lift_comp = list()
+  ave_drag = list()
+  ave_drag_comp = list()
 
   #Span the angle range
   for i in range(len(aoa)):
     trainData = np.load(test_folder+'train_{}ms_{}deg_{}min.npy'.format(vel, aoa[i], test_len))
     sum_PZT1.append(np.mean(np.sum(trainData[1]**2)))
     ave_SG1.append(np.mean(-trainData[6])) #6 is SG1 at root.
-    ave_lift.append(np.mean(-trainData[14])) #14 is Lift CommSG
+    ave_drag.append(np.mean(-trainData[15])) #15 is Drag CommSG
 
     #Handle temperature compensation
     if vel in reftemp_vels:
@@ -52,8 +52,8 @@ for vel in vels:
 
     #CommSG temp. comp.
     commSG_temp_comp = proc_tempcomp_helper.CommSG_Temp_Comp(ref_temp_SG1, ref_temp_wing)
-    comp_commSG, comp_commSG_var = commSG_temp_comp.compensate(trainData[14], trainData[17], 'rod', 0)
-    ave_lift_comp.append (np.mean(-comp_commSG))
+    comp_commSG, comp_commSG_var = commSG_temp_comp.compensate(trainData[15], trainData[17], 'rod', 0)
+    ave_drag_comp.append (np.mean(-comp_commSG))
 
   fig = plt.figure(figsize=(6.0, 8.0))
   ax1 = fig.add_subplot(3,1,1)
@@ -65,7 +65,7 @@ for vel in vels:
   ax2.set_title("-SG1 readings for V = {}m/s".format(vel), fontsize=12)
   ax2.set_xlabel("Angle (deg)", fontsize=11)
   ax2.set_ylabel("Microstrain (ue)", fontsize=11)
-  ax3.set_title("-SG Lift for V = {}m/s".format(vel), fontsize=12)
+  ax3.set_title("-SG Drag for V = {}m/s".format(vel), fontsize=12)
   ax3.set_xlabel("Angle (deg)", fontsize=11)
   ax3.set_ylabel("Microstrain (ue)", fontsize=11)
 
@@ -75,9 +75,10 @@ for vel in vels:
   ax2.plot(aoa[:-1], ave_SG1[:-1], '.-', linewidth=0.5, label="-SG1")
   ax2.plot(aoa[:-1], ave_SG1_comp[:-1], '.:', color=ax1.lines[0].get_color(), linewidth=0.5, label="-SG1 (comp.)")
   ax2.scatter(0, ave_SG1_comp[-1], marker='*', c='red', label="-SG1 (comp.) 0_2")
-  ax3.plot(aoa[:-1], ave_lift[:-1], '.-', linewidth=0.5, label="SG Lift")
-  ax3.plot(aoa[:-1], ave_lift_comp[:-1], '.:', color=ax2.lines[0].get_color(), linewidth=0.5, label="SG Lift (comp.)")
-  ax3.scatter(0, ave_lift_comp[-1], marker='*', c='red', label="SG Lift (comp.) 0_2")
+  ax3.plot(aoa[:-1], ave_drag[:-1], '.-', linewidth=0.5, label="SG Lift")
+  ax3.plot(aoa[:-1], ave_drag_comp[:-1], '.:', color=ax2.lines[0].get_color(), linewidth=0.5, label="SG Lift (comp.)")
+  ax3.scatter(0, ave_drag[-1], marker='*', c='blue', label="SG Drag 0_2")
+  ax3.scatter(0, ave_drag_comp[-1], marker='*', c='red', label="SG Drag (comp.) 0_2")
 
   ax1.legend(fontsize=7, loc="upper left", ncol=1, columnspacing=1)
   ax2.legend(fontsize=7, loc="lower left", ncol=1, columnspacing=1)
@@ -87,5 +88,5 @@ for vel in vels:
   ax2.set_xticks(aoa[:-1][::4])
   ax3.set_xticks(aoa[:-1][::4])
   plt.tight_layout(pad=2.0)
-  # plt.savefig(test_folder+'{}ms_lift_varAoA.png'.format(vel))
+  # plt.savefig(test_folder+'{}ms_drag_varAoA.png'.format(vel))
   plt.show()

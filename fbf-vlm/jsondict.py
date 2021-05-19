@@ -105,36 +105,36 @@ json_dict = {
                 }
             ],
         },
-        {
-            "name": "Wall",
-            "angle": 0.0,
-            "mirror": False,
-            "cnum": 45,
-            "cspc": "equal",
-            "xpos": 0.0,
-            "ypos": 0.0,
-            "zpos": 0.0,
-            "sections": [
-                {
-                    "xpos": -0.305,
-                    "ypos": 0.0,
-                    "zpos": -0.2,
-                    "chord": 0.915,
-                    "angle": 0.0,
-                    "bnum": 20,
-                    "bspc": "equal",
-                    "noload":True
-                },
-                {
-                    "xpos": -0.305,
-                    "ypos": 0.0,
-                    "zpos": 0.2,
-                    "chord": 0.915,
-                    "angle": 0.0,
-                    "noload":True
-                }
-            ]
-      }
+    #     {
+    #         "name": "Wall",
+    #         "angle": 0.0,
+    #         "mirror": False,
+    #         "cnum": 45,
+    #         "cspc": "equal",
+    #         "xpos": 0.0,
+    #         "ypos": 0.0,
+    #         "zpos": 0.0,
+    #         "sections": [
+    #             {
+    #                 "xpos": -0.305,
+    #                 "ypos": 0.0,
+    #                 "zpos": -0.2,
+    #                 "chord": 0.915,
+    #                 "angle": 0.0,
+    #                 "bnum": 20,
+    #                 "bspc": "equal",
+    #                 "noload":True
+    #             },
+    #             {
+    #                 "xpos": -0.305,
+    #                 "ypos": 0.0,
+    #                 "zpos": 0.2,
+    #                 "chord": 0.915,
+    #                 "angle": 0.0,
+    #                 "noload":True
+    #             }
+    #         ]
+    #   }
     ],
     "cases": [
         {
@@ -148,16 +148,12 @@ json_dict = {
 
 
 def enterdata(airspeed, alpha, mfc1, mfc2):
-    json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.AIRFOILS_PATH + str(mfc1) + ".DAT"  # MFC 1
-    json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.AIRFOILS_PATH + str(mfc1) + ".DAT"  # MFC 1
-    json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.AIRFOILS_PATH + str(mfc2) + ".DAT"  # MFC 2
-    json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.AIRFOILS_PATH + str(mfc2) + ".DAT"  # MFC 2
-    # json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 1
-    # json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 1
-    # json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 2
-    # json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.AIRFOILS_PATH + "0.DAT"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][2]["airfoil"] = const.AIRFOILS_PATH + str(mfc1) + ".DAT"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][3]["airfoil"] = const.AIRFOILS_PATH + str(mfc1) + ".DAT"  # MFC 1
+    # json_dict["surfaces"][0]["sections"][4]["airfoil"] = const.AIRFOILS_PATH + str(mfc2) + ".DAT"  # MFC 2
+    # json_dict["surfaces"][0]["sections"][5]["airfoil"] = const.AIRFOILS_PATH + str(mfc2) + ".DAT"  # MFC 2
     json_dict["cases"][0]["speed"] = float(airspeed)
-    json_dict["cases"][0]["alpha"] = float(alpha)+1.5 #correction for incorrect measurement.
+    json_dict["cases"][0]["alpha"] = float(alpha)+1.75 #correction for incorrect measurement.
     return json_dict
 
 

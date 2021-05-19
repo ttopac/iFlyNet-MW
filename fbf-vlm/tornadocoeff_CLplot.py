@@ -76,5 +76,8 @@ if __name__ == "__main__":
         lres = lsys.results['Test']
         CL.append(lres.nfres.CL)
 
-    plt.plot(alphas, CL)
+    plt.plot(alphas, CL, '.-', linewidth=0.5)
+    plt.xlabel ("AoA", fontsize=16)
+    plt.ylabel ("CL", fontsize=16)
+    plt.title ("AoA vs CL (VLM)", fontsize=16)
     plt.show()

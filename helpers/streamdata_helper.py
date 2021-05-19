@@ -99,7 +99,7 @@ class StreamOffline (StreamData):
   def stream_sensordata(self, signalplot, data_list, ys):
     while True: #Wait
       if not self.streamhold_queue.empty():
-        time.sleep(0.02)
+        time.sleep(0.5)
         print ("Started streaming sensor signals")
         _ = FuncAnimation(signalplot.fig, signalplot.plot_live, fargs=(ys, data_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True) #DOESN'T REMOVE FROM data_queue 
         self.GUIapp.update()
@@ -205,10 +205,10 @@ class StreamOffline (StreamData):
           _ = FuncAnimation(self.aoa_plot.fig, self.aoa_plot.plot_aoa_live, fargs=(self.GUIapp.meas_aoa_list, self.GUIapp.stateest_list, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
         if self.lift_plot is not None:
           time.sleep(0.05)
-          _ = FuncAnimation(self.lift_plot.fig, self.lift_plot.plot_lift_live, fargs=(self.GUIapp.data_list, self.GUIapp.liftdragest_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
+          _ = FuncAnimation(self.lift_plot.fig, self.lift_plot.plot_lift_live, fargs=(self.GUIapp.data_list, self.GUIapp.meas_aoa_list, self.GUIapp.liftdragest_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
         if self.drag_plot is not None:
           time.sleep(0.05)
-          _ = FuncAnimation(self.drag_plot.fig, self.drag_plot.plot_drag_live, fargs=(self.GUIapp.data_list, self.GUIapp.liftdragest_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
+          _ = FuncAnimation(self.drag_plot.fig, self.drag_plot.plot_drag_live, fargs=(self.GUIapp.data_list, self.GUIapp.meas_aoa_list, self.GUIapp.liftdragest_list, self.use_compensated_strains, self.start_time), interval=self.plot_refresh_rate*1000, blit=True)
         self.GUIapp.update()
         break
       else:

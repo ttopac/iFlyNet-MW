@@ -29,7 +29,7 @@ class CommSG_Temp_Comp():
     corr_matl_dev = 0
     if np.absolute(commSG_CTEvar)*1E6 > 1:
       corr_matl_dev = self.comp_matl_dev(temp, SG_surf, commSG_CTEvar)
-    e_substrate = readings + ((e_therm - e_therm_ref)*self.k_poly/self.gage_fact) - corr_matl_dev
+    e_substrate = readings - ((e_therm - e_therm_ref)*self.k_poly/self.gage_fact) - corr_matl_dev
     return (e_substrate, 0)
 
   
