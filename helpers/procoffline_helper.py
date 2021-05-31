@@ -2,11 +2,16 @@ from multiprocessing import Queue
 import sys, os
 import math
 import numpy as np
+import pandas as pd
+import pathlib
 sys.path.append(os.path.abspath('./helpers'))
+sys.path.append(os.path.abspath('./fbf-vlm'))
 import proc_keras_estimates_helper
 import proc_MFCshape_helper
 import proc_tempcomp_helper
 import proc_vlm_estimates_helper
+import constant as const
+file_path = pathlib.Path(__file__).parent.absolute()
 
 
 SSNSG_CTEvar_wing = dict()
@@ -114,12 +119,14 @@ class ProcEstimatesOffline:
         liftdrag_dict = dict()
 
         for i in range(self.num_estimates):
-          est_lift, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
+          est_lift, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
           self.liftdrag_estimates[i,0] = est_lift
-          self.liftdrag_estimates[i,1] = est_drag
+          self.liftdrag_estimates[i,1] = est_drag_i
       
+
       elif liftdrag_est_meth == '1dcnn':
         self.liftdrag_estimates = keras_estimator.estimate_liftdrag(self.sensor_data_keras[1])
+
 
       elif liftdrag_est_meth == 'sg1+vlm':
         step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
@@ -128,9 +135,10 @@ class ProcEstimatesOffline:
 
         for i in range(self.num_estimates):
           est_lift = -1 * np.mean(self.reduced_sensor_data[6, int((i)*step_size-step_size/6) : int((i)*step_size+step_size/6)])
-          _, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
+          _, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
           self.liftdrag_estimates[i,0] = est_lift
-          self.liftdrag_estimates[i,1] = est_drag
+          self.liftdrag_estimates[i,1] = est_drag_i
+
 
       elif liftdrag_est_meth == 'sg1+vlm_v2':
         step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
@@ -139,17 +147,59 @@ class ProcEstimatesOffline:
 
         if not hasattr(self, "stall_estimates"):
           raise Exception("Stall estimates are required for this method.")
-        
+
         for i in range(self.num_estimates):
           if self.stall_estimates[i] == True:
             SG1_lift_prev_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i-1)*step_size-step_size/6) : int((i-1)*step_size+step_size/6)]) * np.cos(np.radians(int(self.state_estimates[i-1,1])))
             SG1_lift_curr_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i)*step_size-step_size/6) : int((i)*step_size+step_size/6)]) * np.cos(np.radians(int(self.state_estimates[i,1])))
             lift_prev_stp = self.liftdrag_estimates[i-1,0]
-            SG1_pct_chg = (SG1_lift_curr_stp - SG1_lift_prev_stp)/SG1_lift_prev_stp*100*3 #3 here is correction
+            SG1_pct_chg = (SG1_lift_curr_stp - SG1_lift_prev_stp)/SG1_lift_prev_stp*100*2.5 #2.5 here is correction to account for the location difference of SG1 and commSG (elliptic lift profile assumed)
+            est_lift, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
             est_lift = lift_prev_stp * (1+SG1_pct_chg/100)
-            _, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
           else:
-            est_lift, est_drag = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2  
-          
+            est_lift, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2  
+
           self.liftdrag_estimates[i,0] = est_lift
-          self.liftdrag_estimates[i,1] = est_drag
+          self.liftdrag_estimates[i,1] = est_drag_i
+
+
+      elif liftdrag_est_meth == 'sg1+vlm_v2+xfoil':
+        step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
+        self.liftdrag_estimates = np.zeros((self.num_estimates,2))
+        liftdrag_dict = dict()
+        parasiticdrag_dict = dict()
+
+        if not hasattr(self, "stall_estimates"):
+          raise Exception("Stall estimates are required for this method.")
+
+        try:
+          airfoil = const.AIRFOIL_BASE.replace(" ", "")
+          cdp_file_path = os.path.join(file_path.parent, 'assets', airfoil+'_CDp.csv')
+          cdp_data = pd.read_csv(cdp_file_path, delim_whitespace=True)
+          
+          parasiticdrag_dict[0] = dict()
+          parasiticdrag_dict[0][0] = 0
+          for cnt, speed in enumerate(cdp_data['Speed']):
+            parasiticdrag_dict[speed] = dict()
+            for cnt2, cdp in enumerate(cdp_data.iloc[cnt]):
+              if cnt2 > 0:
+                aoa = int(cdp_data.columns[cnt2])
+                parasiticdrag_dict[speed][aoa] = (cdp_data.iloc[cnt][cnt2]+0.02) * 1/2 * const.RHO * speed**2 * const.CHORD * const.SPAN #0.02 is correction for frictional drag contribution
+        except:
+          raise Exception("Problem in getting parasitic drag.")
+
+        for i in range(self.num_estimates):
+          if self.stall_estimates[i] == True:
+            SG1_lift_prev_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i-1)*step_size-step_size/6) : int((i-1)*step_size+step_size/6)]) * np.cos(np.radians(int(self.state_estimates[i-1,1])))
+            SG1_lift_curr_stp = -1 * np.mean(self.reduced_sensor_data[6, int((i)*step_size-step_size/6) : int((i)*step_size+step_size/6)]) * np.cos(np.radians(int(self.state_estimates[i,1])))
+            lift_prev_stp = self.liftdrag_estimates[i-1,0]
+            SG1_pct_chg = (SG1_lift_curr_stp - SG1_lift_prev_stp)/SG1_lift_prev_stp*100*2.5 #2.5 here is correction to account for the location difference of SG1 and commSG (elliptic lift profile assumed)
+            est_lift, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2
+            est_lift = lift_prev_stp * (1+SG1_pct_chg/100)
+            est_drag_p = parasiticdrag_dict[int(self.state_estimates[i,0])] [int(self.state_estimates[i,1])]
+          else:
+            est_lift, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(self.state_estimates[i,0]), int(self.state_estimates[i,1]), int(self.mfc_estimates[i,0]), int(self.mfc_estimates[i,1])) #V, aoa, mfc1, mfc2  
+            est_drag_p = parasiticdrag_dict[int(self.state_estimates[i,0])] [int(self.state_estimates[i,1])]
+
+          self.liftdrag_estimates[i,0] = est_lift
+          self.liftdrag_estimates[i,1] = est_drag_i + est_drag_p

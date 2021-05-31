@@ -71,8 +71,8 @@ if __name__ == "__main__":
     #           "in range -6,6)>")
     #     exit()
 
-    airspeed = 12
-    alpha = 6
+    airspeed = 10
+    alpha = 8.25
     mfc1 = 0
     mfc2 = 0
 

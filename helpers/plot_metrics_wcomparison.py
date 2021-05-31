@@ -18,8 +18,6 @@ class PlotsWComparison:
     self.downsample_mult = downsample_mult
     self.params = params
     self.plot_refresh_rate = plot_refresh_rate
-    # self.xs = np.linspace (0, self.visible_duration, int(self.visible_duration/self.plot_refresh_rate))
-    # self.ys = np.zeros((2,int(self.visible_duration/self.plot_refresh_rate)))
     self.xs = np.zeros(1)
     self.ys = np.zeros((2,1))
 
@@ -158,21 +156,24 @@ class LiftPlot (PlotsWComparison):
       self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted", color='#ff7f0e')
 
       if liftdrag_estimate_meth == '1dcnn':
-        self.ax1.set_ylim (-30, 300) #This scale is microstrains
-      elif liftdrag_estimate_meth == 'vlm' or liftdrag_estimate_meth == 'sg1+vlm_v2':
+        self.ax1.set_ylim (-29.0, 290.0) #This scale is microstrains
+      elif liftdrag_estimate_meth == 'vlm' or liftdrag_estimate_meth == 'sg1+vlm_v2' or liftdrag_estimate_meth == 'sg1+vlm_v2+xfoil':
         self.ax1.set_ylim (-1.11, 11.1) #This scale is Newtons
       elif liftdrag_estimate_meth == 'sg1+vlm':
-        self.ax1.set_ylim (-24, 240) #This scale is microstrains
+        self.ax1.set_ylim (-1.11, 11.1) #This scale is microstrains
       
       self.ax1.yaxis.set_major_locator(plt.MaxNLocator(6))
       self.twin_ax.set_xlim (-2, self.visible_duration+2)
-      self.twin_ax.set_ylim(-30, 300) #This scale is microstrains
+      self.twin_ax.set_ylim(-29.0, 290.0) #This scale is microstrains
       self.twin_ax.set_yticklabels([])
   
   def plot_lift_live(self, i, data_queue, aoa_meas_queue, liftdrag_est_queue, use_compensated_strains, start_time):
-    aoa_meas = np.asarray(aoa_meas_queue)+1.75
-    # lift_meas_queue = np.asarray(data_queue)[:,14] #Without correcting for SG rotation.
-    lift_meas_queue = np.asarray(data_queue)[:,14] * np.cos(np.radians(aoa_meas)) - np.asarray(data_queue)[:,15] * np.sin(np.radians(aoa_meas))
+    aoa_meas = np.asarray(aoa_meas_queue)
+    princp1_arr = np.asarray(data_queue)[:,14]
+    meas_arr = np.asarray(data_queue)[:,15]
+    princp2_arr = (0.23*princp1_arr + meas_arr)/0.96 #Approach 1
+  # lift_meas_queue = np.asarray(data_queue)[:,14] #Without correcting for SG rotation.
+    lift_meas_queue = princp1_arr * np.cos(np.radians(aoa_meas)) - princp2_arr * np.sin(np.radians(aoa_meas))
     lift_est_queue = np.asarray(liftdrag_est_queue)[:,0]
     temp_queue = np.asarray(data_queue)[:,16:18]
     self.meas_line, self.est_line = super().plot_live(i, self.meas_line, self.est_line, lift_meas_queue, lift_est_queue, start_time, 'lift', use_compensated_strains, temp_queue)
@@ -200,22 +201,24 @@ class DragPlot (PlotsWComparison):
       self.est_line, = self.ax1.plot(self.xs, self.ys[1], animated=True, label="Predicted", color='#ff7f0e')
       
       self.ax1.set_xlim (-2, self.visible_duration+2) 
-      if liftdrag_estimate_meth == '1dcnn':
-        self.ax1.set_ylim (-30, 300) #This scale is microstrains
-      elif liftdrag_estimate_meth == 'vlm' or liftdrag_estimate_meth == 'sg1+vlm' or liftdrag_estimate_meth == 'sg1+vlm_v2':
-        self.ax1.set_ylim (-0.34, 3.4) #This scale is Newtons
+      if liftdrag_estimate_meth == 'vlm' or liftdrag_estimate_meth == 'sg1+vlm' or liftdrag_estimate_meth == 'sg1+vlm_v2' or liftdrag_estimate_meth == 'sg1+vlm_v2+xfoil':
+        self.ax1.set_ylim (-0.55, 5.5) #This scale is Newtons
+      else:
+        raise Exception()
       
-      self.ax1.yaxis.set_major_locator(plt.MaxNLocator(nbins=5))
+      self.ax1.yaxis.set_major_locator(plt.MultipleLocator(1.25))
       self.twin_ax.set_xlim (-2, self.visible_duration+2)
-      self.twin_ax.set_ylim(-30, 300) #This scale is microstrains
+      self.twin_ax.set_ylim(-25.5, 255.0) #This scale is microstrains
       self.twin_ax.set_yticklabels([])
 
   def plot_drag_live(self, i, data_queue, aoa_meas_queue, liftdrag_est_queue, use_compensated_strains, start_time):
-    aoa_meas = np.asarray(aoa_meas_queue)+1.75
-    # drag_meas_queue = np.asarray(data_queue)[:,15] #Without correcting for SG rotation.
+    aoa_meas = np.asarray(aoa_meas_queue)
     princp1_arr = np.asarray(data_queue)[:,14]
     meas_arr = np.asarray(data_queue)[:,15]
-    princp2_arr = (0.33*princp1_arr + meas_arr)/0.95
+    princp2_arr = (0.23*princp1_arr + meas_arr)/0.96 #Approach 1
+    # princp2_arr = (meas_arr + 0.23*princp1_arr) * 1.04 #Approach 2
+    # princp2_arr = meas_arr #Approach 3
+    # drag_meas_queue = np.asarray(data_queue)[:,15] #Without correcting for SG rotation.
     drag_meas_queue = princp1_arr * np.sin(np.radians(aoa_meas)) + princp2_arr * np.cos(np.radians(aoa_meas))
     drag_est_queue = np.asarray(liftdrag_est_queue)[:,1]
     temp_queue = np.asarray(data_queue)[:,16:18]

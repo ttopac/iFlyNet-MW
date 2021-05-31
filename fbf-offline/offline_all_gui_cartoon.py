@@ -52,9 +52,9 @@ if __name__ == '__main__':
   plot_refresh_rate = 0.1 #seconds. This should be equal to or slower than 30hz (equal to or more than 0.033)
   keras_samplesize=233 #This is also used for pred_freq. Bad naming here.
   downsample_mult = keras_samplesize #For this app these two are  equal to have equal number of lift/drag values. 
-  use_compensated_strains = False
+  use_compensated_strains = True
   mfc_estimate_meth = 'simple' #simple or full
-  liftdrag_estimate_meth = 'sg1+vlm_v2' #vlm or 1dcnn or sg1+vlm or sg1+vlm_v2
+  liftdrag_estimate_meth = 'sg1+vlm_v2+xfoil' #vlm or 1dcnn or sg1+vlm or sg1+vlm_v2
 
   ###
   #Load the data and models
@@ -79,7 +79,6 @@ if __name__ == '__main__':
   #All estimates are of size "stepcount".
   ###
   estimates = procoffline_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains, models, keras_samplesize)
-  estimates.make_estimates(True, True, True, mfc_estimate_meth, liftdrag_estimate_meth)
   if len(os.listdir(main_folder+test_folder+"saved_estimates")) < 4: #All estimations are not there.
     #Make estimations
     estimates.make_estimates(True, True, True, mfc_estimate_meth, liftdrag_estimate_meth)
