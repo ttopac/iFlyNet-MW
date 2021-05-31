@@ -184,7 +184,7 @@ class ProcEstimatesOffline:
             for cnt2, cdp in enumerate(cdp_data.iloc[cnt]):
               if cnt2 > 0:
                 aoa = int(cdp_data.columns[cnt2])
-                parasiticdrag_dict[speed][aoa] = (cdp_data.iloc[cnt][cnt2]+0.02) * 1/2 * const.RHO * speed**2 * const.CHORD * const.SPAN #0.02 is correction for frictional drag contribution
+                parasiticdrag_dict[speed][aoa] = (cdp_data.iloc[cnt][cnt2]*1.5) * 1/2 * const.RHO * speed**2 * const.CHORD * const.SPAN #*1.5 is correction for frictional drag contribution
         except:
           raise Exception("Problem in getting parasitic drag.")
 
