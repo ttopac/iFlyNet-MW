@@ -23,7 +23,7 @@ import plot_metrics_wcomparison
 
 #Plotting in TK class
 class GroundTruthAndiFlyNetEstimatesWindow(Frame):
-  def __init__(self, parent, plot_refresh_rate, downsample_mult, offline=False, liftdrag_estimate_meth='1dcnn'):
+  def __init__(self, parent, plot_refresh_rate, downsample_mult, offline, liftdrag_estimate_meth):
     Frame.__init__(self,parent)
     self.parent = parent
     self.stall_cond = "No"
@@ -291,7 +291,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
 
     plot = plot_MFC_helper.PlotMFCShape(self.plot_refresh_rate, mfc_shape.XVAL, mfc_shape.YVAL, offline=self.offline)
     plot.plot_2D_contour()
-    self.mfc_lbl = Label(self.parent, text="Morphing\nsection shape", font=("Helvetica", 18), justify='center')
+    self.mfc_lbl = Label(self.parent, text="Morphing section shape", font=("Helvetica", 21, 'bold', 'underline'), justify='center')
     self.mfc_canvas = FigureCanvasTkAgg(plot.fig, master=self.parent)
     
     if not self.offline:
@@ -354,9 +354,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       pass
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_wing_cartoon, new_aoa, start_time)
 
-  ###
-  #TODO: Complete cartoon GUI
-  ###
+ 
   def draw_cartoon_cvs (self, imgpath):
     self.draw_cartoon_lbl()
     
@@ -378,9 +376,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.draw_mfc_lbls()
     self.mfc1_wdw = self.cartoon_cvs.create_window (self.mfc_pos[self.init_angle][0][0], self.mfc_pos[self.init_angle][0][1], window = self.mfc1lbl, anchor=NW) #inner
     self.mfc2_wdw = self.cartoon_cvs.create_window (self.mfc_pos[self.init_angle][1][0], self.mfc_pos[self.init_angle][1][1], window = self.mfc2lbl, anchor=NW) #outer
-  ###
-  #TODO: Complete cartoon GUI
-  ###
+
 
   def draw_airspeed_plot_wcomparison(self, visible_duration, params, pred_sample_size):
     if not self.offline:
@@ -408,7 +404,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.aoa_plot_wcomparison_cvs = FigureCanvasTkAgg(aoa_plot.fig, master=self.parent)
     return aoa_plot
 
-  def draw_lift_plot_wcomparison(self, visible_duration, params, pred_sample_size):
+  def draw_liftdrag_plot_wcomparison(self, visible_duration, params, pred_sample_size):
     if not self.offline:
       raise NotImplementedError
 
@@ -418,27 +414,19 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     lift_plot.plot_lift_wcomparison(self.liftdrag_estimate_meth)
     lift_plot.term_common_params(False)
 
-    self.lift_plot_wcomparison_cvs = FigureCanvasTkAgg(lift_plot.fig, master=self.parent)
-    return lift_plot
-
-  def draw_drag_plot_wcomparison(self, visible_duration, params, pred_sample_size):
-    if not self.offline:
-      raise NotImplementedError
-
     drag_plot = plot_metrics_wcomparison.DragPlot(pred_sample_size, ongui=True, offline=self.offline)
     drag_plot.init_realtime_params(visible_duration, self.downsample_mult, params, self.plot_refresh_rate)
     drag_plot.init_common_params("Drag (N)")
     drag_plot.plot_drag_wcomparison(self.liftdrag_estimate_meth)
     drag_plot.term_common_params(False)
 
+    self.lift_plot_wcomparison_cvs = FigureCanvasTkAgg(lift_plot.fig, master=self.parent)
     self.drag_plot_wcomparison_cvs = FigureCanvasTkAgg(drag_plot.fig, master=self.parent)
-    return drag_plot
 
+    return lift_plot, drag_plot
 
-
-  def place_on_grid(self, raw_signal, keras_preds, MFC_preds, keras_state_preds=False, cartoon_gui=False):
-    
-    if cartoon_gui == True: #offline_all_gui_cartoon
+  def place_on_grid(self, gui_type, cartoon_gui_include_liftdrag=True):
+    if gui_type == "cartoon": 
       #Top row
       self.videos[0].videolbl.grid(row=1, column=0, rowspan=1, columnspan=4)
       self.videos[0].videocvs.grid(row=2, column=0, rowspan=1, columnspan=4)
@@ -450,12 +438,16 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.midrow_frame_bottom.grid(row=4, column=0, rowspan=1, columnspan=8, pady=(2,6))
 
       #Bottom row
-      self.airspeed_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=0, rowspan=1, columnspan=2, padx=(10,5))
-      self.aoa_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=2, rowspan=1, columnspan=2, padx=(5,5))
-      self.lift_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=4, rowspan=1, columnspan=2, padx=(5,5))
-      self.drag_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=6, rowspan=1, columnspan=2, padx=(5,10))      
+      if cartoon_gui_include_liftdrag:
+        self.airspeed_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=0, rowspan=1, columnspan=2, padx=(10,5))
+        self.aoa_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=2, rowspan=1, columnspan=2, padx=(5,5))
+        self.lift_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=4, rowspan=1, columnspan=2, padx=(5,5))
+        self.drag_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=6, rowspan=1, columnspan=2, padx=(5,10))
+      else:
+        self.airspeed_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=2, rowspan=1, columnspan=2, padx=(10,5))
+        self.aoa_plot_wcomparison_cvs.get_tk_widget().grid(row=5, column=4, rowspan=1, columnspan=2, padx=(5,5))
 
-    if raw_signal==True and keras_preds==False and MFC_preds==False and keras_state_preds==False: #offline_signal_gui and realtime_signal_gui
+    if gui_type == "signal only":
       self.videos[0].videolbl.grid(row=0, column=1, rowspan=1, columnspan=1, sticky=S)
       self.videos[0].videocvs.grid(row=1, column=0, rowspan=2, columnspan=3, sticky=N)
       self.videos[1].videolbl.grid(row=3, column=1, rowspan=1, columnspan=1, sticky=S)
@@ -464,7 +456,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.sensordata_plot_cvs.get_tk_widget().grid(row=2, column=3, rowspan=3, columnspan=3)
 
 
-    if raw_signal==True and keras_preds==False and MFC_preds==True and keras_state_preds==False: #offline_signal_shape_gui and realtime_signal_shape_gui    
+    if gui_type == "signal with MFC":
       self.videos[0].videolbl.grid(row=5, column=0, rowspan=1, columnspan=3, sticky=S)
       self.videos[0].videocvs.grid(row=6, column=0, rowspan=1, columnspan=3, sticky=N)
       self.videos[1].videolbl.grid(row=12, column=0, rowspan=1, columnspan=3, pady=5, sticky=S)
@@ -475,7 +467,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.mfc_canvas.get_tk_widget().grid(row=13, column=3, rowspan=1, columnspan=3, sticky=N)
 
 
-    if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==False: #offline_all_gui and realtime_all_gui
+    if gui_type == "MFC with stall and lift/drag":
       self.title_labels[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
       self.title_labels[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
 
@@ -497,7 +489,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.mfc_canvas.get_tk_widget().grid(row=3, column=4, rowspan=1, columnspan=2, sticky=W)
 
     
-    if raw_signal==False and keras_preds==True and MFC_preds==True and keras_state_preds==True: #offline_all_gui_wstate
+    if gui_type == "MFC with all state":
       self.title_labels[0].grid(row=0, column=0, rowspan=1, columnspan=2, sticky=S)
       self.title_labels[1].grid(row=0, column=4, rowspan=1, columnspan=2, sticky=S)
 

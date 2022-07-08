@@ -19,8 +19,9 @@ import streamdata_helper
 # main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
-main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
-test_folder = 'Offline_Tests/offline12_Dec16/'
+# main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
+main_folder = '/Volumes/GoogleDrive-109082130355562393140/Shared drives/WindTunnelTests-Feb2019/July2022_Tests_SNIC/'
+test_folder = 'Offline_Tests/offline3_July6/'
 models_folder = 'Kerasfiles_Dec2020/'
 
 models = dict()
@@ -45,12 +46,14 @@ if __name__ == '__main__':
   keras_samplesize=233 #This is also used for pred_freq. Bad naming here.
   downsample_mult = keras_samplesize #For this app these two are  equal to have equal number of lift/drag values. 
   use_compensated_strains = True
+  mfc_estimate_meth = 'simple' #simple or full
+  liftdrag_estimate_meth = '1dcnn' #vlm or 1dcnn or sg1+vlm or sg1+vlm_v2
 
   #Load the data and models
   leakyrelu = tensorflow.keras.layers.LeakyReLU(alpha=0.02)
   resnet_model = keras_resnet.models.ResNet1D18(freeze_bn=True)
   resnet_bn_layer = keras_resnet.layers.BatchNormalization(freeze=True)
-  test_data = np.load(main_folder+test_folder+'/test.npy') #(18, ~2000000) channels: PZT1, PZT2, PZT3, PZT4, PZT5, PZT6, SG1, SG2, SG3, SG4, SG5, SG6, SG7, SG9, Lift, Drag, SG1RTD, WingRTD
+  test_data = np.load(main_folder+test_folder+'test.npy') #(18, ~2000000) channels: PZT1, PZT2, PZT3, PZT4, PZT5, PZT6, SG1, SG2, SG3, SG4, SG5, SG6, SG7, SG9, Lift, Drag, SG1RTD, WingRTD
   stepcount = int (test_data.shape[1] / params ['sample_rate'] / plot_refresh_rate) + 1
   models['filepaths'] = list(map(lambda x: main_folder+models_folder+'{}'.format(x), models['filenames']))
   for filepath in models['filepaths']:
@@ -60,22 +63,42 @@ if __name__ == '__main__':
       models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.tf', custom_objects={'LeakyReLU': leakyrelu, 'ResNet1D18':resnet_model, 'BatchNormalization':resnet_bn_layer}))
       models['modelfiles'][-1].load_weights(filepath+'.ckpt')
     else:
-      raise Exception ('Problem with loading Keras models') 
+      raise Exception ('Problem with loading Keras models')
 
+  ###
   #Run estimations on the data
+  ###
   estimates = procoffline_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains, models, keras_samplesize)
-  estimates.make_estimates()
+  if not os.path.isdir(main_folder+test_folder+"saved_estimates"): #Create a folder to put estimates if it doesn't already exists
+    os.mkdir(main_folder+test_folder+"saved_estimates")
+  if len(os.listdir(main_folder+test_folder+"saved_estimates")) < 4:  #All estimations are not there.
+    #Make estimates
+    estimates.make_estimates(True, True, True, mfc_estimate_meth, liftdrag_estimate_meth)
+    #Save estimate files for easy reuse.
+    np.save(main_folder+test_folder+"saved_estimates/"+'stall_estimates.npy', estimates.stall_estimates)
+    np.save(main_folder+test_folder+"saved_estimates/"+'state_estimates.npy', estimates.state_estimates)
+    np.save(main_folder+test_folder+"saved_estimates/"+'liftdrag_estimates.npy', estimates.liftdrag_estimates)
+    np.save(main_folder+test_folder+"saved_estimates/"+'mfc_estimates.npy', estimates.mfc_estimates)
+  else:
+    #Load estimate files for reuse.
+    estimates.stall_estimates = np.load(main_folder+test_folder+"saved_estimates/"+'stall_estimates.npy')
+    estimates.state_estimates = np.load(main_folder+test_folder+"saved_estimates/"+'state_estimates.npy')
+    estimates.liftdrag_estimates = np.load(main_folder+test_folder+"saved_estimates/"+'liftdrag_estimates.npy')
+    estimates.mfc_estimates = np.load(main_folder+test_folder+"saved_estimates/"+'mfc_estimates.npy')
   
+
+  ###
   #Initiate the streams of camera + measurements + estimations and place them on the GUI
+  ###
   root = Tk()
   root.title ("Offline Ground Truth and i-FlyNet Estimation")
   title_labels = ("Measurements", "i-FlyNet Estimates")
-  video_labels = ("AoA view", "Wing\nouter view")
+  video_labels = ("AoA view", "Disabled")
   filespath = main_folder+test_folder
   camnums = ('2_deframed','1_deframed')
   
-  GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True)
-  GUIapp.init_UI(title_labels)
+  GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True, liftdrag_estimate_meth=liftdrag_estimate_meth)
+  GUIapp.draw_title_labels(title_labels)
   GUIapp.draw_stall_lbl()
   GUIapp.draw_state_lbl()
   GUIapp.draw_liftdrag_lbl()  
@@ -93,9 +116,8 @@ if __name__ == '__main__':
   stream = streamdata_helper.StreamOffline(GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
   stream.initialize_video(video_labels, camnums)
   stream.initialize_measurements()
-  stream.initialize_estimates(True, True, True, True)
-  GUIapp.place_on_grid(False, True, True, True)
-
+  stream.initialize_estimates(True, True, True, True, False, False)
+  GUIapp.place_on_grid(False, True, True, True, False) #raw_signal, keras_preds, MFC_preds, keras_state_preds, cartoon_gui
 
   #Run the GUI
   start_offline_button(GUIapp, streamhold_queue)

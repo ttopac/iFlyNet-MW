@@ -61,6 +61,10 @@ class StreamOffline (StreamData):
     super(StreamOffline, self).__init__(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
     self.streamhold_queue = streamhold_queue
     self.filespath = filespath
+    self.airspeed_plot = None
+    self.aoa_plot = None
+    self.lift_plot = None
+    self.drag_plot = None
 
   def initialize_video(self, video_labels, camnums):
     video1, video2 = self.GUIapp.draw_videos(video_labels, camnums, realtime=False, videopath=self.filespath)
@@ -174,20 +178,13 @@ class StreamOffline (StreamData):
         pass
 
 
-  def initialize_plots_wcomparison(self, plot_airspeed, plot_aoa, plot_lift, plot_drag):
-    self.airspeed_plot = None
-    self.aoa_plot = None
-    self.lift_plot = None
-    self.drag_plot = None
-
+  def initialize_plots_wcomparison(self, plot_airspeed, plot_aoa, plot_liftdrag):
     if plot_airspeed:
       self.airspeed_plot = self.GUIapp.draw_airspeed_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
     if plot_aoa:
       self.aoa_plot = self.GUIapp.draw_aoa_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
-    if plot_lift:
-      self.lift_plot = self.GUIapp.draw_lift_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
-    if plot_drag:
-      self.drag_plot = self.GUIapp.draw_drag_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
+    if plot_liftdrag:
+      self.lift_plot, self.drag_plot = self.GUIapp.draw_liftdrag_plot_wcomparison(self.visible_duration, self.params, self.downsample_mult)
     
     plots_wcomparison_thr = Thread(target=self.stream_plots_wcomparison)
     plots_wcomparison_thr.start()

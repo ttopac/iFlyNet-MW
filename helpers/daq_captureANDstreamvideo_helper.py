@@ -2,8 +2,7 @@ from collections import deque
 import collections
 import platform
 import subprocess
-if platform.machine() != 'arm64':
-  import cv2
+import cv2
 
 import numpy as np
 import tkinter as tk
