@@ -1,6 +1,7 @@
-import sys, os
+import sys
+import os
 import time
-from tkinter import Tk, Frame, Button
+from tkinter import Tk, Button
 
 sys.path.append(os.path.abspath('./helpers'))
 sys.path.append(os.path.abspath('./fbf-realtime'))
@@ -97,14 +98,14 @@ if __name__ == "__main__":
   plot_refresh_rate = 0.2 #seconds
   downsample_mult = 1 #Use 1 for training, use 233 for drifttest.
   ys = np.zeros((18,int(visible_duration*params["sample_rate"]/downsample_mult)))
-  video_names = ("Dummy0", "Dummy1")
-  camnums = (0,1)
+  video_names = ("Disabled", "AoA Cam")
+  camnums = (1,2)
   use_compensated_strains_forstream = False
 
   #Define save parameters
-  # save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/Offline_Tests/offline5_Nov19/'
-  save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline_SG4_tmm_down_Apr4/'
-  save_duration = 60 #seconds
+  save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/July2022_Tests_SNIC/Offline_Tests/offline3_July6/'
+  # save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline_SG4_tmm_down_Apr4/'
+  save_duration = 240 #seconds
   saver = daq_savedata_helper.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
   preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!

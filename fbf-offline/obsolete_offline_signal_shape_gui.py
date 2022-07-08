@@ -17,7 +17,7 @@ import streamdata_helper
 # main_folder = '/Volumes/GoogleDrive/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 # main_folder = '/Volumes/Macintosh HD/Users/tanay/GoogleDrive/Team Drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
 main_folder = '/Volumes/Macintosh HD/Users/tanay/OneDrive - Stanford/Sept2020_Tests/'
-test_folder = 'offline5_Nov19'
+test_folder = 'offline12_Dec16'
 
 params = dict()
 params ['sample_rate'] = 7142 #Use 7142 for training, 1724 for drift. 1724 becomes 1724.1379310344828. 7142 becomes 7142.857142857143 Lowest sample rate possible is 1613 for our NI device. 
@@ -42,14 +42,14 @@ if __name__ == '__main__':
 
   #Run estimations on the data
   estimates = procoffline_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains)
-  estimates.make_estimates()
+  estimates.make_estimates(False, True, False, mfc_est_meth='full')
   
   #Initiate the streams of camera + measurements + estimations and place them on the GUI
   root = Tk()
   root.title ("Offline Video, Signals, and Shapes")
   video_labels = ("AoA view", "Outer MFC view")
   filespath = main_folder+'Offline_Tests/{}/'.format(test_folder)
-  camnums = (1,0)
+  camnums = ('2_deframed', '1_deframed')
   
   GUIapp = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=True)
   GUIapp.SGoffsets = params ['SG_offsets']
@@ -57,15 +57,17 @@ if __name__ == '__main__':
   GUIapp.initialize_queues_or_lists()
 
   data_cut = int (params['sample_rate'] * plot_refresh_rate)
-  for i in range(stepcount): #(601 for 60second of data with 10hz refresh rate)
+  for i in range(stepcount-1): #(3001 for 300second of data with 10hz refresh rate)
     GUIapp.data_list.append(test_data[:, i*data_cut : (i+1)*data_cut])  
+    
+    print (i)
     GUIapp.shape_list.append(estimates.mfc_estimates[i])
 
   streamhold_queue = Queue()
   stream = streamdata_helper.StreamOffline(GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
   stream.initialize_video(video_labels, camnums)
   stream.initialize_sensordata(True)
-  stream.initialize_estimates(False, False, True)
+  stream.initialize_estimates(False, False, True, False, True, False)
   stream.GUIapp.place_on_grid(True, False, True)
 
 

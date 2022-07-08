@@ -24,12 +24,13 @@ class PlotsWComparison:
   def init_common_params (self, y_label):
     mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=['#1f77b4', '#ff7f0e', '#2ca02c', '#bcbd22', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#17becf', '#d62728']) 
     mpl.rcParams['axes.edgecolor'] = 'black'
-    mpl.rcParams['axes.linewidth'] = 1
+    mpl.rcParams['axes.linewidth'] = 0.5
     
     self.fig = plt.figure()
     self.ax1 = self.fig.add_subplot(1,1,1)
-    self.ax1.set_xlabel("Time", labelpad=2, fontsize=11)
-    self.ax1.set_ylabel(y_label, labelpad=2, fontsize=11) #Commented out for simplification. We are showing trends, not absolute values.
+    self.ax1.set_xlabel("Time", labelpad=2, fontsize=7)
+    self.ax1.set_ylabel(y_label, labelpad=2, fontsize=7)
+    self.ax1.tick_params(axis='both', which='major', labelsize=6)
     self.ax1.grid(False)
 
   def term_common_params (self, legend):
@@ -43,7 +44,8 @@ class PlotsWComparison:
         line.set_markersize(1.5)
     
     if self.ongui:
-      self.fig.set_size_inches(3.5, 3.0) #width, height
+      # self.fig.set_size_inches(3.5, 3.0) #width, height
+      self.fig.set_size_inches(1.75, 1.5) #width, height
       plt.tight_layout()
 
   def plot_live(self, i, meas_line, est_line, meas_queue, est_queue, start_time, plot_name, use_compensated_strains=False, temp_queue=None):
@@ -99,8 +101,8 @@ class AirspeedPlot (PlotsWComparison):
       self.ax1.set_xlim(-2, self.visible_duration+2)
       self.ax1.set_ylim(-2, 22) #This scale is m/s
       self.ax1.set_xticklabels([])
-      self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1.5, animated=True, label="Measured") 
-      self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted")
+      self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1, animated=True, label="Measured") 
+      self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1, animated=True, label="Predicted")
 
   def plot_airspeed_live(self, i, vel_meas_queue, vel_est_queue, start_time):
     vel_meas_queue = np.asarray(vel_meas_queue)
@@ -125,8 +127,8 @@ class AoaPlot (PlotsWComparison):
       self.ax1.set_xlim(-2, self.visible_duration+2)
       self.ax1.set_ylim(-2, 22) #This scale is degrees
       self.ax1.set_xticklabels([])
-      self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1.5, animated=True, label="Measured") 
-      self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted")
+      self.meas_line, = self.ax1.plot(self.xs, self.ys[0], linewidth=1, animated=True, label="Measured") 
+      self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1, animated=True, label="Predicted")
 
   def plot_aoa_live(self, i, aoa_meas_queue, est_queue, start_time):
     aoa_meas_queue = np.asarray(aoa_meas_queue)
@@ -152,8 +154,8 @@ class LiftPlot (PlotsWComparison):
       self.ax1.set_xticklabels([])
   
       self.twin_ax = self.ax1.twinx()
-      self.meas_line, = self.twin_ax.plot(self.xs, self.ys[0], linewidth=1.5, animated=True, label="Measured") 
-      self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1.5, animated=True, label="Predicted", color='#ff7f0e')
+      self.meas_line, = self.twin_ax.plot(self.xs, self.ys[0], linewidth=1, animated=True, label="Measured") 
+      self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1, animated=True, label="Predicted", color='#ff7f0e')
 
       if liftdrag_estimate_meth == '1dcnn':
         self.ax1.set_ylim (-29.0, 290.0) #This scale is microstrains
@@ -197,14 +199,11 @@ class DragPlot (PlotsWComparison):
       self.ax1.set_xticklabels([])
 
       self.twin_ax = self.ax1.twinx()
-      self.meas_line, = self.twin_ax.plot(self.xs, self.ys[0], animated=True, label="Measured") 
-      self.est_line, = self.ax1.plot(self.xs, self.ys[1], animated=True, label="Predicted", color='#ff7f0e')
+      self.meas_line, = self.twin_ax.plot(self.xs, self.ys[0], linewidth=1, animated=True, label="Measured") 
+      self.est_line, = self.ax1.plot(self.xs, self.ys[1], linewidth=1, animated=True, label="Predicted", color='#ff7f0e')
       
       self.ax1.set_xlim (-2, self.visible_duration+2) 
-      if liftdrag_estimate_meth == 'vlm' or liftdrag_estimate_meth == 'sg1+vlm' or liftdrag_estimate_meth == 'sg1+vlm_v2' or liftdrag_estimate_meth == 'sg1+vlm_v2+xfoil':
-        self.ax1.set_ylim (-0.55, 5.5) #This scale is Newtons
-      else:
-        raise Exception()
+      self.ax1.set_ylim (-0.55, 5.5) #This scale is Newtons
       
       self.ax1.yaxis.set_major_locator(plt.MultipleLocator(1.25))
       self.twin_ax.set_xlim (-2, self.visible_duration+2)
