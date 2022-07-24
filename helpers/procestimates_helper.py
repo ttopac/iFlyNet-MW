@@ -1,6 +1,8 @@
 from multiprocessing import Queue
 import sys, os
 import math
+import time
+import copy
 import numpy as np
 import pandas as pd
 import pathlib
@@ -18,18 +20,200 @@ SSNSG_CTEvar_wing = dict()
 SSNSG_CTEvar_wing = {1:109, 5:88, 6:43, 7:54, 9:55}
 
 MFC_averages = dict()
-MFC_averages["MFC1_SG5"] = (-528, -421, -312, -210, -120, -51, 0, 165, 403, 629, 837, 1022, 1189) #(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6) camber (up, neutral, down)
-MFC_averages["MFC1_SG6"] = (-642, -492, -360, -244, -135, -56, 0, 194, 477, 742, 980, 1187, 1373) #(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6)
+MFC_averages["MFC1_SG5"] = (-427, -355, -284, -213, -142, -71, 0, 220, 470, 710, 910, 1090, 1250) #(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6) camber (up, neutral, down)
+MFC_averages["MFC1_SG6"] = (-500, -416, -333, -250, -166, -83, 0, 230, 550, 830, 1050, 1260, 1440) #(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6)
 
-class ProcEstimatesOffline:
-  def __init__ (self, sensor_data, daq_samplerate, plot_refresh_rate, downsample_mult, use_compensated_strains, models=None, keras_samplesize=None):
+class ProcEstimates:
+  def __init__ (self, daq_samplerate, plot_refresh_rate, downsample_mult, models):
     self.daq_samplerate = daq_samplerate
     self.plot_refresh_rate = plot_refresh_rate
     self.downsample_mult = downsample_mult
     self.models = models
+
+class ProcEstimatesRealtime (ProcEstimates):
+  def __init__ (self, sensor_queue, estimates_queue, daq_samplerate, plot_refresh_rate, downsample_mult, use_compensated_strains, keras_est, mfc_est, liftdrag_est, mfc_est_meth='simple', liftdrag_est_meth='vlm', models=None, keras_samplesize=None):
+    super().__init__(daq_samplerate, plot_refresh_rate, downsample_mult, models)
+    if use_compensated_strains:
+      raise NotImplementedError("Using compensated strains in real-time is not implemented yet") #TODO
+    if keras_est:
+      self.keras_estimator = proc_keras_estimates_helper.iFlyNetEstimates(keras_samplesize, models) #Initialize Keras estimates if this is not running in realtime
+    if mfc_est:
+      if mfc_est_meth == 'full':
+        self.mfc_estimator = proc_MFCshape_helper.CalcMFCShape()
+    
+    self.keras_est = keras_est
+    self.mfc_est = mfc_est
+    self.liftdrag_est = liftdrag_est
+    self.sensor_queue = sensor_queue
+    self.estimates_queue = estimates_queue
+    self.keras_samplesize = keras_samplesize
+    self.mfc_est_meth = mfc_est_meth
+    self.liftdrag_est = liftdrag_est
+    self.liftdrag_est_meth = liftdrag_est_meth
+
+  def prepare_data(self):
+    while True:
+      try:
+        sensor_data = self.sensor_queue.get_nowait()
+        self.reduced_sensor_data = np.take(sensor_data, range(int(sensor_data.shape[1]//2 - self.keras_samplesize/2), int(sensor_data.shape[1]//2 + self.keras_samplesize/2)), axis=1)
+        self.sensor_data_keras = list()
+        for sensorcut in self.models['activesensors']:
+          self.sensor_data_keras.append(self.reduced_sensor_data[np.array(sensorcut),:])
+      except:
+        pass
+      time.sleep(self.plot_refresh_rate/3)
+
+  def estimate_stall(self):
+    if self.keras_est is False:
+      raise Exception("You declared you won't do Keras estimations, but asking it here")
+    while True:
+      try:
+        stall_estimates = self.keras_estimator.estimate_stall(self.sensor_data_keras[0])
+        self.estimates_queue[0].put_nowait(stall_estimates.reshape(1,1))
+        time.sleep(self.plot_refresh_rate/3)
+      except:
+        pass
+    
+  def estimate_state(self):
+    if self.keras_est is False:
+      raise Exception("You declared you won't do Keras estimations, but asking it here")
+    while True:
+      try:
+        state_estimates = self.keras_estimator.estimate_state(self.sensor_data_keras[2])
+        self.estimates_queue[1].put_nowait(state_estimates.T)
+        time.sleep(self.plot_refresh_rate/3)
+      except:
+        pass
+
+  def estimate_mfc(self):
+    if self.mfc_est is False:
+      raise Exception("You declared you won't do MFC estimations, but asking it here")
+    while True:
+      try:
+        if self.mfc_est_meth == 'full':
+          self.mfc_estimator.estimate_shape_analytic(self.reduced_sensor_data, self.estimates_queue[3]) #Number of estimates is driven by plot refresh rate (even if there are more predictions by Keras)
+          #!!!Shape of above could be wrong. Make sure it is (2,1)
+
+        elif self.mfc_est_meth == 'simple':
+          #Simplified MFC shape estimates within the range (-6,+6) for MFC1 and MFC2. 
+          
+          mfc1_data = self.reduced_sensor_data[10:12,:] #SG5, SG6
+          mfc2_data = self.reduced_sensor_data[12:14,:] #SG7, SG9
+          relevant_mfc1_data = np.mean (mfc1_data, axis=1)
+
+          closest_mfc1_sg5_val = min(MFC_averages["MFC1_SG5"], key=lambda x:abs(x-relevant_mfc1_data[0]))
+          closest_mfc1_sg6_val = min(MFC_averages["MFC1_SG6"], key=lambda x:abs(x-relevant_mfc1_data[1]))
+          closest_mfc1_sg5 = MFC_averages["MFC1_SG5"].index(closest_mfc1_sg5_val) - 6 #-6 is here to normalize index.
+          closest_mfc1_sg6 = MFC_averages["MFC1_SG6"].index(closest_mfc1_sg6_val) - 6 #-6 is here to normalize index.
+          closest_mfc1 = int((closest_mfc1_sg5 + closest_mfc1_sg6)/2)
+          closest_mfc2 = 0 #(MFC2 not working)
+          
+          pretty_mfc_ests = np.array([[closest_mfc1],[closest_mfc2]])
+          self.estimates_queue[3].put_nowait(pretty_mfc_ests)
+        time.sleep(self.plot_refresh_rate/3)
+      except:
+        pass
+  
+  def estimate_liftdrag(self):
+    if self.liftdrag_est is False:
+      raise Exception("You declared you won't do Lift/Drag estimations, but asking it here")
+    while True:
+      try:
+        if self.liftdrag_est_meth == '1dcnn':
+          liftdrag_estimates = self.keras_estimator.estimate_liftdrag(self.sensor_data_keras[1])
+          pretty_liftdrag_estimates = np.array([[liftdrag_estimates[0,0]],[liftdrag_estimates[0,1]]])
+          self.estimates_queue[2].put_nowait(pretty_liftdrag_estimates)
+
+
+        elif self.liftdrag_est_meth == 'vlm':
+          liftdrag_dict = dict()
+
+          state_ests = self.estimates_queue[1].get_nowait()
+          airspeed, aoa = state_ests[1,0], state_ests[0,0]
+          self.estimates_queue[1].put_nowait(np.array([[airspeed],[aoa]]))
+          mfc_ests = self.estimates_queue[3].get_nowait()
+          mfc1, mfc2 = mfc_ests[1,0], mfc_ests[0,0]
+          self.estimates_queue[3].put_nowait(np.array([[mfc1],[mfc2]]))
+
+          est_lift, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(airspeed), int(aoa), int(mfc1), int(mfc2)) #V, aoa, mfc1, mfc2
+          pretty_liftdrag_estimates = np.array([[est_lift],[est_drag_i]])
+          self.estimates_queue[2].put_nowait(pretty_liftdrag_estimates)
+
+
+        elif self.liftdrag_est_meth == 'sg1+vlm':
+          liftdrag_dict = dict()
+
+          state_ests = self.estimates_queue[1].get_nowait()
+          airspeed, aoa = state_ests[1,0], state_ests[0,0]
+          self.estimates_queue[1].put_nowait(np.array([[airspeed],[aoa]]))
+          mfc_ests = self.estimates_queue[3].get_nowait()
+          mfc1, mfc2 = mfc_ests[1,0], mfc_ests[0,0]
+          self.estimates_queue[3].put_nowait(np.array([[mfc1],[mfc2]]))
+
+          midpoint = self.reduced_sensor_data[6].shape[0]/2
+          step_size = self.reduced_sensor_data[6].shape[0]/6
+          est_lift = -1 * np.mean(self.reduced_sensor_data[6, int(midpoint-step_size) : int(midpoint+step_size)])
+          _, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(airspeed), int(aoa), int(mfc1), int(mfc2)) #V, aoa, mfc1, mfc2
+          pretty_liftdrag_estimates = np.array([[est_lift],[est_drag_i]])
+          self.estimates_queue[2].put_nowait(pretty_liftdrag_estimates)
+
+
+        elif self.liftdrag_est_meth == 'sg1+vlm_v2':
+          liftdrag_dict = dict()
+          self.SG1_hist_filtered = list()
+          self.aoa_hist = list()
+          self.liftdrag_hist = list()
+
+          state_ests = self.estimates_queue[1].get_nowait()
+          airspeed, aoa = state_ests[1,0], state_ests[0,0]
+          self.estimates_queue[1].put_nowait(np.array([[airspeed],[aoa]]))
+          mfc_ests = self.estimates_queue[3].get_nowait()
+          mfc1, mfc2 = mfc_ests[1,0], mfc_ests[0,0]
+          self.estimates_queue[3].put_nowait(np.array([[mfc1],[mfc2]]))
+          self.aoa_hist.append(aoa)
+
+          midpoint = self.reduced_sensor_data[6].shape[0]/2
+          step_size = self.reduced_sensor_data[6].shape[0]/6
+          curr_SG1_filtered = np.mean(self.reduced_sensor_data[6, int(midpoint-step_size) : int(midpoint+step_size)])
+          self.SG1_hist_filtered.append(curr_SG1_filtered)
+
+          stall_estimate = self.estimates_queue[0].get_nowait()[0,0]
+          self.estimates_queue[0].put_nowait(stall_estimate.reshape(1,1))
+
+          try:
+            liftdrag_ests = self.estimates_queue[2].get_nowait()
+            lift, drag = liftdrag_ests[0,0], liftdrag_ests[1,0]
+            self.estimates_queue[2].put_nowait(np.array([[lift],[drag]]))
+          except:
+            lift, drag = 0, 0
+          self.liftdrag_hist.append([lift,drag])
+
+          if stall_estimate == True:
+            SG1_lift_prev_stp = -1 * self.SG1_hist_filtered[-2] * np.cos(np.radians(int(self.aoa_hist[-2])))
+            SG1_lift_curr_stp = -1 * self.SG1_hist_filtered[-1] * np.cos(np.radians(int(self.aoa_hist[-1])))
+            lift_prev_stp = self.liftdrag_hist[-2][0]
+            SG1_pct_chg = (SG1_lift_curr_stp - SG1_lift_prev_stp)/SG1_lift_prev_stp*100*2.5 #2.5 here is correction to account for the location difference of SG1 and commSG (elliptic lift profile assumed)
+            _, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(airspeed), int(aoa), int(mfc1), int(mfc2)) #V, aoa, mfc1, mfc2
+            est_lift = lift_prev_stp * (1+SG1_pct_chg/100)
+          else:
+            est_lift, est_drag_i, liftdrag_dict = proc_vlm_estimates_helper.get_liftANDdrag(liftdrag_dict, int(airspeed), int(aoa), int(mfc1), int(mfc2)) #V, aoa, mfc1, mfc2
+          pretty_liftdrag_estimates = np.array([[est_lift],[est_drag_i]])
+          self.estimates_queue[2].put_nowait(pretty_liftdrag_estimates)
+
+        time.sleep(self.plot_refresh_rate/3)
+      except:
+        pass
+
+
+
+class ProcEstimatesOffline (ProcEstimates):
+  def __init__ (self, input_data, daq_samplerate, plot_refresh_rate, downsample_mult, use_compensated_strains, models=None, keras_samplesize=None):
+    super().__init__(daq_samplerate, plot_refresh_rate, downsample_mult, models)
+    
+    sensor_data = copy.copy(input_data)
     self.test_duration = int(sensor_data.shape[1]/daq_samplerate)
     self.pred_count = int(sensor_data.shape[1]/downsample_mult)
-    
+  
     ###
     #Temperature compensation
     ###
@@ -69,6 +253,7 @@ class ProcEstimatesOffline:
         self.sensor_data_keras.append(self.reduced_sensor_data[np.array(sensorcut),:])
     self.step_size = int (self.reduced_sensor_data.shape[1]/self.num_estimates)
 
+    self.sensor_data = sensor_data
 
   ###
   #General function for making the Estimations

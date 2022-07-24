@@ -11,6 +11,7 @@ import daq_savedata_helper
 import gui_windows_helper
 import streamdata_helper
 import daq_captureANDstreamvideo_helper
+import procestimates_helper
 import remove_extra_frames
 
 import numpy as np
@@ -20,6 +21,7 @@ from threading import Thread
 from multiprocessing import Process, Queue, Pipe
 
 save_signal_flag = False
+mfcplot_exists = False
 
 class SaveVideoAndSignals():
   def __init__ (self, root, preview, params, save_duration, saveflag_queue, saver, preview_while_saving=False):
@@ -43,7 +45,8 @@ class SaveVideoAndSignals():
     else: #KILL PREVIEW
       #Stop camera plotting and DAQ altogether.
       self.preview.get_data_proc.terminate()
-      self.preview.draw_MFC_proc.terminate()
+      if mfcplot_exists:
+        self.preview.draw_MFC_proc.terminate()
       for video in self.preview.videos:
         video.capture_stopflag = True
       
@@ -52,7 +55,8 @@ class SaveVideoAndSignals():
       
       #Then start DAQ 
       parent_conn, child_conn = Pipe()
-      save_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.preview.SGoffsets, self.params["sample_rate"], int(self.params["sample_rate"]*self.save_duration), "fixedlen", child_conn, self.saveflag_queue))
+      send_data_size = int(self.params["sample_rate"]*self.save_duration)
+      save_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.preview.SGoffsets, self.params["sample_rate"], send_data_size, "fixedlen", child_conn, self.saveflag_queue))
       save_data_proc.start()
 
       #Then start saving videos once DAQ is ready
@@ -99,13 +103,12 @@ if __name__ == "__main__":
   downsample_mult = 1 #Use 1 for training, use 233 for drifttest.
   ys = np.zeros((18,int(visible_duration*params["sample_rate"]/downsample_mult)))
   video_names = ("Disabled", "AoA Cam")
-  camnums = (1,2)
+  camnums = (1,0)
   use_compensated_strains_forstream = False
 
   #Define save parameters
-  save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/July2022_Tests_SNIC/Offline_Tests/offline3_July6/'
-  # save_path = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/Offline_Tests/offline_SG4_tmm_down_Apr4/'
-  save_duration = 240 #seconds
+  save_path = 'g:/Shared drives/WindTunnelTests-Feb2019/July2022_Tests_SNIC/Offline_Tests/offline13_July23/'
+  save_duration = 30 #seconds
   saver = daq_savedata_helper.DataSaverToNP(save_path)
   saveflag_queue = Queue() #Queue for sending save flag. Used differently in fixedlen and continuous capture.
   preview_while_saving = False #!!!Previewing while saving is not tested extensively. It may cause data loss or bad quality. Use with caution. Especially, don't use fast refresh!
@@ -116,7 +119,7 @@ if __name__ == "__main__":
   #Define TK windows
   preview = gui_windows_helper.GroundTruthAndiFlyNetEstimatesWindow(root, plot_refresh_rate, downsample_mult, offline=False)
   main = SaveVideoAndSignals(root, preview, params, save_duration, saveflag_queue, saver, preview_while_saving)
-
+  
   #Get and save SG and RTD offsets
   preview.getSGoffsets(params)
   np.save(save_path+'SG_offsets.npy', preview.SGoffsets)
@@ -128,19 +131,25 @@ if __name__ == "__main__":
   preview.initialize_queues_or_lists()
 
   if preview_while_saving:
-    preview.captureData(params)
+    preview.start_datacapture_process(params)
   else:
-    preview.captureData(params, saveflag_queue=saveflag_queue, save_duration=save_duration, saver=saver)
-  
+    preview.start_datacapture_process(params, saveflag_queue=saveflag_queue, save_duration=save_duration, saver=saver)
+
   stream = streamdata_helper.StreamRealTime(preview, params, use_compensated_strains_forstream, downsample_mult, visible_duration, plot_refresh_rate)
-  stream.init_and_stream_sensordata(True)
-  stream.init_and_stream_estimates()
+  stream.init_sensordata(mfcplot_exists)
+
   queue_refresh_thread = Thread(target=stream.refresh_queues)
   queue_refresh_thread.start()
 
+  #Place the elements on GUI
+  if mfcplot_exists:
+    preview.place_on_grid('signal with MFC')
+  else:
+    preview.place_on_grid('signal only')
+
   #Save the data
-  preview.place_on_grid(True, False, True)
   main.skip_preview_button()
+  print ("Reached mainloop")
   root.mainloop()
 
   #Stop queue_refresh_thread

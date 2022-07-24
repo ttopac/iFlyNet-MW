@@ -3,7 +3,6 @@ import pickle
 import time
 from sklearn import preprocessing
 
-
 class iFlyNetEstimates:
   def __init__(self, pred_freq, models):
     self.pred_freq = pred_freq
@@ -32,7 +31,8 @@ class iFlyNetEstimates:
     sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq) #shape= (8, -1, 233) for Sept. 2020
     sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0)) #shape= (-1, 233, 8) for Sept. 2020.
     sensordata_rshp_t_std = (sensordata_rshp_t-self.means[np.array(self.models['activesensors'][2])]) / self.stddevs[np.array(self.models['activesensors'][2])]
-    ''' Below is here to measure Keras computation speed
+    ''' 
+    The code below can be used measure Keras computation speed:
     data2 = sensordata_rshp_t_std[1000].reshape(1,233,9)
     data3 = sensordata_rshp_t_std[1100].reshape(1,233,9)
     data4 = sensordata_rshp_t_std[1200].reshape(1,233,9)
@@ -46,7 +46,7 @@ class iFlyNetEstimates:
     preds = self.models['modelfiles'][2].predict(data4)
     print ("Third predictions take {} seconds.".format(time.time() - t3))
     '''
-    preds = self.models['modelfiles'][2].predict(sensordata_rshp_t_std)
+    preds = self.models['modelfiles'][2].predict(sensordata_rshp_t_std, verbose=0)
     argmax_preds = np.argmax (preds, axis=1)
     _ = encoder.inverse_transform(statetruth) #making encoder remember previous states.
     decoded_preds = encoder.inverse_transform(argmax_preds) #Actually decode predictions.
@@ -64,7 +64,7 @@ class iFlyNetEstimates:
     sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq)
     sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0))
     sensordata_rshp_t_std = (sensordata_rshp_t-self.means[np.array(self.models['activesensors'][1])]) / self.stddevs[np.array(self.models['activesensors'][1])]
-    preds = self.models['modelfiles'][1].predict(sensordata_rshp_t_std)
+    preds = self.models['modelfiles'][1].predict(sensordata_rshp_t_std, verbose=0)
 
     # De-standardize predictions
     output_channels = list(set(self.models['activesensors'][0]) - set(self.models['activesensors'][1]))

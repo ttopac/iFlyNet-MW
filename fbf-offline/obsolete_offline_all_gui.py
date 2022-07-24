@@ -11,7 +11,7 @@ from threading import Thread
 
 sys.path.append(os.path.abspath('./helpers'))
 import gui_windows_helper
-import procoffline_helper
+import procestimates_helper
 import streamdata_helper
 
 # main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
@@ -60,7 +60,7 @@ if __name__ == '__main__':
       raise Exception ('Problem with loading Keras models') 
 
   #Run estimations on the data
-  estimates = procoffline_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains, models, keras_samplesize)
+  estimates = procestimates_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains, models, keras_samplesize)
   estimates.make_estimates()
   
   #Initiate the streams of camera + measurements + estimations and place them on the GUI

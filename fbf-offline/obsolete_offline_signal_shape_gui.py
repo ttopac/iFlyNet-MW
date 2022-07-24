@@ -9,7 +9,7 @@ from threading import Thread
 
 sys.path.append(os.path.abspath('./helpers'))
 import gui_windows_helper
-import procoffline_helper
+import procestimates_helper
 import streamdata_helper
 
 # main_folder = 'g:/Shared drives/WindTunnelTests-Feb2019/Sept2020_Tests/'
@@ -41,7 +41,7 @@ if __name__ == '__main__':
   stepcount = int (test_data.shape[1] / params ['sample_rate'] / plot_refresh_rate) + 1
 
   #Run estimations on the data
-  estimates = procoffline_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains)
+  estimates = procestimates_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains)
   estimates.make_estimates(False, True, False, mfc_est_meth='full')
   
   #Initiate the streams of camera + measurements + estimations and place them on the GUI

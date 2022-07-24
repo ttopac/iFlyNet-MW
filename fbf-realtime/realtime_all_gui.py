@@ -38,13 +38,12 @@ if __name__ == "__main__":
   resnet_bn_layer = keras_resnet.layers.BatchNormalization(freeze=True)
   models['filepaths'] = list(map(lambda x: main_folder+'Kerasfiles/'+'{}'.format(x), models['filenames']))
   for filepath in models['filepaths']:
-    if os.path.isfile(filepath+'.hdf5'): #Old format saved with weights (likely our shallow CNN model)
-      models['modelfiles'].append(keras.models.load_model(filepath+'.hdf5', custom_objects={'LeakyReLU': leakyrelu}))
-    elif os.path.isfile(filepath+'.tf'): #New format saved without weights (likely ResNet model)
-      models['modelfiles'].append(keras.models.load_model(filepath+'.tf', custom_objects={'BatchNormalization':resnet_bn_layer}))
-      models['modelfiles'][-1].load_weights(filepath+'.ckpt')
+    if os.path.isfile(filepath+'.hdf5'): #Old format saved with weights
+      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.hdf5', custom_objects={'LeakyReLU': leakyrelu, 'ResNet1D18':resnet_model, 'BatchNormalization':resnet_bn_layer}))
+    elif os.path.isdir(filepath+'.tf'): #New format saved without weights
+      models['modelfiles'].append(tensorflow.keras.models.load_model(filepath+'.tf', custom_objects={'LeakyReLU': leakyrelu, 'ResNet1D18':resnet_model, 'BatchNormalization':resnet_bn_layer}))
     else:
-      raise Exception ('Problem with loading Keras models') 
+      raise Exception ('Problem with loading Keras models')
 
   root = Tk()
   root.title ("Real-time Ground Truth and i-FlyNet Estimation")

@@ -23,7 +23,7 @@ import plot_metrics_wcomparison
 
 #Plotting in TK class
 class GroundTruthAndiFlyNetEstimatesWindow(Frame):
-  def __init__(self, parent, plot_refresh_rate, downsample_mult, offline, liftdrag_estimate_meth):
+  def __init__(self, parent, plot_refresh_rate, downsample_mult, offline, liftdrag_estimate_meth=None):
     Frame.__init__(self,parent)
     self.parent = parent
     self.stall_cond = "No"
@@ -62,21 +62,26 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.SGoffsets = q1.get()
     p1.join()
 
-  def captureData (self, params, saveflag_queue=None, save_duration=None, saver=None):
+  def start_datacapture_process (self, params, saveflag_queue=None, save_duration=None, saver=None):
     # Run capture data in background
     import daq_capturedata_helper
+    send_data_size = int(params["sample_rate"]*self.plot_refresh_rate)
     if saver == None:
-      self.get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*self.plot_refresh_rate), "continuous", self.data_queue))
+      self.get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], send_data_size, "continuous", self.data_queue))
     else:
-      self.get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], int(params["sample_rate"]*self.plot_refresh_rate), "continuous", self.data_queue, saveflag_queue, save_duration, saver))
+      self.get_data_proc = Process(target = daq_capturedata_helper.send_data, args=(self.SGoffsets, params["sample_rate"], send_data_size, "continuous", self.data_queue, saveflag_queue, save_duration, saver))
     self.get_data_proc.start()
+
+  def get_reftemp(self):
+    dat = self.data_queue.get_nowait()
+    self.reftemps = dat[16:18, -1]
+    self.data_queue.put_nowait(dat)
 
   
   def draw_title_labels (self, labels):
     self.title_labels = list()
     for i in range(len(labels)):
       self.title_labels.append(Label(self.parent, text=labels[i], font=("Helvetica", 21, 'bold', 'underline'), anchor='e', justify=RIGHT))
-  
 
   def draw_midrow (self, title_label, legend_label_img):
     img = Image.open(legend_label_img)
@@ -112,10 +117,15 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       self.meas_airspeed_list = list()
       self.meas_aoa_list = list()
 
-  def initialize_estimates (self, pred_freq, models):
-    self.estimates = proc_keras_estimates_helper.iFlyNetEstimates(pred_freq, models)
-    # t_estimations = Thread(target = self.update_estimations)
-    # t_estimations.start()
+  def initialize_data_history (self, data_length=None):
+    self.data_history = dict()
+    if self.offline:
+      self.data_history["sensor_data"] = np.ones((18,data_length)) #6PZTs + 8SSNSGs + 2commSGs(Lift&Drag) + 2RTDs
+      self.data_history["estimates_data"] = np.ones((7,data_length)) #stall, airspeed, aoa, lift, drag, mfc1, mfc2
+    else:
+      self.data_history["updates"] = {"sensors":False, "stall":False, "state":False, "liftdrag":False, "mfc":False} #A dictionary to keep track of which values are updated.
+      self.data_history["sensor_data"] = np.ones((18,1)) #6PZTs + 8SSNSGs + 2commSGs(Lift&Drag) + 2RTDs
+      self.data_history["estimates_data"] = np.ones((7,1)) #stall, airspeed, aoa, lift, drag, mfc1, mfc2
 
   def draw_stall_lbl (self):
     self.stall_lbl = Label(self.parent, text='Stall?', font=("Helvetica", 18), justify='center')
@@ -143,6 +153,17 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.cartoon_lbl = Label(self.parent, text='Wing State (i-FlyNet)', font=("Helvetica", 21, 'bold', 'underline'), justify='center')
 
 
+  def update_sensordata_lbls(self,start_time=None):
+    try:
+      if not self.offline:
+        sensor_data = self.data_queue.get_nowait()
+      else:
+        t0 = time.time()
+        cur_frame = int((t0-start_time)/self.plot_refresh_rate)
+        sensor_data = self.data_list[cur_frame]
+    except:
+      pass
+    self.parent.after(int(self.plot_refresh_rate*1000), self.update_sensordata_lbls, start_time)    
 
   def update_stallest_lbls (self, start_time=None):
     try:
@@ -152,12 +173,12 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
         t0 = time.time()
         cur_frame = int((t0-start_time)/self.plot_refresh_rate)
         stall_cond = self.stallest_list[cur_frame]
-      if stall_cond:
-        self.stall_cond_lbl.config(text="Yes", fg='red')
-        self.stall_cond_lbl_incartoon.config(text='Stall: Yes', fg='red')
-      else:
-        self.stall_cond_lbl.config(text="No", fg='green')
-        self.stall_cond_lbl_incartoon.config(text='Stall: No', fg='green')
+        if stall_cond:
+          self.stall_cond_lbl.config(text="Yes", fg='red')
+          self.stall_cond_lbl_incartoon.config(text='Stall: Yes', fg='red')
+        else:
+          self.stall_cond_lbl.config(text="No", fg='green')
+          self.stall_cond_lbl_incartoon.config(text='Stall: No', fg='green')
     except:
       pass
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_stallest_lbls, start_time)
@@ -182,7 +203,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
       try:
         if not self.offline:
           est_liftdrag = self.liftdragest_queue.get_nowait()
-          self.liftdragest_queue.put_nowait(est_liftdrag)
         else:
           t0 = time.time()
           cur_frame = int((t0-start_time)/self.plot_refresh_rate)
@@ -222,6 +242,64 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.parent.after(int(self.plot_refresh_rate*1000), self.update_mfc_lbls, start_time)
 
 
+  def update_dummyests(self, estimates_list=None):
+    while True:
+      for estimate in estimates_list:
+        if estimate == "stall":
+          est = np.array([[1]]) #shape(1,1)
+          self.stallest_queue.put_nowait(est)
+        elif estimate == "state":
+          est = np.array([[4],[16]]) #shape(2,1)
+          self.stateest_queue.put_nowait(est)
+        elif estimate == "liftdrag":
+          est = np.array([[5],[17]])
+          self.liftdragest_queue.put_nowait(est)
+        elif estimate == "mfc":
+          est = np.array([[10],[11]])
+          self.shape_queue.put_nowait(est)
+      time.sleep(self.plot_refresh_rate/3)
+
+  def update_data_history(self):
+    #data_history is the dictionary of np.arrays that store the data
+    #data is (n,1) np.array where n changes based on data_nature
+    #Possible values for data_nature are sensors, stall, state, liftdrag, and mfc.
+    if self.offline:
+      self.data_history['sensor_data'] = np.squeeze(np.array(self.data_list)).T
+      self.data_history['estimates_data'][0, :] = np.squeeze(np.array(self.stallest_list))
+      self.data_history['estimates_data'][1:3, :] = np.squeeze(np.array(self.stateest_list)).T
+      self.data_history['estimates_data'][3:5, :] = np.squeeze(np.array(self.liftdragest_list)).T
+      self.data_history['estimates_data'][5:7, :] = np.squeeze(np.array(self.shape_list)).T
+
+    else:
+      queues = [self.data_queue, self.stallest_queue, self.stateest_queue, self.liftdragest_queue, self.shape_queue]
+      
+      while True:
+        queues_filled = True
+        for queue in queues:
+          if queue.qsize() < 1:
+            queues_filled = False
+
+        if queues_filled:
+          try:
+            sensor_data = self.data_queue.get_nowait()
+            stall_data = self.stallest_queue.get_nowait()
+            state_data = self.stateest_queue.get_nowait()
+            liftdrag_data = self.liftdragest_queue.get_nowait()
+            mfc_data = self.shape_queue.get_nowait()
+
+            self.data_history['sensor_data'] = np.append(self.data_history['sensor_data'], np.zeros((18, 1)), axis=1)
+            self.data_history['estimates_data'] = np.append(self.data_history['estimates_data'], np.zeros((7, 1)), axis=1)
+
+            self.data_history['sensor_data'][np.arange(0,18),-1] = sensor_data[:,-1] #6PZTs + 8SSNSGs + 2commSGs(lift&drag) + 2RTDs
+            self.data_history['estimates_data'][np.array(0), -1] = stall_data[:,-1] #stall
+            self.data_history['estimates_data'][np.arange(1,3), -1] = state_data[:,-1] #airspeed, aoa
+            self.data_history['estimates_data'][np.arange(3,5), -1] = liftdrag_data[:,-1] #lift, drag
+            self.data_history['estimates_data'][np.arange(5,7), -1] = mfc_data[:,-1] #mfc1, mfc2          
+          except:
+            pass
+        time.sleep(self.plot_refresh_rate/5)
+    
+
   def draw_videos(self, video_names, camnums, realtime=True, videopath=None):
     self.videos = list()
     if not realtime:
@@ -257,7 +335,6 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     
     if not self.offline:
       _ = FuncAnimation(plot.fig, plot.plot_live, fargs=(ys, self.data_queue, plot_compensated_strains, None), interval=self.plot_refresh_rate*1000, blit=True)
-      print ("Started sensordata plot.")
       self.update()
     else:
       return plot
@@ -426,7 +503,7 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     return lift_plot, drag_plot
 
   def place_on_grid(self, gui_type, cartoon_gui_include_liftdrag=True):
-    if gui_type == "cartoon": 
+    if gui_type == "cartoon":
       #Top row
       self.videos[0].videolbl.grid(row=1, column=0, rowspan=1, columnspan=4)
       self.videos[0].videocvs.grid(row=2, column=0, rowspan=1, columnspan=4)
@@ -519,8 +596,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
   def print_queuelens(self):
     while True:
       print ("Data queue: {}".format(self.data_queue.qsize()))
-      print ("Lift/drag queue: {}".format(self.liftdragest_queue.qsize()))
-      print ("Stall queue: {}".format(self.stallest_queue.qsize()))
-      print ("State queue: {}".format(self.stateest_queue.qsize()))
-      print ("Shape queue: {}".format(self.shape_queue.qsize()))
+      # print ("Lift/drag queue: {}".format(self.liftdragest_queue.qsize()))
+      # print ("Stall queue: {}".format(self.stallest_queue.qsize()))
+      # print ("State queue: {}".format(self.stateest_queue.qsize()))
+      # print ("Shape queue: {}".format(self.shape_queue.qsize()))
       time.sleep (1)

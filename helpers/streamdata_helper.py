@@ -1,48 +1,59 @@
+from ast import Not, Raise
 import numpy as np
 import time
 from tkinter import Tk, Frame, Canvas, Label
 from multiprocessing import Queue, Process
 from threading import Thread
 from matplotlib.animation import FuncAnimation
+import proc_keras_estimates_helper
+from threading import Thread
 
 
 class StreamData:
-  def __init__ (self, GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate):
+  def __init__ (self, GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, GUI_active):
     self.GUIapp = GUIapp
     self.params = params
     self.use_compensated_strains = use_compensated_strains
     self.downsample_mult = downsample_mult
     self.visible_duration = visible_duration
     self.plot_refresh_rate = plot_refresh_rate
-
+    self.GUI_active = GUI_active
 
 class StreamRealTime (StreamData):
-  def __init__ (self, GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate):
-    super(StreamRealTime, self).__init__(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
+  def __init__ (self, GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, GUI_active=True):
+    super(StreamRealTime, self).__init__(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, GUI_active)
 
-  def init_and_stream_sensordata(self, mfcplot_exists):
+  def init_sensordata(self, mfcplot_exists=True):
     xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
-    ys = np.zeros((18,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag
-    self.GUIapp.draw_sensordata_plot(xs, ys, self.visible_duration, self.params, self.use_compensated_strains, mfcplot_exists)
-
-  def init_and_stream_measurements(self):
+    ys = np.zeros((18,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult)))
+    if self.use_compensated_strains:
+      self.GUIapp.get_reftemp()
+    if self.GUI_active:
+      self.GUIapp.draw_sensordata_plot(xs, ys, self.visible_duration, self.params, self.use_compensated_strains, mfcplot_exists)
+  
+  def init_measurements(self):
     xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
     ys = np.zeros((2,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag
-    self.GUIapp.update_liftdrag_lbls(predictions=False)
-    self.GUIapp.draw_liftdrag_plots(xs, ys, self.visible_duration, self.params, self.downsample_mult, self.use_compensated_strains, False)
+    if self.GUI_active:
+      self.GUIapp.draw_liftdrag_plots(xs, ys, self.visible_duration, self.params, self.downsample_mult, self.use_compensated_strains, False)
 
-  def init_and_stream_estimates(self, models=None):
-    if models != None: #Making keras estimates
-      xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
-      ys_preds = np.zeros((2,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag 
-      self.GUIapp.initialize_estimates(self.downsample_mult, models) #Making estimations removes from data_queue
-      self.GUIapp.update_stallest_lbls()
-      self.GUIapp.update_liftdrag_lbls(predictions=True)
+  def init_estimates(self):
+    xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
+    ys_preds = np.zeros((2,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))) #Here ys only has commlift & commdrag 
+    if self.GUI_active:
       self.GUIapp.draw_liftdrag_plots(xs, ys_preds, self.visible_duration, self.params, self.downsample_mult, self.use_compensated_strains, True)
-    self.GUIapp.draw_MFCshapes(plot_type='contour', blit=True) #Possible plot types are contour or surface
+      self.GUIapp.draw_MFCshapes(plot_type='contour', blit=True) #Possible plot types are contour or surface
+
+  def stream_dummyests(self):
+    dummyests_thread = Thread(target = self.GUIapp.update_dummyests)
+    dummyests_thread.start()
+
+  def update_datahistory(self):
+    sensordata_update_thread = Thread(target = self.GUIapp.update_data_history)
+    sensordata_update_thread.start()
   
   def refresh_queues(self):
-    all_queues_list = [self.GUIapp.data_queue, self.GUIapp.stallest_queue, self.GUIapp.liftdragest_queue, self.GUIapp.shape_queue]
+    all_queues_list = [self.GUIapp.data_queue, self.GUIapp.stallest_queue, self.GUIapp.stateest_queue, self.GUIapp.liftdragest_queue, self.GUIapp.shape_queue]
     while True:
       for queue in all_queues_list:
         while queue.qsize() > 1: #To keep up with the delay.
@@ -50,15 +61,13 @@ class StreamRealTime (StreamData):
               _ = queue.get_nowait()
             except:
               pass
-      time.sleep(self.plot_refresh_rate/3)
+      time.sleep(self.plot_refresh_rate)
       if self.visible_duration == 0:
         break
-      
-
 
 class StreamOffline (StreamData):
-  def __init__ (self, GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate):
-    super(StreamOffline, self).__init__(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate)
+  def __init__ (self, GUIapp, params, streamhold_queue, filespath, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, GUI_active=True):
+    super(StreamOffline, self).__init__(GUIapp, params, use_compensated_strains, downsample_mult, visible_duration, plot_refresh_rate, GUI_active)
     self.streamhold_queue = streamhold_queue
     self.filespath = filespath
     self.airspeed_plot = None
@@ -91,7 +100,7 @@ class StreamOffline (StreamData):
       else:
         pass
     
-  
+
   def initialize_sensordata(self, mfcplot_exists):
     xs = np.linspace (0, self.visible_duration, int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult))
     ys = np.zeros((16,int(self.visible_duration*self.params["sample_rate"]/self.downsample_mult)))

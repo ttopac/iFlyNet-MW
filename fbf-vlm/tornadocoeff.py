@@ -54,7 +54,7 @@ def return_results(airspeed, alpha, mfc1, mfc2):
     makejson(json_dict, filename)  # Convert dictionary into a .json file
 
     # 2) Generate lattice using PyVLM
-    lsys = latticesystem_from_json(const.JSON_PATH + filename)
+    lsys = latticesystem_from_json(os.path.join(const.JSON_PATH,filename))
 
     return lsys
 

@@ -12,7 +12,7 @@ from threading import Thread
 
 sys.path.append(os.path.abspath('./helpers'))
 import gui_windows_helper
-import procoffline_helper
+import procestimates_helper
 import streamdata_helper
 
 # main_folder = 'c:/Users/SACL/OneDrive - Stanford/Sept2020_Tests/'
@@ -68,7 +68,7 @@ if __name__ == '__main__':
   ###
   #Run estimations on the data
   ###
-  estimates = procoffline_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains, models, keras_samplesize)
+  estimates = procestimates_helper.ProcEstimatesOffline(test_data, params['sample_rate'], plot_refresh_rate, downsample_mult, use_compensated_strains, models, keras_samplesize)
   if not os.path.isdir(main_folder+test_folder+"saved_estimates"): #Create a folder to put estimates if it doesn't already exists
     os.mkdir(main_folder+test_folder+"saved_estimates")
   if len(os.listdir(main_folder+test_folder+"saved_estimates")) < 4:  #All estimations are not there.

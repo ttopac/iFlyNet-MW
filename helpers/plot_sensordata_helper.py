@@ -119,8 +119,13 @@ class PlotSensorData:
   #Function to generate real-time plots.
   def plot_live(self, i, ys, queue, plot_compensated_strains=False, start_time=None):
     if not self.offline:
-      read_data = queue.get()
-      queue.put_nowait(read_data)
+      try:
+        read_data = queue.get()
+        queue.put_nowait(read_data)
+        print ("Getting sensor data.")
+      except:
+        print ("Unable to get sensor data.")
+        pass
     else:
       t0 = time.time()
       cur_frame = int((t0-start_time)/self.plot_refresh_rate)
@@ -168,6 +173,7 @@ class PlotSensorData:
       line.set_ydata(ys[SSNSGID+6])
     self.liftline.set_ydata(ys[14])
     self.dragline.set_ydata(ys[15])
+    print ("Updated lines")
     return self.PZTlines+self.SGlines+list((self.liftline,self.dragline))
 
   #Additional plots for plot_drift_test plots.
