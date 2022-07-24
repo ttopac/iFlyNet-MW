@@ -3,9 +3,9 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Contains the constants for tornadocoeff.py.
 
-JSON_PATH = os.path.join(dir_path,"files/")
-RESULTS_PATH = os.path.join(dir_path,"results/")
-AIRFOILS_PATH = os.path.join(dir_path,"airfoils_2/")
+JSON_PATH = os.path.join(dir_path,"files")
+RESULTS_PATH = os.path.join(dir_path,"results")
+AIRFOILS_PATH = os.path.join(dir_path,"airfoils_2")
 
 # Currently, there exist 13 different morph airfoils available, -6 through +6
 MFC_MAX = 6

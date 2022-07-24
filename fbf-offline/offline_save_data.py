@@ -149,7 +149,6 @@ if __name__ == "__main__":
 
   #Save the data
   main.skip_preview_button()
-  print ("Reached mainloop")
   root.mainloop()
 
   #Stop queue_refresh_thread

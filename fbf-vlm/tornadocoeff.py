@@ -40,7 +40,7 @@ def namefile(airspeed, alpha, mfc1, mfc2):
 # Coverts a given python dictionary and saves it as a json file.
 # Params: python dictionary, name of file to be created
 def makejson(dict, filename):
-    with open(const.JSON_PATH + filename, 'w') as path:
+    with open(os.path.join(const.JSON_PATH,filename), 'w') as path:
         json.dump(dict, path)
 
 

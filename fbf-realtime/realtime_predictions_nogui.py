@@ -105,22 +105,14 @@ if __name__ == '__main__':
   stateestimate_thread = Thread(target=estimates.estimate_state)
   mfcestimate_thread = Thread(target=estimates.estimate_mfc)
   liftdragestimate_thread = Thread(target=estimates.estimate_liftdrag)
+  # update_dummyests_thread = Thread(target=GUIapp.update_dummyests, args=[['liftdrag']])
   
   estimatesdata_prep_thread.start()
   stallestimate_thread.start()
   stateestimate_thread.start()
   mfcestimate_thread.start()
   liftdragestimate_thread.start()
-  
-  ###
-  # Atharva's streaming thread
-  ###
-  # raw_sensors = GUIapp.data_history["sensor_data"]
-  # estimates = GUIapp.data_history["estimates_data"]
-  # data_stream = server_new_neuron.ServerFunction()
-  # mylist_increment_thread = Thread(target=data_stream.increase_num, args=[mylist])
-  # data_stream.start()
-  # mylist_increment_thread.start()
+  # update_dummyests_thread.start()
 
   ###
   # Update measured and predicted data

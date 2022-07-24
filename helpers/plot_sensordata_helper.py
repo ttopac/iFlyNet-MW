@@ -122,7 +122,6 @@ class PlotSensorData:
       try:
         read_data = queue.get()
         queue.put_nowait(read_data)
-        print ("Getting sensor data.")
       except:
         print ("Unable to get sensor data.")
         pass
@@ -173,7 +172,6 @@ class PlotSensorData:
       line.set_ydata(ys[SSNSGID+6])
     self.liftline.set_ydata(ys[14])
     self.dragline.set_ydata(ys[15])
-    print ("Updated lines")
     return self.PZTlines+self.SGlines+list((self.liftline,self.dragline))
 
   #Additional plots for plot_drift_test plots.

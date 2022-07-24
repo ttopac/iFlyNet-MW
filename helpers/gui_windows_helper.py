@@ -593,11 +593,12 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
     self.update()
 
 
-  def print_queuelens(self):
-    while True:
-      print ("Data queue: {}".format(self.data_queue.qsize()))
+  # def print_queuelens(self):
+  #   while True:
+      # print ("Data queue: {}".format(self.data_queue.qsize()))
       # print ("Lift/drag queue: {}".format(self.liftdragest_queue.qsize()))
       # print ("Stall queue: {}".format(self.stallest_queue.qsize()))
       # print ("State queue: {}".format(self.stateest_queue.qsize()))
       # print ("Shape queue: {}".format(self.shape_queue.qsize()))
-      time.sleep (1)
+      # time.sleep (1)
+      

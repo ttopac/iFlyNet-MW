@@ -18,7 +18,7 @@ sys.path.append(os.path.abspath('./fbf-realtime'))
 
 HEADER = 16
 HEADER_SEND = 32
-PORT = 5003
+PORT = 5004
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8",80))
@@ -182,9 +182,6 @@ class ServerFunction(threading.Thread):
     def run(self): 
         while True:
             if (self.conn is not None):
-                #self.state1 = self.raw1
-                #self.state2 = self.raw2
-                #self.state3 = self.raw3
                 self.state_message()
                 time.sleep(0.0005)
                 send_msg = self.state_msg.encode(FORMAT)

@@ -4,8 +4,6 @@ import os
 from multiprocessing import Queue
 import pathlib
 
-mylist = [50,51,52]
-
 from tkinter import Tk, Button
 from tkinter import S
 import tensorflow.keras
@@ -17,7 +15,7 @@ from threading import Thread
 sys.path.append(os.path.abspath('./helpers'))
 import streamdata_helper
 import gui_windows_helper
-import procestimates_helper
+# import procestimates_helper
 import server_new_neuron
 
 INCLUDE_STALL_EST = True
@@ -99,8 +97,8 @@ if __name__ == '__main__':
   ###
   # Start making predictions
   ###
-  estimates_queue = [GUIapp.stallest_queue, GUIapp.stateest_queue, GUIapp.liftdragest_queue, GUIapp.shape_queue]
-  estimates = procestimates_helper.ProcEstimatesRealtime(GUIapp.data_queue, estimates_queue, params ['sample_rate'], DATA_REFRESH_RATE, DOWNSAMPLE_MULT, USE_COMPENSATED_STRAINS, KERAS_EST, MFC_EST, LIFTDRAG_EST, MFC_ESTIMATE_METH, LIFTDRAG_ESTIMATE_METH, models, KERAS_SAMPLESIZE)
+  # estimates_queue = [GUIapp.stallest_queue, GUIapp.stateest_queue, GUIapp.liftdragest_queue, GUIapp.shape_queue]
+  # estimates = procestimates_helper.ProcEstimatesRealtime(GUIapp.data_queue, estimates_queue, params ['sample_rate'], DATA_REFRESH_RATE, DOWNSAMPLE_MULT, USE_COMPENSATED_STRAINS, KERAS_EST, MFC_EST, LIFTDRAG_EST, MFC_ESTIMATE_METH, LIFTDRAG_ESTIMATE_METH, models, KERAS_SAMPLESIZE)
   
   # estimatesdata_prep_thread = Thread(target=estimates.prepare_data)
   # stallestimate_thread = Thread(target=estimates.estimate_stall)
@@ -135,7 +133,7 @@ if __name__ == '__main__':
     raw_sensors = GUIapp.data_history["sensor_data"][:,-1] #PZTs(0-5) + 8SSNSGs(6-13) + 2commSGs(Lift&Drag)(14-15) + 2RTDs(16-17)
     data_stream.update(raw_sensors)
     print("Raw sens1: ",raw_sensors[14],raw_sensors[15],raw_sensors[6])
-    estimates = GUIapp.data_history["estimates_data"][:,-1] #stall, airspeed, aoa, lift, drag, mfc1, mfc2
+    # estimates = GUIapp.data_history["estimates_data"][:,-1] #stall, airspeed, aoa, lift, drag, mfc1, mfc2
     # print ("Raw sensor data:")
     # print (f"commSG Lift: {raw_sensors[14]}, commSG Drag: {raw_sensors[15]}")
     # print (f"SSNSG Lift: {raw_sensors[6]}")
