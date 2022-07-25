@@ -129,17 +129,18 @@ if __name__ == '__main__':
   print ("Data history update started.")
 
   start_time = time.time()
-  while time.time() - start_time < 1550:
+  while time.time() - start_time < 180:
     raw_sensors = GUIapp.data_history["sensor_data"][:,-1] #PZTs(0-5) + 8SSNSGs(6-13) + 2commSGs(Lift&Drag)(14-15) + 2RTDs(16-17)
     data_stream.update(raw_sensors)
-    print("Raw sens1: ",raw_sensors[14],raw_sensors[15],raw_sensors[6])
+    # print("Raw sens1: ",raw_sensors[14],raw_sensors[15],raw_sensors[6])
     # estimates = GUIapp.data_history["estimates_data"][:,-1] #stall, airspeed, aoa, lift, drag, mfc1, mfc2
     # print ("Raw sensor data:")
     # print (f"commSG Lift: {raw_sensors[14]}, commSG Drag: {raw_sensors[15]}")
     # print (f"SSNSG Lift: {raw_sensors[6]}")
     # print ("Estimates:")
     # print (f"Stall: {estimates[0]}, Airspeed: {estimates[1]}, AoA: {estimates[2]}, Lift: {estimates[3]}, Drag: {estimates[4]}, MFC1: {estimates[5]}, MFC2: {estimates[6]} \n")
-    #print ()
-    time.sleep(0.001)
+    # print ()
+    time.sleep(0.05)
   np.save(os.path.join(datasave_folder, "sensor_dat.npy"),GUIapp.data_history["sensor_data"], allow_pickle=True)
   np.save(os.path.join(datasave_folder, "estimates_dat.npy"),GUIapp.data_history["estimates_data"], allow_pickle=True)
+  print ("Saved!")

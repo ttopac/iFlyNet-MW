@@ -287,8 +287,8 @@ class GroundTruthAndiFlyNetEstimatesWindow(Frame):
             liftdrag_data = self.liftdragest_queue.get_nowait()
             mfc_data = self.shape_queue.get_nowait()
 
-            self.data_history['sensor_data'] = np.append(self.data_history['sensor_data'], np.zeros((18, 1)), axis=1)
-            self.data_history['estimates_data'] = np.append(self.data_history['estimates_data'], np.zeros((7, 1)), axis=1)
+            self.data_history['sensor_data'] = np.append(self.data_history['sensor_data'], np.full((18, 1), 100), axis=1)
+            self.data_history['estimates_data'] = np.append(self.data_history['estimates_data'], np.full((7, 1), 100), axis=1)
 
             self.data_history['sensor_data'][np.arange(0,18),-1] = sensor_data[:,-1] #6PZTs + 8SSNSGs + 2commSGs(lift&drag) + 2RTDs
             self.data_history['estimates_data'][np.array(0), -1] = stall_data[:,-1] #stall

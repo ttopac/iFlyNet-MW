@@ -186,7 +186,7 @@ class ServerFunction(threading.Thread):
                 time.sleep(0.0005)
                 send_msg = self.state_msg.encode(FORMAT)
                 self.conn.send(send_msg)
-                print("Raw sens2: ",send_msg)
+                # print("Raw sens2: ",send_msg)
                 if self.control.quit():
                     time.sleep(1.0)
                     break

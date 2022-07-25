@@ -120,7 +120,7 @@ if __name__ == '__main__':
   stream.update_datahistory()
 
   start_time = time.time()
-  while time.time() - start_time < 1200:
+  while time.time() - start_time < 120:
     raw_sensors = GUIapp.data_history["sensor_data"][:,-1] #PZTs(0-5) + 8SSNSGs(6-13) + 2commSGs(Lift&Drag)(14-15) + 2RTDs(16-17)
     estimates = GUIapp.data_history["estimates_data"][:,-1] #stall, airspeed, aoa, lift, drag, mfc1, mfc2
     print ("Raw sensor data:")
@@ -132,3 +132,4 @@ if __name__ == '__main__':
     time.sleep(1)
   np.save(os.path.join(datasave_folder, "sensor_dat.npy"),GUIapp.data_history["sensor_data"], allow_pickle=True)
   np.save(os.path.join(datasave_folder, "estimates_dat.npy"),GUIapp.data_history["estimates_data"], allow_pickle=True)
+  print ("Saved!")
