@@ -14,6 +14,8 @@ class iFlyNetEstimates:
     sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq) #WORKED shape= (8, -1, 233) for Sept. 2020
     sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0)) #WORKED shape= (-1, 233, 8) for Sept. 2020.
     sensordata_rshp_t_std = (sensordata_rshp_t-self.means[np.array(self.models['activesensors'][0])]) / self.stddevs[np.array(self.models['activesensors'][0])]
+    
+    print (sensordata_rshp_t_std.shape)
     preds = self.models['modelfiles'][0].predict(sensordata_rshp_t_std)
     cond = preds[:,0] < 0.5 #NoStall: False
     return cond
@@ -31,22 +33,16 @@ class iFlyNetEstimates:
     sensordata_rshp = sensordata.reshape(sensordata.shape[0], -1, self.pred_freq) #shape= (8, -1, 233) for Sept. 2020
     sensordata_rshp_t = np.transpose(sensordata_rshp, (1,2,0)) #shape= (-1, 233, 8) for Sept. 2020.
     sensordata_rshp_t_std = (sensordata_rshp_t-self.means[np.array(self.models['activesensors'][2])]) / self.stddevs[np.array(self.models['activesensors'][2])]
-    ''' 
-    The code below can be used measure Keras computation speed:
-    data2 = sensordata_rshp_t_std[1000].reshape(1,233,9)
-    data3 = sensordata_rshp_t_std[1100].reshape(1,233,9)
-    data4 = sensordata_rshp_t_std[1200].reshape(1,233,9)
-    t1 = time.time()
-    preds = self.models['modelfiles'][2].predict(data2)
-    print ("Initial prediction takes {} seconds.".format(time.time() - t1))
-    t2 = time.time()
-    preds = self.models['modelfiles'][2].predict(data3)
-    print ("Second predictions take {} seconds.".format(time.time() - t2))
-    t3 = time.time()
-    preds = self.models['modelfiles'][2].predict(data4)
-    print ("Third predictions take {} seconds.".format(time.time() - t3))
-    '''
-    preds = self.models['modelfiles'][2].predict(sensordata_rshp_t_std, verbose=0)
+    
+    # The code below can be used measure Keras computation speed:
+    # for i in range(10):
+    #   start_t = time.time()
+    #   preds = self.models['modelfiles'][2].predict(sensordata_rshp_t_std[i:i+1,:,:])
+    #   end_t = time.time()
+    #   print ("Prediction of 1 array took this much time (in seconds):")
+    #   print (end_t-start_t)
+    
+    preds = self.models['modelfiles'][2].predict(sensordata_rshp_t_std)
     argmax_preds = np.argmax (preds, axis=1)
     _ = encoder.inverse_transform(statetruth) #making encoder remember previous states.
     decoded_preds = encoder.inverse_transform(argmax_preds) #Actually decode predictions.

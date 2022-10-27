@@ -30,17 +30,17 @@ file_path = pathlib.Path(__file__).parent.absolute()
 MAIN_LOC = '/Volumes/GoogleDrive-109082130355562393140/Shared drives/WindTunnelTests-Feb2019/July2022_Tests_SNIC/'
 # MAIN_LOC = 'g:/Shared drives/WindTunnelTests-Feb2019/July2022_Tests_SNIC/'
 
-TEST_LOC = 'Offline_Tests/offline12_July22/'
+TEST_LOC = 'Offline_Tests/offline99_July20/'
 MODELS_LOC = 'Kerasfiles_Dec2020/'
 test_folder = os.path.join(MAIN_LOC, TEST_LOC)
 models_folder = os.path.join(MAIN_LOC, MODELS_LOC)
 
 models = dict()
 models['types'] = ['stall', 'liftdrag', 'state']
-models['filenames'] = ['stall_9sensors_train991_val994', 'reg_7sensors_train0020_val0022', 'state_9sensors_train996_val972_July2022']
-# models['filenames'] = ['stall_9sensors_train991_val994', 'reg_7sensors_train0020_val0022', 'state_8sensors_July2022']
-models['activesensors'] = [(0, 1, 2, 3, 4, 5, 6, 14, 15), (0, 1, 2, 3, 4, 5, 6), (0, 1, 2, 3, 4, 5, 6, 14, 15)] #For regression, last 2 sensors give ground truth.
-# models['activesensors'] = [(0, 1, 2, 3, 4, 5, 6, 14, 15), (0, 1, 2, 3, 4, 5, 6), (0, 1, 2, 3, 4, 5, 14, 15)] #For regression, last 2 sensors give ground truth.
+# models['filenames'] = ['stall_9sensors_train991_val994', 'reg_7sensors_train0020_val0022', 'state_9sensors_train996_val972_July2022']
+models['filenames'] = ['stall_9sensors_train991_val994', 'reg_7sensors_train0020_val0022', 'state_8sensors_July2022']
+# models['activesensors'] = [(0, 1, 2, 3, 4, 5, 6, 14, 15), (0, 1, 2, 3, 4, 5, 6), (0, 1, 2, 3, 4, 5, 6, 14, 15)] #For regression, last 2 sensors give ground truth.
+models['activesensors'] = [(0, 1, 2, 3, 4, 5, 6, 14, 15), (0, 1, 2, 3, 4, 5, 6), (0, 1, 2, 3, 4, 5, 14, 15)] #For regression, last 2 sensors give ground truth.
 models['modelfiles'] = list()
 models['means'] = np.array([-4.334589129779109e-06, 8.410618468135621e-05, 0.0003380918816729708, -0.00033040819902024725, -0.0004918243008301694, -0.00011952919733986609, -88.5091598596475, 0, 0, 0, 0, 0, 0, 0, -149.31235739451475, -1.4116125522601457, 0, 0])
 models['stddevs'] = np.array([0.0011386681293641748, 0.0016901989191845132, 0.0012115932943635751, 0.0015570071919707178, 0.0012676181753638542, 0.0012784967994997837, 50.90707044913575, 0, 0, 0, 0, 0, 0, 0, 137.46263891169286, 39.068130385665526, 0, 0])
@@ -61,7 +61,7 @@ if __name__ == '__main__':
   MFC_EST = True
   LIFTDRAG_EST = True
   MFC_ESTIMATE_METH = 'simple' #simple or full
-  LIFTDRAG_ESTIMATE_METH = 'vlm' #choose amongst vlm, 1dcnn, sg1+vlm, sg1+vlm_v2, sg1+vlm_v2+xfoil
+  LIFTDRAG_ESTIMATE_METH = 'sg1+vlm_v2' #choose amongst vlm, 1dcnn, sg1+vlm, sg1+vlm_v2, sg1+vlm_v2+xfoil
 
   ###
   #Load the data and models
